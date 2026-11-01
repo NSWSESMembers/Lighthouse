@@ -296,5 +296,32 @@ describe('simulated exercise feed (ctx.simulation)', () => {
       const err = await simulated(trainCtx).catch((e) => e);
       expect(isSimulationUnavailable(err)).toBe(true);
     });
+
+    it('retries a refused sign-in once with the newest token from ctx.refreshToken', async () => {
+      vi.mocked(request)
+        .mockRejectedValueOnce(Object.assign(new Error('403'), { status: 403 }))
+        .mockResolvedValueOnce([simFeature('DMC56')]);
+      const assets = await simulated({ ...trainCtx, refreshToken: async () => 'tok-renewed' });
+      expect(assets.map((a) => a.name)).toEqual(['DMC56 (PSN)']);
+      expect(vi.mocked(request).mock.calls.map(([, opts]) => opts.token)).toEqual(['tok', 'tok-renewed']);
+    });
+  });
+
+  it('filter() retries the simulated feed with the newest token too, and Beacon keeps its own token', async () => {
+    vi.mocked(request).mockImplementation(async (url, { token }) => {
+      if (url.startsWith(FEED)) {
+        if (token !== 'tok-renewed') throw Object.assign(new Error('403'), { status: 403 });
+        return [simFeature('DMC56')];
+      }
+      return { features: [] };
+    });
+    const result = await filter(null, { ...trainCtx, refreshToken: async () => 'tok-renewed' });
+    expect(result.map((a) => a.name)).toEqual(['DMC56 (PSN)']);
+    const calls = vi.mocked(request).mock.calls.map(([url, opts]) => [url.startsWith(FEED) ? 'feed' : 'beacon', opts.token]);
+    expect(calls).toEqual([
+      ['feed', 'tok'],
+      ['beacon', 'tok'],
+      ['feed', 'tok-renewed'],
+    ]);
   });
 });

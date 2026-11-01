@@ -29,13 +29,13 @@ function writeCache(key, data) {
   }
 }
 
-async function fetchRadioAssets(host, userId, token, signal, simulation) {
+async function fetchRadioAssets(host, userId, token, signal, simulation, refreshToken) {
   if (simulation) {
     // A CADence exercise is selected (Train/Test Beacon only, see
     // ../cadenceSimulation.js): its simulated positions replace Beacon's radio
     // feed. Never cached: the feed is served no-store and positions move every
     // few seconds, so a cached copy would show teams where they were.
-    return fetchSimulatedRadioAssets(simulation, { host, token, signal });
+    return fetchSimulatedRadioAssets(simulation, { host, token, signal, refreshToken });
   }
   const key = cacheKey(host, 'LighthouseFetchedRadioAssets');
   const cached = readCache(key);
@@ -90,9 +90,9 @@ function normaliseRadioAssets(features, exerciseHqId = null) {
   return assets;
 }
 
-async function returnAssetLocations(host, userId, token, signal, simulation) {
+async function returnAssetLocations(host, userId, token, signal, simulation, refreshToken) {
   const [radio, tele] = await Promise.allSettled([
-    fetchRadioAssets(host, userId, token, signal, simulation),
+    fetchRadioAssets(host, userId, token, signal, simulation, refreshToken),
     fetchTeleAssets(host, userId, token, signal),
   ]);
 
@@ -154,16 +154,18 @@ async function returnAssetLocations(host, userId, token, signal, simulation) {
  * rejects with a SimulationFeedError that isSimulationUnavailable() accepts,
  * without contacting the CADence backend. With `participantHqId` in it too,
  * each simulated asset carries that HQ as `exerciseHqId`, so LAD only matches
- * it to teams assigned to that HQ.
+ * it to teams assigned to that HQ. `refreshToken` (simulated feed only) gives the
+ * newest Beacon token after a 401/403, see cadenceSimulation.js.
  *
  * @param {string[]} assetFilter  asset names to keep; empty/falsy returns everything
  * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
- *          simulation?: {exerciseId: string, copyId: string, participantHqId?: string}|null}} ctx
+ *          simulation?: {exerciseId: string, copyId: string, participantHqId?: string}|null,
+ *          refreshToken?: () => Promise<string|null>}} ctx
  * @returns {Promise<object[]>}
  */
 export async function filter(assetFilter, ctx = {}) {
-  const { host, userId = 'notPassed', token, signal, simulation = null } = ctx;
-  const response = await returnAssetLocations(host, userId, token, signal, simulation);
+  const { host, userId = 'notPassed', token, signal, simulation = null, refreshToken } = ctx;
+  const response = await returnAssetLocations(host, userId, token, signal, simulation, refreshToken);
   if (!assetFilter || assetFilter.length === 0) {
     return response;
   }
@@ -178,10 +180,10 @@ export async function filter(assetFilter, ctx = {}) {
  * else it rejects like filter() does with `ctx.simulation`.
  *
  * @param {{host: string, token: string, signal?: AbortSignal,
- *          simulation: {exerciseId: string, copyId: string}}} ctx
+ *          simulation: {exerciseId: string, copyId: string}, refreshToken?: () => Promise<string|null>}} ctx
  * @returns {Promise<object[]>}
  */
 export async function simulated(ctx = {}) {
-  const { host, token, signal, simulation = null } = ctx;
-  return normaliseRadioAssets(await fetchSimulatedRadioAssets(simulation, { host, token, signal }));
+  const { host, token, signal, simulation = null, refreshToken } = ctx;
+  return normaliseRadioAssets(await fetchSimulatedRadioAssets(simulation, { host, token, signal, refreshToken }));
 }

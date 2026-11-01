@@ -423,3 +423,86 @@ describe('selectionForHq', () => {
     expect(selectionForHq(withoutCopies, 101)).toBeNull();
   });
 });
+
+describe('a refused Beacon token (401/403)', () => {
+  // The backend as the authorizer behaves: it only accepts the tokens listed
+  // (an expired one isn't), whatever the call.
+  let accepted;
+  const backend = (body) =>
+    vi.mocked(request).mockImplementation(async (url, { token }) => {
+      if (!accepted.has(token)) throw new BeaconApiError(403, 'Forbidden', url, '');
+      return typeof body === 'function' ? body(url) : body;
+    });
+  const SELECTION = { exerciseId: 'ex1', copyId: 'individual' };
+  const LIST = { exercises: [{ exerciseId: 'ex1', copies: [{ copyId: 'individual', participantHqId: '101' }] }] };
+  const tokensSent = () => vi.mocked(request).mock.calls.map(([, opts]) => opts.token);
+
+  beforeEach(() => {
+    accepted = new Set(['fake-token-new']);
+  });
+
+  it('asks for the newest token and tries once more with it, for the position feed', async () => {
+    backend([feature('DEM01')]);
+    const refreshToken = vi.fn(async () => 'fake-token-new');
+    const features = await fetchResourceLocations(SELECTION, { ...TRAIN, token: 'fake-token-old', refreshToken });
+    expect(features).toHaveLength(1);
+    expect(refreshToken).toHaveBeenCalledTimes(1);
+    expect(tokensSent()).toEqual(['fake-token-old', 'fake-token-new']);
+  });
+
+  it('does the same for the exercise list, so the exercise stays running', async () => {
+    backend(LIST);
+    const refreshToken = vi.fn(async () => 'fake-token-new');
+    await expect(
+      selectionStatus(SELECTION, { ...TRAIN, token: 'fake-token-old', refreshToken }),
+    ).resolves.toBe('running');
+    expect(tokensSent()).toEqual(['fake-token-old', 'fake-token-new']);
+  });
+
+  it('is unavailable when the newest token is the one refused, without trying it again', async () => {
+    backend([]);
+    const refreshToken = vi.fn(async () => 'fake-token-old');
+    const err = await fetchResourceLocations(SELECTION, { ...TRAIN, token: 'fake-token-old', refreshToken }).catch(
+      (e) => e,
+    );
+    expect(isSimulationUnavailable(err)).toBe(true);
+    expect(err.status).toBe(403);
+    expect(tokensSent()).toEqual(['fake-token-old']);
+  });
+
+  it('is unavailable when the newer token is refused too, after one retry only', async () => {
+    accepted = new Set();
+    backend(LIST);
+    const refreshToken = vi.fn(async () => 'fake-token-new');
+    await expect(
+      selectionStatus(SELECTION, { ...TRAIN, token: 'fake-token-old', refreshToken }),
+    ).resolves.toBe('unavailable');
+    expect(refreshToken).toHaveBeenCalledTimes(1);
+    expect(tokensSent()).toEqual(['fake-token-old', 'fake-token-new']);
+  });
+
+  it('is unavailable when no newer token can be had (none, or the lookup fails)', async () => {
+    backend(LIST);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    for (const refreshToken of [async () => null, async () => Promise.reject(new Error('storage gone'))]) {
+      const err = await listExercises({ ...TRAIN, token: 'fake-token-old', refreshToken }).catch((e) => e);
+      expect(isSimulationUnavailable(err)).toBe(true);
+    }
+  });
+
+  it("doesn't ask for a new token when the failure isn't a refusal", async () => {
+    vi.mocked(request).mockRejectedValue(new BeaconApiError(502, 'Bad Gateway', `${FEED}/feed/exercises`, ''));
+    const refreshToken = vi.fn(async () => 'fake-token-new');
+    const err = await listExercises({ ...TRAIN, token: 'fake-token-new', refreshToken }).catch((e) => e);
+    expect(isSimulationUnavailable(err)).toBe(false);
+    expect(refreshToken).not.toHaveBeenCalled();
+  });
+
+  it('never asks for a token, or calls the backend, on production Beacon', async () => {
+    const refreshToken = vi.fn(async () => 'fake-token-new');
+    const err = await fetchResourceLocations(SELECTION, { ...PROD, refreshToken }).catch((e) => e);
+    expect(isSimulationUnavailable(err)).toBe(true);
+    expect(refreshToken).not.toHaveBeenCalled();
+    expect(request).not.toHaveBeenCalled();
+  });
+});

@@ -179,17 +179,37 @@ function requireEnvironment(host) {
   return environment;
 }
 
-async function feedRequest(url, { token, signal }) {
+function feedError(err, url) {
+  const status = typeof err?.status === 'number' ? err.status : null;
+  return new SimulationFeedError(`CADence feed ${status ?? 'request failed'} (${url})`, {
+    status,
+    unavailable: status === 401 || status === 403,
+    url,
+  });
+}
+
+// `refreshToken` (optional) gives the newest Beacon token the caller can get,
+// renewed if it was about to expire. A 401/403 is often a stale copy: a page
+// keeps the token it was handed while Beacon or another page renews the
+// stored one, and the backend refuses it once it expires. So a refusal asks
+// for the newest token and, if that's a different one, tries once more with
+// it. Only a refusal of the newest token makes the error `unavailable`.
+async function feedRequest(url, { token, signal, refreshToken }) {
   try {
     return await request(url, { token, signal });
   } catch (err) {
     if (err && err.name === 'AbortError') throw err;
-    const status = typeof err?.status === 'number' ? err.status : null;
-    throw new SimulationFeedError(`CADence feed ${status ?? 'request failed'} (${url})`, {
-      status,
-      unavailable: status === 401 || status === 403,
-      url,
-    });
+    const refused = err?.status === 401 || err?.status === 403;
+    if (refused && typeof refreshToken === 'function') {
+      let fresh = null;
+      try {
+        fresh = await refreshToken();
+      } catch (refreshErr) {
+        console.warn('[cadence] Could not get a newer Beacon token:', refreshErr);
+      }
+      if (fresh && fresh !== token) return feedRequest(url, { token: fresh, signal });
+    }
+    throw feedError(err, url);
   }
 }
 
@@ -221,14 +241,15 @@ function normaliseExercise(exercise) {
  * Copies without a participant HQ are dropped, and so are exercises left with
  * no copy (there would be nothing to show).
  *
- * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @param {{host: string, token: string, signal?: AbortSignal, refreshToken?: () => Promise<string|null>}} ctx
+ *   refreshToken: the newest Beacon token, asked for once after a 401/403 (see feedRequest)
  * @returns {Promise<Array<{exerciseId: string, name: string, mode: 'group'|'individual', createdAt: string,
  *   copies: Array<{copyId: string, participantHqId: string, participantHqName: string}>}>>}
  */
 export async function listExercises(ctx = {}) {
-  const { host, token, signal } = ctx;
+  const { host, token, signal, refreshToken } = ctx;
   const { feedBase } = requireEnvironment(host);
-  const body = await feedRequest(`${feedBase}/feed/exercises`, { token, signal });
+  const body = await feedRequest(`${feedBase}/feed/exercises`, { token, signal, refreshToken });
   const exercises = Array.isArray(body?.exercises) ? body.exercises : [];
   return exercises.map(normaliseExercise).filter((e) => e && e.copies.length > 0);
 }
@@ -240,7 +261,8 @@ export async function listExercises(ctx = {}) {
  * positions yet.
  *
  * @param {{exerciseId: string, copyId: string}} selection
- * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @param {{host: string, token: string, signal?: AbortSignal, refreshToken?: () => Promise<string|null>}} ctx
+ *   as for listExercises
  * @returns {Promise<'running'|'ended'|'unavailable'|'unknown'>} 'ended' when the exercise or that copy is
  *   no longer listed, 'unavailable' when the backend refused the token (or this isn't Train or Test Beacon),
  *   'unknown' when the list couldn't be loaded (network, 5xx)
@@ -267,11 +289,12 @@ export async function selectionStatus(selection, ctx = {}) {
  * published positions yet.
  *
  * @param {{exerciseId: string, copyId: string}} selection
- * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @param {{host: string, token: string, signal?: AbortSignal, refreshToken?: () => Promise<string|null>}} ctx
+ *   as for listExercises
  * @returns {Promise<object[]>}
  */
 export async function fetchResourceLocations(selection, ctx = {}) {
-  const { host, token, signal } = ctx;
+  const { host, token, signal, refreshToken } = ctx;
   const { feedBase } = requireEnvironment(host);
   const exerciseId = selection?.exerciseId != null ? String(selection.exerciseId) : '';
   const copyId = selection?.copyId != null ? String(selection.copyId) : '';
@@ -281,7 +304,7 @@ export async function fetchResourceLocations(selection, ctx = {}) {
   const url =
     `${feedBase}/feed/exercises/${encodeURIComponent(exerciseId)}` +
     `/copies/${encodeURIComponent(copyId)}/resource-locations`;
-  const body = await feedRequest(url, { token, signal });
+  const body = await feedRequest(url, { token, signal, refreshToken });
   // Features without a usable name or position can't be drawn or matched.
   return (Array.isArray(body) ? body : []).map(cleanFeature).filter(Boolean);
 }

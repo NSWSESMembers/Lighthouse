@@ -45,6 +45,8 @@ function listed(exercises, selection) {
  * @param {{watch: Function, choose: Function, stop: Function, end: Function}|null} [deps.share]  the shared
  *   choice for this environment; defaults to chrome.storage.session (sharedChoice)
  * @param {string} [deps.guideUrl]  the guide's page on the website
+ * @param {() => Promise<string|null>} [deps.refreshToken]  the newest Beacon token, asked for after the
+ *   backend refuses one (see feedRequest in shared/cadenceSimulation.js)
  */
 export function SimulatedExercisePageVM(deps = {}) {
   const self = this;
@@ -217,7 +219,7 @@ export function SimulatedExercisePageVM(deps = {}) {
     const seq = ++refreshSeq;
     self.loading(true);
     try {
-      const list = await listExercises({ host, token });
+      const list = await listExercises({ host, token, refreshToken: deps.refreshToken });
       if (seq !== refreshSeq) return self.exercises();
 
       const rows = list

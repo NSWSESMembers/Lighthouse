@@ -2049,6 +2049,11 @@ export default class InjectScriptMapManager {
     }
     sendToken();
     setInterval(sendToken, 3e5);
+    // And straight away when the content script asks: the CADence exercise
+    // backend refused the copy it had, which may be up to 5 minutes old.
+    window.addEventListener('message', function (event) {
+      if (event.source === window && event.data && event.data.type === 'LH_REQUEST_USER_ACCESS_TOKEN') sendToken();
+    });
 
     console.debug('Sending base: ' + urls.Base);
     window.postMessage({ type: 'LH_USER_API', base: urls.Base }, '*');

@@ -28,6 +28,8 @@ function escapeHtml(value) {
  * @param {object} deps
  * @param {string} deps.host  Beacon API host (params.host); decides availability
  * @param {() => Promise<string>} deps.getToken  current Beacon bearer token
+ * @param {() => Promise<string|null>} [deps.refreshToken]  the newest Beacon token, asked for after the
+ *   backend refuses one (see feedRequest in shared/cadenceSimulation.js)
  * @param {{watch: Function, stop: Function, end: Function}|null} [deps.share]  the shared choice for this
  *   environment; defaults to chrome.storage.session (sharedChoice), null to follow nothing
  * @param {(selection: object|null) => void} [deps.onSelectionChange]  refetch assets
@@ -36,7 +38,7 @@ function escapeHtml(value) {
  */
 export function SimulatedExerciseVM(deps = {}) {
   const self = this;
-  const { host, getToken, onSelectionChange, openPage } = deps;
+  const { host, getToken, refreshToken, onSelectionChange, openPage } = deps;
   const environment = simulationEnvironment(host);
   const share = deps.share !== undefined ? deps.share : environment ? sharedChoice(environment.env) : null;
 
@@ -212,7 +214,7 @@ export function SimulatedExerciseVM(deps = {}) {
     if (!verifying) {
       verifying = (async () => {
         const token = await getToken();
-        const status = await selectionStatus(selection, { host, token });
+        const status = await selectionStatus(selection, { host, token, refreshToken });
         // Leave it if the choice changed while the list was loading.
         if ((status === 'ended' || status === 'unavailable') && sameSimulation(self.selection(), selection)) {
           await self.endHere(status);

@@ -253,6 +253,11 @@ const sourceUrl = params.source
 // the page's host/userId plus a token (and any per-call extras like onProgress).
 const beaconCtx = (tkn, extra) => ({ host: apiHost, userId: params.userId, token: tkn, ...extra });
 
+// For CADence exercise calls: the newest Beacon token after the backend
+// refuses one (see feedRequest in shared/cadenceSimulation.js). Re-reads the
+// stored token, renewed if it's about to expire; a newer one reaches setToken.
+const refreshCadenceToken = () => BeaconToken.freshBeaconToken(apiHost, params.source);
+
 // Collaborative map layer markers are attributed to the Beacon Person
 // record (params.personId), not the login/account id (params.userId) --
 // these are separate id systems in Beacon's data model (see
@@ -570,6 +575,7 @@ function VM() {
     self.simulatedExercise = new SimulatedExerciseVM({
         host: apiHost,
         getToken,
+        refreshToken: refreshCadenceToken,
         onSelectionChange: () => self.fetchAllTrackableAssets(),
         openPage: () => self.openSimulatedExercisePage(),
     });
@@ -2661,7 +2667,7 @@ function VM() {
             const simulation = simulatedExercise.feedSelection();
             const simulationGeneration = simulatedExercise.generation();
             try {
-                const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation }));
+                const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken }));
                 if (simulationGeneration !== simulatedExercise.generation()) return;
                 if (simulation) {
                     simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);

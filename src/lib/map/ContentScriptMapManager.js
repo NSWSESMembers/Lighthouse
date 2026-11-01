@@ -291,6 +291,7 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
                 } else if (event.data.type === 'LH_USER_ACCESS_TOKEN') {
                     this._token = event.data.token;
                     //console.debug('Got access-token: ' + this._token);
+                    (this._tokenWaiters || []).splice(0).forEach((resolve) => resolve(this._token));
 
                 } else if (event.data.type === 'LH_SELECTED_STATE') {
                     this._hqs = event.data.params.hqs;
@@ -622,6 +623,7 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             .simulated({
                 host: this._base,
                 token: this._token,
+                refreshToken: () => this._freshToken(),
                 simulation: { exerciseId: selection.exerciseId, copyId: selection.copyId },
             })
             .then((assets) => {
@@ -645,7 +647,11 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
      */
     _checkSimulationStillRunning(selection) {
         if (this._simulationCheck) return;
-        this._simulationCheck = selectionStatus(selection, { host: this._base, token: this._token })
+        this._simulationCheck = selectionStatus(selection, {
+            host: this._base,
+            token: this._token,
+            refreshToken: () => this._freshToken(),
+        })
             .then((status) => {
                 if (status === 'ended' || status === 'unavailable') return this._endSimulation(selection, status);
             })
@@ -653,6 +659,29 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             .finally(() => {
                 this._simulationCheck = null;
             });
+    }
+
+    /**
+     * Beacon's current token, for a CADence call that was refused: the inject
+     * script only sends it over every 5 minutes, so the copy here can be older
+     * than the one Beacon has renewed to. Asks for it now and resolves with
+     * what arrives, or the copy already held if nothing does within 2 seconds.
+     */
+    _freshToken() {
+        return new Promise((resolve) => {
+            const waiters = (this._tokenWaiters = this._tokenWaiters || []);
+            const done = (token) => {
+                clearTimeout(timer);
+                resolve(token || null);
+            };
+            const timer = setTimeout(() => {
+                const index = waiters.indexOf(done);
+                if (index !== -1) waiters.splice(index, 1);
+                resolve(this._token || null);
+            }, 2000);
+            waiters.push(done);
+            window.postMessage({ type: 'LH_REQUEST_USER_ACCESS_TOKEN' }, '*');
+        });
     }
 
     _endSimulation(selection, reason) {

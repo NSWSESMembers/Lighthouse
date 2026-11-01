@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', function () {
       host: params.host,
       hqId: params.hqIds[0],
       guideUrl: GUIDE_URL,
+      // After a refusal: the stored Beacon token, renewed if it's about to
+      // expire (a newer one also reaches setToken below).
+      refreshToken: () => BeaconToken.freshBeaconToken(params.host, params.source),
     });
     window.simulatedExercisePageVM = vm; // for browser tests and the console
 
