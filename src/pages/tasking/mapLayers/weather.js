@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { viewImageRequest } from "../utils/wmsViewImage.js";
+import { utcHourIso } from "../utils/bomTime.js";
 
 // The BOM WMS layers below leave `crs` unset so Leaflet requests tiles in the
 // map's own Web Mercator (EPSG:3857), which BOM's MapServer supports. Asking
@@ -234,7 +235,9 @@ export function registerBOMWindLayer(vm, sourceUrl) {
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomWind`) || false,
-    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    // One forecast hour for every tile (see utils/bomTime.js); moves on at
+    // the first refresh after the hour.
+    fetchFn: async () => ({ cacheBuster: Date.now(), time: utcHourIso() }),
     drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: ["IDY25026_windpt","IDY25026_windrast"],
@@ -245,6 +248,7 @@ export function registerBOMWindLayer(vm, sourceUrl) {
         opacity: 0.5, // Adjust opacity for more transparency
         version: "1.3.0",
         attribution: "Bureau of Meteorology",
+        time: data?.time,
         _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
@@ -263,7 +267,9 @@ export function registerBOMMSLPLayer(vm, sourceUrl) {
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomMSLP`) || false,
-    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    // One forecast hour for every tile (see utils/bomTime.js); moves on at
+    // the first refresh after the hour.
+    fetchFn: async () => ({ cacheBuster: Date.now(), time: utcHourIso() }),
     drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: ["IDY25026_mslp"],
@@ -273,6 +279,7 @@ export function registerBOMMSLPLayer(vm, sourceUrl) {
         bgcolor: "0xFFFFFF",
         version: "1.3.0",
         attribution: "Bureau of Meteorology",
+        time: data?.time,
         _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
