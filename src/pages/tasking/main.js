@@ -119,7 +119,10 @@ import {
     registerBOMFireBehaviourIndexLayer,
     registerBOMHazardousWindLayer,
     registerBOMFloodWarningBoundariesLayer,
-    registerBOMFireWeatherDistrictsLayer
+    registerBOMFireWeatherDistrictsLayer,
+    registerBOMSevereThunderstormWarningLayer,
+    registerBOMVolcanicAshLayer,
+    registerBOMSeaSurfaceTempLayer
 } from "./mapLayers/weather.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
@@ -3019,6 +3022,8 @@ function VM() {
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
     registerBOMLandWarningsLayer(self);
+    registerBOMSevereThunderstormWarningLayer(self, sourceUrl);
+    registerBOMVolcanicAshLayer(self, sourceUrl);
     registerBOMRainfallLayer(self, sourceUrl);
     // Tile overlays join the bottom of the default layer order as they
     // register, so registering storms first draws them over the radar.
@@ -3043,6 +3048,7 @@ function VM() {
     registerBOMHazardousWindLayer(self, sourceUrl);
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
+    registerBOMSeaSurfaceTempLayer(self, sourceUrl);
     registerRainRadarLayer(self, map);
     registerCollabLayers(self, sourceUrl, markerActorId, getToken, getMemberId);
 
