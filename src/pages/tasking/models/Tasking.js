@@ -20,6 +20,8 @@ setInterval(() => _tick(Date.now()), 300000);
 // a 5-minute tick would leave "ETA 3m" on screen long after the team was due.
 const _etaTick = ko.observable(Date.now());
 setInterval(() => _etaTick(Date.now()), 30000);
+// Read-only access to that clock, for alert rules that age out over time.
+export const etaClockNow = () => _etaTick();
 
 // "Due soon" (amber) at this many minutes or less to go.
 export const ETA_SOON_MINUTES = 5;

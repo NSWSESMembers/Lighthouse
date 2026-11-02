@@ -132,7 +132,7 @@ In the Team and Incident Registers, the countdown is shortened to fit: overdue t
 - **Asset map popup**: beside each of the team's taskings.
 - **Incident hover tooltip** on the map: one badge per team, e.g. *DEM04 · ETA 9m*.
 
-A team that is 5 minutes or more past its ETA or ETC is also listed in the *Teams overdue on ETA/ETC* [alert](interface.md#alerts).
+A team that is 5 minutes or more past its ETA or ETC is also listed in the *Teams overdue on ETA/ETC* [alert](interface.md#alerts). A *Tasked* or *Enroute* team whose asset is already near the incident is listed in the *Arrived, not marked Onsite* alert, as a reminder to set it to *Onsite*.
 
 You can also change a tasking's status while logging a radio message: click the tasking's **Radio Log** button and pick the new status at the bottom of the dialog. See [Changing the Team's Status](logs-and-messages.md#changing-the-teams-status).
 

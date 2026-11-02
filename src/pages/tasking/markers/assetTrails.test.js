@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { addFix, pruneTrail, trailOpacity, fixTime, distanceM, MIN_MOVE_M, MAX_FIXES } from './assetTrails.js';
+import { addFix, pruneTrail, trailOpacity, fixTime, distanceM, travelAngle, MIN_MOVE_M, MAX_FIXES } from './assetTrails.js';
 
 // ~111m per 0.001 deg of latitude.
 const fix = (dLat, t) => ({ lat: -33.8 + dLat, lng: 151.2, t });
@@ -82,5 +82,14 @@ describe('fixTime', () => {
         expect(fixTime('', now)).toBe(now);
         expect(fixTime('not a date', now)).toBe(now);
         expect(fixTime('2026-10-08T03:10:00Z', now)).toBe(now);
+    });
+});
+
+describe('travelAngle', () => {
+    it('points from the older fix to the newer one, clockwise from east', () => {
+        expect(travelAngle({ x: 0, y: 0 }, { x: 10, y: 0 })).toBe(0);
+        expect(travelAngle({ x: 0, y: 0 }, { x: 0, y: 10 })).toBe(90);   // down the screen
+        expect(travelAngle({ x: 10, y: 0 }, { x: 0, y: 0 })).toBe(180);
+        expect(travelAngle({ x: 0, y: 10 }, { x: 0, y: 0 })).toBe(-90);  // up the screen
     });
 });

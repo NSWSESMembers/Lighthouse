@@ -972,6 +972,33 @@ export function MapVM(Lmap, root) {
     }).addTo(self.map);
   };
 
+  // Green dashed asset -> incident line with its straight-line length on a
+  // label at the midpoint, turned to run along the line. A straight line keeps
+  // the same on-screen angle at every zoom, so it's worked out once.
+  const crowFliesLayer = (fromLat, fromLng, toLat, toLng) => {
+    const from = L.latLng(fromLat, fromLng);
+    const to = L.latLng(toLat, toLng);
+    const line = L.polyline([from, to], { weight: 4, color: 'green', dashArray: '6' });
+
+    const metres = self.map.distance(from, to);
+    const text = metres < 1000 ? `${Math.round(metres)} m` : `${(metres / 1000).toFixed(1)} km`;
+    const p1 = self.map.latLngToLayerPoint(from);
+    const p2 = self.map.latLngToLayerPoint(to);
+    let angleDeg = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+    if (angleDeg > 90 || angleDeg < -90) angleDeg += 180; // keep the text upright
+
+    const label = L.marker(L.latLng((fromLat + toLat) / 2, (fromLng + toLng) / 2), {
+      icon: L.divIcon({
+        className: 'bullseye-distance-wrapper',
+        html: `<div class="bullseye-distance-label crow-flies-distance-label" style="transform: translate(-50%, -50%) rotate(${angleDeg}deg);">${text}</div>`,
+        iconSize: null,
+      }),
+      interactive: false,
+      keyboard: false,
+    });
+    return L.featureGroup([line, label]);
+  };
+
   self.drawCrowsFliesToAssetPassedTeam = (team, job) => {
     self.clearCrowFliesLine();
     if (!team || !job) return;
@@ -990,14 +1017,7 @@ export function MapVM(Lmap, root) {
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
 
-    this._polyline = L.polyline(
-      [
-        [fromLat, fromLng],
-        [toLat, toLng],
-      ],
-      { weight: 4, color: 'green', dashArray: '6' }
-    )
-    self.registerCrowFliesLine(this._polyline);
+    self.registerCrowFliesLine(crowFliesLayer(fromLat, fromLng, toLat, toLng));
   }
 
   self.drawCrowsFliesToAssetFromTasking = (tasking, asset) => {
@@ -1026,14 +1046,7 @@ export function MapVM(Lmap, root) {
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
 
-    this._polyline = L.polyline(
-      [
-        [fromLat, fromLng],
-        [toLat, toLng],
-      ],
-      { weight: 4, color: 'green', dashArray: '6' }
-    )
-    self.registerCrowFliesLine(this._polyline);
+    self.registerCrowFliesLine(crowFliesLayer(fromLat, fromLng, toLat, toLng));
   }
 
   // --- distance rings state ---

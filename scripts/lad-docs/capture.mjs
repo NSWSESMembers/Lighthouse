@@ -819,6 +819,31 @@ const SHOTS = {
     },
     target: (page) => page.locator('[data-rule-id="overdue-eta-teams"]'),
   },
+
+  // Park a Tasked/Enroute team's asset 120 m from its incident, with a
+  // fresh fix, so the arrived-but-not-Onsite geofence alert shows.
+  'alert-unmarked-arrival-bar': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const vm = ko.dataFor(document.body);
+        for (const team of vm.teams()) {
+          const asset = team.trackableAssets()[0];
+          const t = asset && team.taskings().find((x) => ['Enroute', 'Tasked'].includes(x.currentStatus())
+            && !x.isComplete() && Number.isFinite(x.job.address.latitude()));
+          if (!t) continue;
+          asset.latLng({ lat: t.job.address.latitude() + 120 / 111320, lng: t.job.address.longitude() });
+          asset.lastSeen(new Date().toISOString());
+          return;
+        }
+      });
+      const rule = page.locator('[data-rule-id="unmarked-arrival-teams"]');
+      await rule.waitFor();
+      await rule.locator('.alerts__btn').click();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('[data-rule-id="unmarked-arrival-teams"]'),
+  },
 };
 
 const outDir = path.resolve(ROOT, arg('out', 'build/lad-screenshots'));

@@ -148,7 +148,7 @@ This can be turned off, and the zoom level and lines changed, under [Overlapping
 
 ### Asset Breadcrumb Trails
 
-While a vehicle's popup is open, from clicking its marker or using **Show on map**, a breadcrumb trail shows where it has recently been. The trail is a line through its last reported positions in the marker's colour, with a dot at each position. It fades the older it gets, so you can see which way the vehicle came and roughly when.
+While a vehicle's popup is open, from clicking its marker or using **Show on map**, a breadcrumb trail shows where it has recently been. The trail is a line through its last reported positions in the marker's colour, with a dot at each position and a small arrow along each stretch showing which way the vehicle went. It fades the older it gets, so you can see which way the vehicle came and roughly when.
 
 ![A selected vehicle's breadcrumb trail](images/asset-trail.png)
 
