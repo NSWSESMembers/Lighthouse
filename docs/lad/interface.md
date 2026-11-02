@@ -90,11 +90,11 @@ Alerts display in the top right corner of LAD under certain conditions:
 
   ![Incidents missing geolocation alert](images/alert-missing-geolocation-bar.png)
 
-- **Teams overdue on ETA/ETC**: teams 5 minutes or more past their ETA (while *Enroute*) or ETC (while *Onsite*). Click a team to jump to it in the Team Register. See [Arrival and Completion Times](tasking.md#arrival-and-completion-times).
+- **Teams overdue on ETA/ETC**: teams 5 minutes or more past their ETA (while *Enroute*) or ETC (while *Onsite*). Click a team to fly to its asset on the map and open the asset's popup. See [Arrival and Completion Times](tasking.md#arrival-and-completion-times).
 
   ![Teams overdue on ETA/ETC alert](images/alert-overdue-eta-bar.png)
 
-- **Arrived, not marked Onsite**: a low-priority alert listing teams still *Tasked* or *Enroute* whose asset is near their incident, i.e. they've probably arrived but haven't been set to *Onsite*. It uses the team's matched [radio or satellite tracker](assets.md#setting-up-a-team-for-radio-tracking), and only counts a location reported in the last 15 minutes. Each line shows the team, incident, status and how far the asset is from the incident marker. Click a team to jump to it in the Team Register. Turn it off, or set how close counts as arrived (50 m to 1 km, 200 m to start), under [Asset Markers](configuration.md#asset-markers).
+- **Arrived, not marked Onsite**: a low-priority alert listing teams still *Tasked* or *Enroute* whose asset is near their incident, i.e. they've probably arrived but haven't been set to *Onsite*. It uses the team's matched [radio or satellite tracker](assets.md#setting-up-a-team-for-radio-tracking), and only counts a location reported in the last 15 minutes. Each line shows the team, incident, status and how far the asset is from the incident marker. Click a team to fly to its asset on the map and open the asset's popup. Turn it off, or set how close counts as arrived (50 m to 1 km, 200 m to start), under [Asset Markers](configuration.md#asset-markers).
 
   ![Arrived, not marked Onsite alert](images/alert-unmarked-arrival-bar.png)
 
