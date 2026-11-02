@@ -137,6 +137,11 @@ These options only show while **Spread out overlapping asset markers** is on.
 
 - **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability. See [Capability Codes](assets.md#capability-codes) for the full list.
 
+#### Arrival Alert
+
+- **Alert when a team has arrived but isn't marked Onsite** (on by default). The [Arrived, not marked Onsite](interface.md#alerts) alert lists *Tasked* or *Enroute* teams whose asset has reported a location in the last 15 minutes close to their incident.
+- **Distance from the incident marker** sets how close the asset must be, from **50 m** to **1 km**. The default is **200 m**. Make it larger for big properties or rural incidents where assets stop well away from the marker.
+
 ## Map Layers
 
 The **Map layers** tab sets the order map layers are drawn in and how see-through each one is.

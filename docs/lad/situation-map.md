@@ -189,7 +189,7 @@ An incident popup can also be dragged onto a team in the Team Register to [task 
 
 ![Incident popup taskings](images/incident-popup-taskings.png)
 
-- **Team row**: click to zoom to the team's location and open it in the Team Register. A team with no tracked vehicle or radio just opens in the Team Register.
+- **Team row**: click to zoom to the team's location and open it in the Team Register. A team with no tracked vehicle or radio just opens in the Team Register. Hover over the row to draw a green dashed line from the team's asset to the incident, labelled with the straight-line distance, e.g. *524 m* or *3.2 km*.
 - **Team status**: click to [change the tasking status](tasking.md#tasking-status).
 - **Route to Asset** (left button): shows a road route from the team's current location to the incident with an approximate ETA.
 - **Fit Bounds** (right button): zooms in as far as possible while keeping both the team and incident in view.

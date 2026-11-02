@@ -2728,6 +2728,43 @@
                                                                 </div>
                                                             </fieldset>
                                                         </div>
+
+                                                        <!-- Arrived, not marked Onsite alert (utils/onsiteGeofence.js) -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-crosshairs me-1"></i>Arrival Alert
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="onsiteGeofenceAlertToggle"
+                                                                        data-bind="checked: config.onsiteGeofenceAlert">
+                                                                    <label class="form-check-label"
+                                                                        for="onsiteGeofenceAlertToggle">
+                                                                        Alert when a team has arrived but isn't marked Onsite
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text mb-3">
+                                                                    A low-priority alert lists Tasked or Enroute teams
+                                                                    whose asset has reported a location (in the last
+                                                                    15 minutes) close to their incident.
+                                                                </div>
+
+                                                                <div class="ms-3" data-bind="visible: config.onsiteGeofenceAlert">
+                                                                    <label for="onsiteGeofenceMetresRange" class="form-label mb-1">
+                                                                        Distance from the incident marker:
+                                                                        <strong><span data-bind="text: config.onsiteGeofenceMetres"></span> m</strong>
+                                                                    </label>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <small class="text-muted text-nowrap">Closer</small>
+                                                                        <input type="range" class="form-range flex-grow-1"
+                                                                            id="onsiteGeofenceMetresRange" min="50" max="1000" step="50"
+                                                                            data-bind="value: config.onsiteGeofenceMetres, valueUpdate: 'input'">
+                                                                        <small class="text-muted text-nowrap">Further</small>
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

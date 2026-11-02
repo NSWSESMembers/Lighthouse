@@ -1,5 +1,7 @@
 import L from 'leaflet';
 import ko from 'knockout';
+import { etaClockNow } from '../models/Tasking.js';
+import { findUnmarkedArrivals, ONSITE_GEOFENCE_DEFAULT_METRES } from '../utils/onsiteGeofence.js';
 
 const ruleState = new Map(); // key: rule.id -> { collapsed: boolean, open: boolean, lastCount: number }
 
@@ -315,6 +317,19 @@ function buildDefaultRules(vm) {
     id: String(team.id()),
     label: `${team.callsign()} — ${t.job?.identifier?.() ?? '?'} — ${e.label}`
   });
+  // --- Tasked/Enroute teams whose radio is already at the incident ---
+  const geofenceOn = !!vm.config?.onsiteGeofenceAlert?.();
+  const unmarkedArrivals = geofenceOn
+    ? findUnmarkedArrivals(allTeams, {
+      radiusM: Number(vm.config.onsiteGeofenceMetres?.()) || ONSITE_GEOFENCE_DEFAULT_METRES,
+      nowMs: etaClockNow(), // re-check every 30 s so stale fixes drop out
+    })
+    : [];
+
+  const asArrivalItem = ({ team, tasking, metres }) => ({
+    id: String(team.id()),
+    label: `${team.callsign()} — ${tasking.job?.identifier?.() ?? '?'} (${tasking.currentStatus()}) — ${Math.round(metres)} m away`
+  });
   // --- single summary rule for “alerts hidden because incident isn’t pinned” ---
   let hiddenCount = 0;
   if (pinnedOnlyIncidents) {
@@ -427,6 +442,18 @@ function buildDefaultRules(vm) {
       active: multiEnrouteOffsiteTeams.length > 0,
       items: multiEnrouteOffsiteTeams.slice(0, 10).map(asTeamItem),
       count: multiEnrouteOffsiteTeams.length,
+      onClick: (id) => {
+        const found = allTeams.find(t => String(t.id()) === id);
+        found?.focusAndExpandInList?.();
+      }
+    },
+    {
+      id: 'unmarked-arrival-teams',
+      level: 'info',
+      title: 'Arrived, not marked Onsite',
+      active: unmarkedArrivals.length > 0,
+      items: unmarkedArrivals.slice(0, 10).map(asArrivalItem),
+      count: unmarkedArrivals.length,
       onClick: (id) => {
         const found = allTeams.find(t => String(t.id()) === id);
         found?.focusAndExpandInList?.();

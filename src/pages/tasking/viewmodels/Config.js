@@ -14,6 +14,9 @@ import {
 import {
     isMacPlatform, isModifierKey, hasModifier, captureComboFromEvent, formatHotkeyCombo,
 } from '../utils/hotkeyMatch.js';
+import {
+    ONSITE_GEOFENCE_DEFAULT_METRES, ONSITE_GEOFENCE_MIN_METRES, ONSITE_GEOFENCE_MAX_METRES,
+} from '../utils/onsiteGeofence.js';
 
 
 
@@ -1467,6 +1470,10 @@ export function ConfigVM(root, deps) {
         allowLines: !!self.assetPinAllowLines(),
     });
     self.alertsCollapsibleRules = ko.observable(true);
+    // Low-priority alert when a Tasked/Enroute team's radio is within this
+    // many metres of its incident (utils/onsiteGeofence.js).
+    self.onsiteGeofenceAlert = ko.observable(true);
+    self.onsiteGeofenceMetres = ko.observable(ONSITE_GEOFENCE_DEFAULT_METRES);
     self.taskingCountActiveOnly = ko.observable(false);
 
     // On/Off pill labels for the Appearance pane switches
@@ -1619,6 +1626,8 @@ export function ConfigVM(root, deps) {
         showAssetCapabilityCodes: !!self.showAssetCapabilityCodes(),
         assetTrailMinutes: Number(self.assetTrailMinutes()) || 30,
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
+        onsiteGeofenceAlert: !!self.onsiteGeofenceAlert(),
+        onsiteGeofenceMetres: Number(self.onsiteGeofenceMetres()) || ONSITE_GEOFENCE_DEFAULT_METRES,
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
         rescueDistanceWeight: Number(self.rescueDistanceWeight()) || 0,
@@ -1974,6 +1983,12 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
+        if (typeof cfg.onsiteGeofenceAlert === 'boolean') {
+            self.onsiteGeofenceAlert(cfg.onsiteGeofenceAlert);
+        }
+        if (Number.isInteger(cfg.onsiteGeofenceMetres) && cfg.onsiteGeofenceMetres >= ONSITE_GEOFENCE_MIN_METRES && cfg.onsiteGeofenceMetres <= ONSITE_GEOFENCE_MAX_METRES) {
+            self.onsiteGeofenceMetres(cfg.onsiteGeofenceMetres);
+        }
         if (typeof cfg.taskingCountActiveOnly === 'boolean') {
             self.taskingCountActiveOnly(cfg.taskingCountActiveOnly);
         }
@@ -2228,6 +2243,9 @@ export function ConfigVM(root, deps) {
     self.taskingCountActiveOnly.subscribe(() => {
         self.save();
     })
+
+    self.onsiteGeofenceAlert.subscribe(() => { self.save(); });
+    self.onsiteGeofenceMetres.subscribe(() => { self.save(); });
 
     // Auto-save suggestion engine settings
     self.suggestionEnabled.subscribe(() => { self.save(); });
