@@ -17,6 +17,7 @@ import {
 import {
     ONSITE_GEOFENCE_DEFAULT_METRES, ONSITE_GEOFENCE_MIN_METRES, ONSITE_GEOFENCE_MAX_METRES,
 } from '../utils/onsiteGeofence.js';
+import { RESET_GROUPS, keysToReset } from '../utils/resetGroups.js';
 
 
 
@@ -2277,19 +2278,42 @@ export function ConfigVM(root, deps) {
         self.save();
     });
 
-    /** Wipe all Lighthouse localStorage keys and reload the page. */
+    // Restore Defaults: pick which groups of LAD's saved state to clear
+    // (utils/resetGroups.js) in their own modal, then reload. Other extension
+    // pages share localStorage, so only LAD's own keys are removed.
+    self.resetGroups = RESET_GROUPS.map(g => ({
+        id: g.id,
+        label: g.label,
+        detail: g.detail,
+        defaultChecked: g.checked,
+        checked: ko.observable(g.checked),
+    }));
+    self.resetAnyChecked = ko.pureComputed(() => self.resetGroups.some(g => g.checked()));
+
+    // Configuration closes while the Restore Defaults modal is open (one
+    // Bootstrap modal at a time) and comes back, unsaved edits and all, on Cancel.
     self.restoreDefaults = () => {
-        if (!confirm(
-            'This will reset ALL settings (filters, layout, map layers, starred items, etc.) to their defaults and reload the page.\n\nContinue?'
-        )) return;
+        self.resetGroups.forEach(g => g.checked(g.defaultChecked));
+        const configEl = document.getElementById('configModal');
+        const resetEl = document.getElementById('restoreDefaultsModal');
+        if (!configEl || !resetEl) return;
+        configEl.addEventListener('hidden.bs.modal', () => {
+            resetEl.addEventListener('hidden.bs.modal', () => {
+                bootstrap.Modal.getOrCreateInstance(configEl).show();
+            }, { once: true });
+            bootstrap.Modal.getOrCreateInstance(resetEl).show();
+        }, { once: true });
+        bootstrap.Modal.getOrCreateInstance(configEl).hide();
+    };
 
-        // Remove every key in localStorage (covers all lh-*, ov.*, layers.*, map.*, etc.)
+    self.confirmReset = () => {
+        const ids = self.resetGroups.filter(g => g.checked()).map(g => g.id);
+        if (!ids.length) return;
+        // A pending trail save would otherwise write them back on pagehide
+        if (ids.includes('trails')) root.mapVM?.assetTrails?.discardPendingSave?.();
         const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            keys.push(localStorage.key(i));
-        }
-        keys.forEach(k => localStorage.removeItem(k));
-
+        for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+        keysToReset(keys, ids).forEach(k => localStorage.removeItem(k));
         location.reload();
     };
 

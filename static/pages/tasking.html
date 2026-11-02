@@ -4564,6 +4564,39 @@
     </div>
 
     <!-- Trackable Assets Modal -->
+    <!-- Restore Defaults: choose what to clear (utils/resetGroups.js). Opened from Configuration, which reopens on Cancel. -->
+    <div class="modal fade" id="restoreDefaultsModal" tabindex="-1" aria-labelledby="restoreDefaultsModalLabel"
+        aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2 px-3">
+                    <h5 class="modal-title" id="restoreDefaultsModalLabel">Restore Defaults</h5>
+                    <button type="button" class="btn-close" aria-label="Cancel" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">Pick what to put back to its defaults. LAD then reloads. Settings for other Lighthouse pages (Radio Console, Statistics, Summary and the exports) aren't touched.</p>
+                    <div class="config-reset-groups" data-bind="foreach: config.resetGroups">
+                        <label class="config-reset-group">
+                            <input type="checkbox" class="form-check-input" data-bind="checked: checked">
+                            <span>
+                                <span class="config-reset-label" data-bind="text: label"></span>
+                                <span class="config-reset-detail" data-bind="text: detail"></span>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">Downloaded data (cached asset positions and collaborative layers) is cleared too and fetched again.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger"
+                        data-bind="click: config.confirmReset, enable: config.resetAnyChecked">
+                        <i class="fa fa-undo me-1"></i>Reset and reload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="trackableAssetsModal" tabindex="-1" aria-labelledby="trackableAssetsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">

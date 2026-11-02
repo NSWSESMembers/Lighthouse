@@ -214,6 +214,17 @@ Set separate weights for **Rescue** and **Standard** (non-rescue) incidents, bal
 
 ## Restoring Default Settings
 
-**Restore Defaults** resets all filters and configuration settings to their defaults, and removes any starred incidents and teams.
+**Restore Defaults** lets you pick what to put back to its defaults, then reloads LAD. Click it to open the **Restore Defaults** window, untick anything you want to keep, and click **Reset and reload**. **Cancel** takes you back to the Configuration screen with nothing changed.
 
-![Restore Defaults button](images/config-restore-defaults.png)
+| Option | What it resets | Ticked to start |
+| --- | --- | --- |
+| **Configuration settings** | Everything on this screen: filters, refresh, map markers, layer order and transparency. Removes starred incidents and teams. | Yes |
+| **Layout** | The page layout and pane sizes, the collapsed side drawer and Legend, the radar bar, the in-view filters on the registers and capability icons. | Yes |
+| **Map layers** | Which overlays are on, the basemap, whether incidents are shown, and the Layers menu. | Yes |
+| **Layer presets** | Your [layer presets](situation-map.md#layer-presets), back to Weather, Roads and Boundaries. | No |
+| **Collaborative layer subscriptions** | Which [collaborative layers](situation-map.md#collaborative-map-layers) you've subscribed to. | No |
+| **Asset trails** | Recorded [asset trails](assets.md#asset-breadcrumb-trails). | No |
+
+Downloaded data that LAD fetches again by itself (cached asset positions and collaborative layers) is always cleared. Settings for other Lighthouse pages, such as the Radio Console, Incident Statistics, Incident Summary and the export pages, are never touched.
+
+![Restore Defaults options](images/config-restore-defaults.png)

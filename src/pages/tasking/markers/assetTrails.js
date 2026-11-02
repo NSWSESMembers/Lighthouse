@@ -304,6 +304,12 @@ export class AssetTrails {
         }, SAVE_DELAY);
     }
 
+    /** Drop an unsaved change, so it isn't written back after a reset clears the trails. */
+    discardPendingSave() {
+        clearTimeout(this._saveTimer);
+        this._saveTimer = null;
+    }
+
     _save() {
         try {
             if (!this.trails.size) {

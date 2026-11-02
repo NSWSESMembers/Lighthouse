@@ -234,6 +234,15 @@ const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
   'config-map-markers': configTab('map'),
+  // Restore Defaults clicked: its own modal, with the groups to clear.
+  'config-restore-defaults': {
+    run: async (page) => {
+      await page.locator('#configModal button:has-text("Restore Defaults")').click();
+      await page.locator('#restoreDefaultsModal').waitFor({ state: 'visible' });
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#restoreDefaultsModal .modal-content'),
+  },
   // Map markers tab with the Asset markers section open (overlapping
   // markers setting and its options).
   'config-asset-markers': {
@@ -627,6 +636,28 @@ const SHOTS = {
       await settle(page, 1500);
     },
     target: (page) => page.locator('.ld-panel'),
+  },
+
+  // The Layers panel's Presets section with Roads on from its map button.
+  // The crop runs from the Layers button down past the pinned preset buttons.
+  'layer-presets': {
+    launch: { viewport: { width: 1800, height: 1200 }, scale: 2 },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('.lp-btn[data-id="roads"]').click();
+      await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'Presets' }).click();
+      await page.mouse.move(0, 0);
+      await settle(page, 1500);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const btn = await page.locator('.ld-toggle-btn').boundingBox();
+        const panel = await page.locator('.ld-panel').boundingBox();
+        const x = btn.x - 8; const y = btn.y - 10;
+        return page.screenshot({ ...opts, clip: { x, y, width: panel.x + panel.width + 8 - x, height: panel.y + panel.height + 8 - y } });
+      },
+    }),
   },
 
   // Overlay load status in the Layers panel: counts for loaded overlays and a
