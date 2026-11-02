@@ -455,8 +455,10 @@ function buildDefaultRules(vm) {
       items: unmarkedArrivals.slice(0, 10).map(asArrivalItem),
       count: unmarkedArrivals.length,
       onClick: (id) => {
-        const found = allTeams.find(t => String(t.id()) === id);
-        found?.focusAndExpandInList?.();
+        // Open the popup of the asset that tripped the geofence
+        const hit = unmarkedArrivals.find(a => String(a.team.id()) === id);
+        if (hit?.asset?.marker) hit.team.flyToAsset(hit.asset);
+        else hit?.team.focusAndExpandInList?.();
       }
     }
   ];
