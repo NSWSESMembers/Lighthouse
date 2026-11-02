@@ -4473,6 +4473,202 @@ body.dark-mode .ops-log-status-details {
   padding: 3px 6px;
 }
 
+/* ── Layer presets (Presets section) ── */
+.ld-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ld-preset {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+}
+.layers-drawer .ld-preset-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 7px;
+  font-size: 11px;
+  padding: 4px 6px;
+}
+.ld-preset-glyph {
+  flex: none;
+  font-size: 13px;
+}
+.ld-preset-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.ld-preset-name {
+  font-weight: 600;
+}
+.ld-preset-layers {
+  font-size: 10px;
+  opacity: 0.75;
+  white-space: normal;
+}
+.ld-preset-part {
+  flex: none;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ld-preset-part:empty {
+  display: none;
+}
+/* Some of its layers on: dashed outline */
+.layers-drawer .ld-preset-main.ld-preset-partial {
+  border-style: dashed;
+}
+.ld-preset-action {
+  flex: none;
+  width: 26px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: none;
+  color: #6c757d;
+  font-size: 11px;
+  padding: 0;
+}
+.ld-preset-action:hover:not(:disabled) {
+  background: #f0f1f3;
+  color: #212529;
+}
+.ld-preset-action:disabled {
+  opacity: 0.4;
+}
+.ld-preset-pin[aria-pressed="true"] {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+.ld-preset-pin[aria-pressed="true"]:hover {
+  background: #5c636a;
+  color: #fff;
+}
+.ld-preset-edit {
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  padding: 6px;
+}
+.ld-preset-edit .ld-preset-form {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ld-preset-new {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+}
+.ld-preset-new-title {
+  font-size: 11px;
+  font-weight: 600;
+}
+.ld-preset-new-info {
+  font-size: 10.5px;
+  color: #6c757d;
+  margin: 1px 0 5px;
+}
+.ld-preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ld-preset-form .form-control {
+  font-size: 12px;
+}
+.ld-preset-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.ld-preset-icon {
+  width: 26px;
+  height: 24px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: none;
+  color: #495057;
+  font-size: 12px;
+  padding: 0;
+}
+.ld-preset-icon:hover {
+  background: #f0f1f3;
+}
+.ld-preset-icon[aria-checked="true"] {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+.ld-preset-replace {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+}
+.ld-preset-buttons {
+  display: flex;
+  gap: 4px;
+}
+.ld-preset-buttons .btn {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+.ld-preset-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+.ld-preset-footer .btn-link {
+  font-size: 11px;
+  text-align: left;
+}
+
+/* Pinned presets: buttons grouped under the Layers button, in its bar */
+.layer-preset-bar[hidden] {
+  display: none !important;
+}
+.layer-preset-bar {
+  display: flex;
+  flex-direction: column;
+}
+.layers-drawer .leaflet-bar:has(.layer-preset-bar:not([hidden])) .ld-toggle-btn {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.layer-preset-bar .lp-btn {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-top: 1px solid #ccc;
+  border-radius: 0;
+}
+.layer-preset-bar .lp-btn:last-child {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+.layer-preset-bar .lp-btn.active {
+  background: #6c757d;
+  color: #fff;
+}
+/* Some of its layers on: a dot in the corner */
+.layer-preset-bar .lp-part {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6c757d;
+}
+
 /* ── Layer load status (polling layers) ── */
 .layers-drawer .ld-has-status > .me-2 {
   flex: 1 1 0;
@@ -5644,4 +5840,31 @@ input[type="search"]:focus {
   transform: translate(-50%, -50%);
   line-height: 1;
   color: #dc3545;
+}
+
+/* ── Restore Defaults modal ── */
+.config-reset-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.config-reset-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.config-reset-group .form-check-input {
+  flex: none;
+  margin-top: 3px;
+}
+.config-reset-label {
+  display: block;
+  font-weight: 500;
+}
+.config-reset-detail {
+  display: block;
+  font-size: 11.5px;
+  color: #6c757d;
 }

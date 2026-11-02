@@ -43,7 +43,7 @@ Measure distances between multiple points. Several separate measurements can be 
 
 Layers control what is shown on the map. Open the Layers menu with the layer button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> in the top left of the map.
 
-The menu has a list of sections down the left: **Basemap**, **On the map** (every layer that's turned on), then each group of overlays. Click a section to show its layers. A number beside a group shows how many of its layers are on. The menu fits itself to the map and stops above the Legend. On a narrow map the sections become a row of buttons along the top.
+The menu has a list of sections down the left: **Basemap**, **On the map** (every layer that's turned on), **Presets** (see [Layer Presets](#layer-presets)), then each group of overlays. Click a section to show its layers. A number beside a group shows how many of its layers are on. The menu fits itself to the map and stops above the Legend. On a narrow map the sections become a row of buttons along the top.
 
 ### Basemap
 
@@ -141,6 +141,26 @@ Most layers are described by their name. Those that need more explanation:
 - **RainViewer Animated Rainfall Radar**: the last two hours of rainfall radar, played on a loop. While it's on, a small **Radar** bar sits above the [Legend](#legend) with play/pause, the time of the frame showing, and how far that frame is behind the latest one. Click **Radar** to open the step buttons, a slider to drag through the frames, the playback speed and the colour scale (hover over a colour to see its rain or hail level). Click the time badge, or **Latest**, to jump back to the newest frame. New frames are added every few minutes: if you've paused on an earlier frame it stays on that frame, and if you're on the latest it moves on to the new one. The bar remembers whether you left it open. To make the radar more or less see-through, use the [Map layers](configuration.md#map-layers) tab; it starts at 60%.
 
 **Collaborative layers** you've subscribed to are also listed here. See [Collaborative Map Layers](#collaborative-map-layers).
+
+### Layer Presets
+
+A preset is a named set of overlays you can turn on or off with one click. Lighthouse comes with three:
+
+- **Weather**: BOM Severe Thunderstorm Warning and BOM Rain Radar Still.
+- **Roads**: Transport NSW Cameras and Transport NSW Incidents.
+- **Boundaries**: Unit/Zone Boundaries Hybrid.
+
+Open the **Layers** menu and click **Presets**, under **On the map**. Click a preset to turn all of its layers on. If they're all on already, clicking it turns them all off. Layers that aren't in the preset are left as they are. A preset with only some of its layers on is shown with a dashed outline and how many are on (e.g. *1/2*). The number beside **Presets** shows how many presets are fully on. Searching the Layers menu finds presets by name, too.
+
+Up to three presets can have a button on the map, grouped with the Layers button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20">. All three shipped presets have one to start with. Click the pin button beside a preset to add or remove its button. To pin a different preset when three are pinned, unpin one first. A map button is shaded while all of its preset's layers are on, and has a dot in the corner while only some are. Hover over it to see the preset's layers.
+
+![The Presets section of the Layers menu, with Roads on from its map button under the Layers button](images/layer-presets.png)
+
+To make your own preset, turn on the layers you want, then go to **Presets**. Under **Save the layers on now as a preset**, type a name, pick an icon for its map button and click **Save preset**.
+
+To change a preset, click the pencil button beside it. You can rename it or change its icon. Tick **Replace its layers with the ... on now** to make it the layers that are on now. **Delete** removes it.
+
+If you've deleted Weather, Roads or Boundaries, a **Restore** link under the presets brings it back and keeps your own presets. **Reset to defaults** puts the presets back to just Weather, Roads and Boundaries, all pinned, and deletes your own. It asks you to click a second time first. Presets are saved in this browser, separately from your [Configuration](configuration.md) settings.
 
 ## Legend
 

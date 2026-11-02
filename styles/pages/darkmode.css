@@ -909,6 +909,26 @@ body.dark-mode .layers-drawer .ld-overlay-btn.ld-status-failed {
 body.dark-mode .layers-drawer .ld-load-ring { border-color: #2a3a55; border-top-color: #7aa7ff; background: #2d2d2d; box-shadow: 0 0 0 1px #2d2d2d; }
 body.dark-mode .layers-drawer .ld-load-badge { color: #fff; border-color: #2d2d2d; }
 
+/* Layer presets */
+body.dark-mode .ld-preset-action,
+body.dark-mode .ld-preset-icon,
+body.dark-mode .ld-preset-edit { border-color: #555; color: #cfd5de; }
+body.dark-mode .ld-preset-action:hover:not(:disabled),
+body.dark-mode .ld-preset-icon:hover { background: #373737; color: #fff; }
+body.dark-mode .ld-preset-pin[aria-pressed="true"],
+body.dark-mode .ld-preset-icon[aria-checked="true"] { background: #5a6068; border-color: #5a6068; color: #fff; }
+body.dark-mode .ld-preset-new { border-color: #444; }
+body.dark-mode .ld-preset-new-info { color: #9aa3ae; }
+body.dark-mode .ld-preset-form .form-control { background: #333; color: #e0e0e0; border-color: #555; }
+body.dark-mode .layer-preset-bar .lp-btn {
+  background: #2d2d2d !important;
+  color: #e0e0e0 !important;
+  border-top-color: #444 !important;
+}
+body.dark-mode .layer-preset-bar .lp-btn:hover { background: #373737 !important; color: #fff !important; }
+body.dark-mode .layer-preset-bar .lp-btn.active { background: #5a6068 !important; color: #fff !important; }
+body.dark-mode .layer-preset-bar .lp-part { background: #cfd5de; }
+
 /* Sidebar collapse control button */
 body.dark-mode .sidebar-toggle .btn,
 body.dark-mode .leaflet-control.sidebar-toggle .btn,
@@ -1482,3 +1502,6 @@ body.dark-mode .layout-preset-preview .preview-block {
   border-color: #555;
   color: #cfcfcf;
 }
+
+/* Restore Defaults modal */
+body.dark-mode .config-reset-detail { color: #9aa3ae; }

@@ -93,6 +93,11 @@ import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } f
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
 import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
+import {
+    PRESETS_STORAGE_KEY, PRESET_ICONS, MAX_PINNED, MAX_NAME_LENGTH,
+    parsePresets, serialisePresets, cleanName, newPresetId,
+    presetState, presetToggleChanges, setPinned, missingDefaults, restoreDefaults, isDefaultPresets, listNames,
+} from "./utils/layerPresets.js";
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
@@ -3061,6 +3066,8 @@ function VM() {
             this._currentBase = initialBasemap; // already on the map, see above
             this._baseKey = minimapInitialKey;
             this._open = localStorage.getItem("layers.open") === "1";
+            this._presets = parsePresets(localStorage.getItem(PRESETS_STORAGE_KEY));
+            this._editingPreset = null;
         },
 
         onAdd(map) {
@@ -3080,6 +3087,7 @@ function VM() {
           <span class="ld-load-ring" hidden></span>
           <span class="ld-load-badge" hidden></span>
         </button>
+        <div class="layer-preset-bar"></div>
       </div>
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
         <!-- Search box -->
@@ -3096,6 +3104,7 @@ function VM() {
           <div class="ld-pane">
             <div class="ld-pane-title"></div>
             <div class="ld-bases"></div>
+            <div class="ld-presets"></div>
             <div class="ld-grid"></div>
             <div class="ld-empty" hidden></div>
           </div>
@@ -3153,7 +3162,14 @@ function VM() {
             if (!this._currentBase) this._setBasemap(this._baseKey, map);
 
             this._searchInput = c.querySelector(".ld-search-input");
+            this._presetBar = new LayerPresetBar(c.querySelector(".layer-preset-bar"), (id) => this.togglePreset(id));
             this._renderOverlays();
+
+            // Layers switched on or off elsewhere (Configuration, the radar
+            // chip, focusing an asset) change which presets are on
+            map.on("layeradd layerremove", (ev) => {
+                if (this._presetLayers.has(ev.layer)) this._schedulePresetPaint();
+            });
 
             // Repaint a row + the button badge whenever a layer's load status changes
             self.mapVM.onLayerStatusChange((key) => this._paintStatus(key));
@@ -3234,6 +3250,10 @@ function VM() {
             });
 
             L.DomEvent.disableClickPropagation(c);
+            // Leaflet finds that flag by walking up from the click target; a
+            // preset button the click re-rendered is detached by then, so the
+            // map would take it as a map click and close the panel.
+            c.addEventListener("click", (ev) => ev.stopPropagation());
 
             return c;
         },
@@ -3264,6 +3284,8 @@ function VM() {
             const grid = c.querySelector(".ld-grid");
             grid.innerHTML = "";
             this._statusRows = new Map(); // polling layer key -> row button
+            this._rows = new Map(); // overlay key -> { btn, layer, label }
+            this._presetLayers = new Set(); // overlay layers, to spot toggles made elsewhere
 
             groups.forEach((defs, groupKey) => {
                 const cell = document.createElement("div");
@@ -3353,21 +3375,11 @@ function VM() {
                             self.mapVM.refreshPollingLayer(statusKey);
                             return;
                         }
-                        const icon = obtn.querySelector("i");
-                        const isOn = obtn.classList.contains("active");
-                        if (isOn) {
-                            map.removeLayer(layer);
-                            localStorage.setItem(`ov.${key}`, "0");
-                            obtn.classList.remove("active");
-                            if (icon) { icon.classList.remove("fa-toggle-on"); icon.classList.add("fa-toggle-off"); }
-                        } else {
-                            map.addLayer(layer);
-                            localStorage.setItem(`ov.${key}`, "1");
-                            obtn.classList.add("active");
-                            if (icon) { icon.classList.remove("fa-toggle-off"); icon.classList.add("fa-toggle-on"); }
-                        }
+                        this._setRow(key, !obtn.classList.contains("active"));
                     });
 
+                    this._rows.set(key, { btn: obtn, layer, label });
+                    this._presetLayers.add(layer);
                     body.appendChild(obtn);
                 });
 
@@ -3378,10 +3390,386 @@ function VM() {
 
             this._renderRail([...groups.keys()].map(groupTitle));
             this._markBasemap(this._baseKey);
+            this._renderPresets();
             this._applyView();
         },
 
-        /** Rail of sections: Basemap, On the map, then one per overlay group. */
+        /** Turn an overlay row's layer on or off, saving it like a click on its toggle. */
+        _setRow(key, on) {
+            const row = this._rows.get(key);
+            if (!row) return;
+            if (on) this._map.addLayer(row.layer);
+            else this._map.removeLayer(row.layer);
+            localStorage.setItem(`ov.${key}`, on ? "1" : "0");
+            row.btn.classList.toggle("active", on);
+            const icon = row.btn.querySelector("i");
+            if (icon) {
+                icon.classList.toggle("fa-toggle-on", on);
+                icon.classList.toggle("fa-toggle-off", !on);
+            }
+        },
+
+        // --- Layer presets (utils/layerPresets.js) ---
+
+        /** Whether an overlay is on the map; null if no such layer (any more). */
+        _isLayerOn(key) {
+            const row = this._rows?.get(key);
+            return row ? this._map.hasLayer(row.layer) : null;
+        },
+
+        _savePresets(presets) {
+            this._presets = presets;
+            try {
+                localStorage.setItem(PRESETS_STORAGE_KEY, serialisePresets(presets));
+            } catch (err) {
+                console.warn("Could not save layer presets:", err);
+            }
+            this._renderPresets();
+            this._applyView();
+        },
+
+        /** Switch a preset's layers all on, or all off when they are all on already. */
+        togglePreset(id) {
+            const preset = this._presets.find((p) => p.id === id);
+            if (!preset) return;
+            presetToggleChanges(preset, (k) => this._isLayerOn(k))
+                .forEach(({ key, on }) => this._setRow(key, on));
+            // layeradd/layerremove repaint the preset states on the next frame
+            if (this._section === "__on") this._applyView();
+            else this._updateCounts();
+        },
+
+        /** The layers on now, as preset keys. */
+        _layersOnNow() {
+            return [...this._rows.keys()].filter((k) => this._isLayerOn(k));
+        },
+
+        /** Repaint preset rows, the Save form and the pinned buttons after a layer change. */
+        _schedulePresetPaint() {
+            if (this._presetPaintQueued) return;
+            this._presetPaintQueued = true;
+            requestAnimationFrame(() => {
+                this._presetPaintQueued = false;
+                this._paintPresets();
+                this._updateCounts();
+            });
+        },
+
+        /** Icon picker: a row of radio-style icon buttons. */
+        _iconPicker(selected) {
+            const wrap = document.createElement("div");
+            wrap.className = "ld-preset-icons";
+            wrap.setAttribute("role", "radiogroup");
+            wrap.setAttribute("aria-label", "Button icon");
+            PRESET_ICONS.forEach((icon) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "ld-preset-icon";
+                b.dataset.icon = icon;
+                b.setAttribute("role", "radio");
+                b.setAttribute("aria-checked", icon === selected ? "true" : "false");
+                b.setAttribute("aria-label", icon.replace(/^fa-/, "").replace(/-/g, " "));
+                b.innerHTML = `<i class="fas ${icon} fa-fw"></i>`;
+                b.addEventListener("click", () => {
+                    wrap.querySelectorAll(".ld-preset-icon").forEach((o) => o.setAttribute("aria-checked", o === b ? "true" : "false"));
+                });
+                wrap.appendChild(b);
+            });
+            return wrap;
+        },
+
+        _pickedIcon(form) {
+            return form.querySelector('.ld-preset-icon[aria-checked="true"]')?.dataset.icon || PRESET_ICONS[0];
+        },
+
+        /** Build the Presets section: a row per preset, then the Save form. */
+        _renderPresets() {
+            const box = this._container?.querySelector(".ld-presets");
+            if (!box) return;
+            // Keep half-typed names across a rebuild (e.g. a collaborative layer refresh)
+            const draftNew = box.querySelector(".ld-preset-new .ld-preset-name-input")?.value;
+            const draftEdit = box.querySelector(".ld-preset-edit .ld-preset-name-input")?.value;
+            box.replaceChildren();
+
+            const header = document.createElement("div");
+            header.className = "ld-group-header";
+            header.textContent = "Presets";
+            box.appendChild(header);
+
+            const pinnedCount = this._presets.filter((p) => p.pinned).length;
+            this._presets.forEach((preset) => {
+                const item = document.createElement("div");
+                item.className = "ld-preset";
+                item.dataset.id = preset.id;
+                item.dataset.label = preset.name;
+
+                if (this._editingPreset === preset.id) {
+                    item.classList.add("ld-preset-edit");
+                    item.appendChild(this._presetForm({
+                        name: draftEdit ?? preset.name,
+                        icon: preset.icon,
+                        submitLabel: "Save",
+                        replaceOption: true,
+                        onSubmit: ({ name, icon, replace }) => {
+                            this._editingPreset = null;
+                            this._savePresets(this._presets.map((p) => (p.id !== preset.id ? p
+                                : { ...p, name, icon, keys: replace ? this._layersOnNow() : p.keys })));
+                        },
+                        onCancel: () => { this._editingPreset = null; this._renderPresets(); this._applyView(); },
+                        onDelete: () => {
+                            this._editingPreset = null;
+                            this._savePresets(this._presets.filter((p) => p.id !== preset.id));
+                        },
+                    }));
+                    box.appendChild(item);
+                    return;
+                }
+
+                const main = document.createElement("button");
+                main.type = "button";
+                main.className = "btn btn-sm btn-outline-secondary w-100 text-start d-flex align-items-center ld-preset-main";
+                main.innerHTML = `
+                    <i class="fas ${preset.icon} fa-fw ld-preset-glyph"></i>
+                    <span class="ld-preset-text">
+                        <span class="ld-preset-name"></span>
+                        <span class="ld-preset-layers"></span>
+                    </span>
+                    <span class="ld-preset-part"></span>
+                    <i class="fas fa-toggle-off ld-preset-switch"></i>`;
+                main.querySelector(".ld-preset-name").textContent = preset.name;
+                main.addEventListener("click", () => this.togglePreset(preset.id));
+
+                const pin = document.createElement("button");
+                pin.type = "button";
+                pin.className = "ld-preset-action ld-preset-pin";
+                pin.setAttribute("aria-pressed", preset.pinned ? "true" : "false");
+                const pinFull = !preset.pinned && pinnedCount >= MAX_PINNED;
+                pin.disabled = pinFull;
+                pin.title = preset.pinned ? "Remove the button from the map tools"
+                    : pinFull ? `Only ${MAX_PINNED} presets can have a map button. Unpin one first.`
+                        : "Add a button for this preset to the map tools";
+                pin.setAttribute("aria-label", pin.title);
+                pin.innerHTML = `<i class="fas fa-thumbtack"></i>`;
+                pin.addEventListener("click", () => this._savePresets(setPinned(this._presets, preset.id, !preset.pinned)));
+
+                const edit = document.createElement("button");
+                edit.type = "button";
+                edit.className = "ld-preset-action ld-preset-editbtn";
+                edit.title = "Rename, change layers or delete";
+                edit.setAttribute("aria-label", `Edit preset ${preset.name}`);
+                edit.innerHTML = `<i class="fas fa-pen"></i>`;
+                edit.addEventListener("click", () => {
+                    this._editingPreset = preset.id;
+                    this._renderPresets();
+                    this._applyView();
+                    this._container.querySelector(".ld-preset-edit .ld-preset-name-input")?.focus();
+                });
+
+                item.append(main, pin, edit);
+                box.appendChild(item);
+            });
+
+            if (!this._presets.length) {
+                const none = document.createElement("div");
+                none.className = "ld-empty ld-preset-none";
+                none.textContent = "No presets yet.";
+                box.appendChild(none);
+            }
+
+            const add = document.createElement("div");
+            add.className = "ld-preset-new";
+            const addTitle = document.createElement("div");
+            addTitle.className = "ld-preset-new-title";
+            addTitle.textContent = "Save the layers on now as a preset";
+            const addInfo = document.createElement("div");
+            addInfo.className = "ld-preset-new-info";
+            add.append(addTitle, addInfo, this._presetForm({
+                name: draftNew ?? "",
+                icon: PRESET_ICONS[0],
+                submitLabel: "Save preset",
+                onSubmit: ({ name, icon }) => {
+                    const keys = this._layersOnNow();
+                    if (!keys.length) return;
+                    const input = add.querySelector(".ld-preset-name-input");
+                    if (input) input.value = ""; // so the rebuild doesn't keep it as a draft
+                    this._savePresets([...this._presets, { id: newPresetId(this._presets), name, icon, keys, pinned: false }]);
+                },
+            }));
+            box.appendChild(add);
+
+            const footer = document.createElement("div");
+            footer.className = "ld-preset-footer";
+            const missing = missingDefaults(this._presets);
+            if (missing.length) {
+                const restore = document.createElement("button");
+                restore.type = "button";
+                restore.className = "btn btn-link btn-sm p-0 ld-preset-restore";
+                restore.textContent = `Restore ${listNames(missing.map((p) => p.name))}`;
+                restore.addEventListener("click", () => this._savePresets(restoreDefaults(this._presets)));
+                footer.appendChild(restore);
+            }
+            // Back to the shipped presets, separate from Configuration's reset.
+            // Deletes the user's own presets, so it asks for a second click.
+            if (!isDefaultPresets(this._presets)) {
+                const reset = document.createElement("button");
+                reset.type = "button";
+                reset.className = "btn btn-link btn-sm p-0 ms-auto ld-preset-reset";
+                reset.textContent = "Reset to defaults";
+                reset.addEventListener("click", () => {
+                    if (reset.dataset.armed) {
+                        this._editingPreset = null;
+                        this._savePresets(parsePresets(null));
+                        return;
+                    }
+                    reset.dataset.armed = "1";
+                    reset.classList.add("text-danger");
+                    reset.textContent = `Click again to replace all presets with ${listNames(parsePresets(null).map((p) => p.name))}`;
+                    setTimeout(() => {
+                        if (!reset.isConnected) return;
+                        delete reset.dataset.armed;
+                        reset.classList.remove("text-danger");
+                        reset.textContent = "Reset to defaults";
+                    }, 4000);
+                });
+                footer.appendChild(reset);
+            }
+            if (footer.childElementCount) box.appendChild(footer);
+
+            this._paintPresets();
+        },
+
+        /**
+         * Name, icon and buttons, for the Save form and a preset being edited.
+         * The submit button is disabled while the name is blank, and (Save form
+         * only) while no layers are on.
+         */
+        _presetForm({ name, icon, submitLabel, replaceOption = false, onSubmit, onCancel, onDelete }) {
+            const form = document.createElement("form");
+            form.className = "ld-preset-form";
+            form.noValidate = true;
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "form-control form-control-sm ld-preset-name-input";
+            input.placeholder = "Preset name";
+            input.maxLength = MAX_NAME_LENGTH;
+            input.value = name;
+            input.setAttribute("aria-label", "Preset name");
+            form.appendChild(input);
+            form.appendChild(this._iconPicker(icon));
+
+            let replace = null;
+            if (replaceOption) {
+                const label = document.createElement("label");
+                label.className = "ld-preset-replace";
+                replace = document.createElement("input");
+                replace.type = "checkbox";
+                replace.className = "form-check-input me-1";
+                const text = document.createElement("span");
+                text.className = "ld-preset-replace-text";
+                label.append(replace, text);
+                form.appendChild(label);
+            }
+
+            const buttons = document.createElement("div");
+            buttons.className = "ld-preset-buttons";
+            const submit = document.createElement("button");
+            submit.type = "submit";
+            submit.className = "btn btn-sm btn-primary ld-preset-submit";
+            submit.textContent = submitLabel;
+            buttons.appendChild(submit);
+            if (onCancel) {
+                const cancel = document.createElement("button");
+                cancel.type = "button";
+                cancel.className = "btn btn-sm btn-outline-secondary";
+                cancel.textContent = "Cancel";
+                cancel.addEventListener("click", onCancel);
+                buttons.appendChild(cancel);
+            }
+            if (onDelete) {
+                const del = document.createElement("button");
+                del.type = "button";
+                del.className = "btn btn-sm btn-outline-danger ms-auto ld-preset-delete";
+                del.innerHTML = `<i class="fas fa-trash-alt me-1"></i>Delete`;
+                del.addEventListener("click", onDelete);
+                buttons.appendChild(del);
+            }
+            form.appendChild(buttons);
+
+            const sync = () => this._paintPresetForm(form);
+            input.addEventListener("input", sync);
+            replace?.addEventListener("change", sync);
+            input.addEventListener("keydown", (ev) => {
+                // Esc cancels an edit; don't let typing reach the page's hotkeys
+                if (ev.key === "Escape" && onCancel) { ev.preventDefault(); onCancel(); }
+                ev.stopPropagation();
+            });
+            form.addEventListener("submit", (ev) => {
+                ev.preventDefault();
+                if (submit.disabled) return;
+                onSubmit({ name: cleanName(input.value), icon: this._pickedIcon(form), replace: !!replace?.checked });
+            });
+            return form;
+        },
+
+        _paintPresetForm(form) {
+            const onNow = this._layersOnNow().length;
+            const named = !!cleanName(form.querySelector(".ld-preset-name-input").value);
+            const isNew = !!form.closest(".ld-preset-new");
+            const replace = form.querySelector(".ld-preset-replace input");
+            const replaceText = form.querySelector(".ld-preset-replace-text");
+            if (replace) {
+                replace.disabled = onNow === 0;
+                if (!onNow) replace.checked = false;
+                replaceText.textContent = onNow
+                    ? `Replace its layers with the ${onNow} on now`
+                    : "Replace its layers (turn some on first)";
+            }
+            form.querySelector(".ld-preset-submit").disabled = !named || (isNew && onNow === 0);
+        },
+
+        /** Preset states (rows, rail count, map buttons) and the Save form, from the map. */
+        _paintPresets() {
+            const box = this._container?.querySelector(".ld-presets");
+            if (!box) return;
+            const isOn = (k) => this._isLayerOn(k);
+            const labelOf = (k) => this._rows.get(k)?.label;
+
+            box.querySelectorAll(".ld-preset:not(.ld-preset-edit)").forEach((item) => {
+                const preset = this._presets.find((p) => p.id === item.dataset.id);
+                if (!preset) return;
+                const { state, on, total } = presetState(preset, isOn);
+                const main = item.querySelector(".ld-preset-main");
+                main.classList.toggle("active", state === "on");
+                main.classList.toggle("ld-preset-partial", state === "partial");
+                main.disabled = state === "empty";
+                main.setAttribute("aria-pressed", state === "on" ? "true" : "false");
+                const sw = main.querySelector(".ld-preset-switch");
+                sw.classList.toggle("fa-toggle-on", state === "on");
+                sw.classList.toggle("fa-toggle-off", state !== "on");
+                main.querySelector(".ld-preset-part").textContent = state === "partial" ? `${on}/${total}` : "";
+
+                const labels = preset.keys.map(labelOf).filter(Boolean);
+                const gone = preset.keys.length - labels.length;
+                main.querySelector(".ld-preset-layers").textContent = labels.length
+                    ? labels.join(", ") + (gone ? ` (+${gone} unavailable)` : "")
+                    : "None of its layers are available";
+                main.title = state === "empty" ? "None of this preset's layers are available"
+                    : state === "on" ? "Turn these layers off" : "Turn these layers on";
+            });
+
+            const onNow = this._layersOnNow();
+            const info = box.querySelector(".ld-preset-new-info");
+            if (info) {
+                info.textContent = onNow.length
+                    ? `${onNow.length} layer${onNow.length === 1 ? "" : "s"} on: ${onNow.map(labelOf).join(", ")}`
+                    : "No layers are on. Turn on the layers you want, then save them here.";
+            }
+            box.querySelectorAll(".ld-preset-form").forEach((form) => this._paintPresetForm(form));
+
+            this._presetBar?.render(this._presets, (p) => presetState(p, isOn).state, (k) => labelOf(k));
+        },
+
+        /** Rail of sections: Basemap, On the map, Presets, then one per overlay group. */
         _renderRail(groupNames) {
             const rail = this._container.querySelector(".ld-rail");
             const item = (section, label, icon = "") => `
@@ -3392,11 +3780,13 @@ function VM() {
                 </button>`;
             rail.innerHTML = item("__base", "Basemap", "fa-map")
                 + item("__on", "On the map", "fa-eye")
+                + item("__presets", "Presets", "fa-bookmark")
                 + `<div class="ld-rail-sep"></div>`
                 + groupNames.map((g) => item(g, g)).join("");
+            const fixed = ["__base", "__on", "__presets"];
             rail.querySelectorAll(".ld-rail-item").forEach((btn, i) => {
                 // dataset holds the unescaped group name; the template only used it for markup
-                btn.dataset.section = i < 2 ? btn.dataset.section : groupNames[i - 2];
+                btn.dataset.section = i < fixed.length ? btn.dataset.section : groupNames[i - fixed.length];
                 btn.addEventListener("click", () => {
                     this._section = btn.dataset.section;
                     localStorage.setItem("layers.section", this._section);
@@ -3405,7 +3795,7 @@ function VM() {
                     this._container.querySelector(".ld-pane").scrollTop = 0;
                 });
             });
-            if (this._section !== "__base" && this._section !== "__on" && !groupNames.includes(this._section)) {
+            if (!fixed.includes(this._section) && !groupNames.includes(this._section)) {
                 this._section = "__on";
             }
         },
@@ -3428,11 +3818,26 @@ function VM() {
             show(c.querySelector(".ld-bases"), anyTile);
             any ||= anyTile;
 
+            // Presets: the whole section, or (searching) just the presets whose name matches
+            const presets = c.querySelector(".ld-presets");
+            let anyPreset = false;
+            presets.querySelectorAll(".ld-preset").forEach((item) => {
+                const visible = q ? item.dataset.label.toLowerCase().includes(q) : section === "__presets";
+                show(item, visible);
+                anyPreset ||= visible;
+            });
+            presets.querySelectorAll(".ld-preset-new, .ld-preset-footer, .ld-preset-none")
+                .forEach((el) => show(el, !q));
+            show(presets.querySelector(".ld-group-header"), !!q);
+            show(presets, q ? anyPreset : section === "__presets");
+            any ||= q ? anyPreset : section === "__presets";
+
             c.querySelectorAll(".ld-grid-cell").forEach((cell) => {
                 let anyRow = false;
                 cell.querySelectorAll(".ld-overlay-btn").forEach((btn) => {
                     const label = (btn.querySelector("span.me-2")?.textContent || "").trim().toLowerCase();
                     const visible = q ? label.includes(q)
+                        : section === "__presets" ? false
                         : section === "__on" ? btn.classList.contains("active")
                             : cell.dataset.group === section;
                     show(btn, visible);
@@ -3446,7 +3851,8 @@ function VM() {
 
             const title = q ? "Search results"
                 : section === "__base" ? "Basemap"
-                    : section === "__on" ? "On the map" : section;
+                    : section === "__on" ? "On the map"
+                        : section === "__presets" ? "Presets" : section;
             c.querySelector(".ld-pane-title").textContent = title;
 
             const empty = c.querySelector(".ld-empty");
@@ -3480,9 +3886,11 @@ function VM() {
                 counts.set(cell.dataset.group, n);
                 total += n;
             });
+            const presetsOn = this._presets
+                .filter((p) => presetState(p, (k) => this._isLayerOn(k)).state === "on").length;
             c.querySelectorAll(".ld-rail-item").forEach((btn) => {
                 const s = btn.dataset.section;
-                const n = s === "__on" ? total : counts.get(s) || 0;
+                const n = s === "__on" ? total : s === "__presets" ? presetsOn : counts.get(s) || 0;
                 const el = btn.querySelector(".ld-rail-count");
                 if (el) el.textContent = s === "__base" || !n ? "" : String(n);
             });
@@ -3602,6 +4010,55 @@ function VM() {
         }
 
 
+    });
+
+    // --- Pinned layer preset buttons, grouped under the Layers button in its
+    // bar. The drawer owns the presets and calls render() whenever they or
+    // their layers change.
+    const LayerPresetBar = L.Class.extend({
+        initialize(container, onToggle) {
+            this._container = container;
+            container.hidden = true;
+            L.DomEvent.on(container, "click", (ev) => {
+                const btn = ev.target.closest(".lp-btn");
+                if (!btn) return;
+                L.DomEvent.stop(ev);
+                onToggle(btn.dataset.id);
+            });
+        },
+
+        render(presets, stateOf, labelOf) {
+            const c = this._container;
+            if (!c) return;
+            const pinned = presets.filter((p) => p.pinned);
+            c.hidden = pinned.length === 0;
+            // Rebuild only when the pinned set changes; otherwise just repaint states
+            const sig = pinned.map((p) => `${p.id}|${p.icon}|${p.name}`).join("\n");
+            if (sig !== this._sig) {
+                this._sig = sig;
+                c.replaceChildren(...pinned.map((p) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "btn btn-light btn-sm shadow-sm lp-btn";
+                    b.dataset.id = p.id;
+                    b.innerHTML = `<i class="fas ${p.icon} fa-fw"></i><span class="lp-part" hidden></span>`;
+                    return b;
+                }));
+            }
+            pinned.forEach((p) => {
+                const b = c.querySelector(`.lp-btn[data-id="${CSS.escape(p.id)}"]`);
+                const state = stateOf(p);
+                b.classList.toggle("active", state === "on");
+                b.setAttribute("aria-pressed", state === "on" ? "true" : "false");
+                b.querySelector(".lp-part").hidden = state !== "partial";
+                b.disabled = state === "empty";
+                const layers = p.keys.map(labelOf).filter(Boolean).join(", ");
+                const action = state === "empty" ? "none of its layers are available"
+                    : state === "on" ? "click to turn off" : "click to turn on";
+                b.title = `${p.name} preset: ${layers || "no layers"} (${action})`;
+                b.setAttribute("aria-label", `${p.name} layer preset, ${state === "on" ? "on" : state === "partial" ? "partly on" : "off"}`);
+            });
+        },
     });
 
     // --- Sidebar collapse button (under Layers drawer)
