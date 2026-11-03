@@ -13,7 +13,7 @@ describe('parsePresets', () => {
     const list = parsePresets(null);
     expect(list.map((p) => p.name)).toEqual(['Weather', 'Roads', 'Boundaries']);
     expect(list.every((p) => p.pinned)).toBe(true);
-    expect(list[0].keys).toEqual(['online-bomSevereThunderstorm', 'online-bomRadar']);
+    expect(list[0].keys).toEqual(['online-bomSevereThunderstormCells', 'online-bomRadar']);
     expect(list[1].keys).toEqual(['online-transport-cameras', 'online-transport-incidents']);
     expect(list[2].keys).toEqual(['online-sesUnitsZonesHybrid']);
   });

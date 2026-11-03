@@ -126,6 +126,7 @@ import {
     registerBOMFloodWarningBoundariesLayer,
     registerBOMFireWeatherDistrictsLayer,
     registerBOMSevereThunderstormWarningLayer,
+    registerBOMSevereThunderstormCellsLayer,
     registerBOMVolcanicAshLayer,
     registerBOMSeaSurfaceTempLayer
 } from "./mapLayers/weather.js";
@@ -3028,6 +3029,7 @@ function VM() {
     registerNSWDeclaredDamsLayer(self);
     registerBOMLandWarningsLayer(self, sourceUrl);
     registerBOMSevereThunderstormWarningLayer(self, sourceUrl);
+    registerBOMSevereThunderstormCellsLayer(self, sourceUrl);
     registerBOMVolcanicAshLayer(self, sourceUrl);
     registerBOMRainfallLayer(self, sourceUrl);
     // Tile overlays join the bottom of the default layer order as they

@@ -125,7 +125,8 @@ Most layers are described by their name. Those that need more explanation:
 
 **BOM Warnings**
 
-- **BOM Severe Thunderstorm Warning**: the areas under a current severe thunderstorm warning, and the storm cells named in those warnings, with an arrow for the direction each is moving and the time of the cell's position (UTC).
+- **BOM Severe Thunderstorm Warning**: the areas under a current severe thunderstorm warning.
+- **BOM Severe Thunderstorm Cells**: the storm cells named in those warnings, with an arrow for the direction each is moving and the time of the cell's position (UTC).
 - **BOM Volcanic Ash Advisory**: advisories from the Darwin Volcanic Ash Advisory Centre: the erupting volcano, the ash cloud now, and where it's forecast to be in 6, 12 and 18 hours.
 
 **BOM Radar & Satellite**
@@ -146,7 +147,7 @@ Most layers are described by their name. Those that need more explanation:
 
 A preset is a named set of overlays you can turn on or off with one click. Lighthouse comes with three:
 
-- **Weather**: BOM Severe Thunderstorm Warning and BOM Rain Radar Still.
+- **Weather**: BOM Severe Thunderstorm Cells and BOM Rain Radar Still.
 - **Roads**: Transport NSW Cameras and Transport NSW Incidents.
 - **Boundaries**: Unit/Zone Boundaries Hybrid.
 

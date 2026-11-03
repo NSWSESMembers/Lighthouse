@@ -24,7 +24,7 @@ export const DEFAULT_PRESETS = [
     id: 'weather',
     name: 'Weather',
     icon: 'fa-cloud-sun-rain',
-    keys: ['online-bomSevereThunderstorm', 'online-bomRadar'],
+    keys: ['online-bomSevereThunderstormCells', 'online-bomRadar'],
     pinned: true,
   },
   {
