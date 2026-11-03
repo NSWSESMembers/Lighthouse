@@ -580,10 +580,14 @@ export function MapVM(Lmap, root) {
   // esri-leaflet FeatureLayer (duck-typed so Map.js doesn't import esri)
   const isFeatureChild = (layer) =>
     typeof layer._requestFeatures === 'function' && typeof layer.eachFeature === 'function';
+  // WmsViewImageLayer (mapLayers/weather.js): a LayerGroup that swaps one WMS
+  // image per view and fires the same load cycle as a tile layer, so it's
+  // tracked as 'tiles'.
+  const isViewImageChild = (layer) => layer._viewImage === true;
 
   /** Follow an async child layer's own load events (tiles / Esri features). */
   function watchLayerChild(entry, layer) {
-    const kind = isTileChild(layer) ? 'tiles' : isFeatureChild(layer) ? 'features' : null;
+    const kind = isTileChild(layer) || isViewImageChild(layer) ? 'tiles' : isFeatureChild(layer) ? 'features' : null;
     if (!kind) return;
     const id = L.stamp(layer);
     if (entry.track.children.has(id)) return;
@@ -663,7 +667,7 @@ export function MapVM(Lmap, root) {
       return false;
     };
     const walk = (layer) => {
-      if (isTileChild(layer)) return;
+      if (isTileChild(layer) || isViewImageChild(layer)) return;
       if (isFeatureChild(layer)) { layer.eachFeature(walk); return; }
       if (typeof layer.eachLayer === 'function') { layer.eachLayer(walk); return; }
       if (!inBounds(layer)) return;
@@ -1268,7 +1272,7 @@ export function MapVM(Lmap, root) {
     // A tile or Esri layer drawn into a polling layer's group (in drawFn, or
     // later, like RainViewer's frames): follow its load events for status.
     // A child can opt out with `skipLoadStatus` (RainViewer's older frames).
-    if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    if (!isTileChild(layer) && !isFeatureChild(layer) && !isViewImageChild(layer)) return;
     if (layer.options?.skipLoadStatus) return;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup.hasLayer(layer)) {
@@ -1288,7 +1292,7 @@ export function MapVM(Lmap, root) {
       }
     }
     // A child removed by clearLayers() before a redraw -- stop following it.
-    if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    if (!isTileChild(layer) && !isFeatureChild(layer) && !isViewImageChild(layer)) return;
     const id = L.stamp(layer);
     for (const entry of self.onlineLayers.values()) {
       const rec = entry.track.children.get(id);

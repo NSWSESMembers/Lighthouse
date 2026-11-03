@@ -23,6 +23,11 @@ const WmsViewImageLayer = L.LayerGroup.extend({
     this._params = params;
     this._seq = 0;
     this._shown = null;
+    // Load-status tracking (Map.js watchLayerChild). This is one image per
+    // view rather than a GridLayer, so it fires the same loading/tileload/
+    // tileerror/load cycle itself and flags its class with _viewImage.
+    this._viewImage = true;
+    this._loading = false;
   },
 
   onAdd(map) {
@@ -34,6 +39,7 @@ const WmsViewImageLayer = L.LayerGroup.extend({
   onRemove(map) {
     map.off("moveend", this._update, this);
     this._seq++;
+    this._loading = false;
     L.LayerGroup.prototype.onRemove.call(this, map);
     this.clearLayers();
     this._shown = null;
@@ -65,20 +71,34 @@ const WmsViewImageLayer = L.LayerGroup.extend({
     );
 
     const seq = ++this._seq;
+    this._loading = true;
+    this.fire("loading");
     const img = L.imageOverlay(url, bounds, {
       pane: "tilePane",
       opacity: this.options.opacity ?? 1,
       interactive: false,
       attribution: this.options.attribution,
     });
+    // Settle the load cycle, but only for the current view -- an image that
+    // finishes after a newer view was requested is stale and ignored.
+    const settle = (ok) => {
+      if (seq !== this._seq) return;
+      this._loading = false;
+      this.fire(ok ? "tileload" : "tileerror");
+      this.fire("load");
+    };
     // Keep the last image up until the new one has loaded; drop images
     // that finish after a newer view was requested.
     img.once("load", () => {
       if (seq !== this._seq) return this.removeLayer(img);
       if (this._shown) this.removeLayer(this._shown);
       this._shown = img;
+      settle(true);
     });
-    img.once("error", () => this.removeLayer(img));
+    img.once("error", () => {
+      this.removeLayer(img);
+      settle(false);
+    });
     this.addLayer(img);
   },
 });
