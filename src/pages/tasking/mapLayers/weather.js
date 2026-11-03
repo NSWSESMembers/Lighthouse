@@ -750,8 +750,7 @@ export function registerBOMFireWeatherDistrictsLayer(vm, sourceUrl) {
 }
 
 /**
- * Register BOM Severe Thunderstorm Warning areas, with the warned storm
- * cells, their direction and time, from Beacon
+ * Register BOM Severe Thunderstorm Warning areas from Beacon
  */
 export function registerBOMSevereThunderstormWarningLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
@@ -766,8 +765,36 @@ export function registerBOMSevereThunderstormWarningLayer(vm, sourceUrl) {
     drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         new WmsViewImageLayer(wmsUrl, {
-          // Warning areas under the cells, track arrows and times
-          layers: "IDZ20006,IDZ20007,IDZ20007_track,IDZ20007_time",
+          layers: "IDZ20006",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          _cb: data?.cacheBuster,
+        }, { attribution: "Bureau of Meteorology" })
+      );
+    },
+  });
+}
+
+/**
+ * Register the storm cells named in BOM Severe Thunderstorm Warnings, with
+ * their direction and time, from Beacon
+ */
+export function registerBOMSevereThunderstormCellsLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomSevereThunderstormCells", {
+    label: "BOM Severe Thunderstorm Cells",
+    menuGroup: "BOM Warnings",
+    stack: "vector",
+    defaultOpacity: 50,
+    refreshMs: 300000, // 5 min – warnings are reissued as storms move
+    visibleByDefault: localStorage.getItem(`ov.bomSevereThunderstormCells`) || false,
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
+      layerGroup.addLayer(
+        new WmsViewImageLayer(wmsUrl, {
+          // Cells, track arrows and times
+          layers: "IDZ20007,IDZ20007_track,IDZ20007_time",
           styles: "default",
           format: "image/png",
           transparent: true,
