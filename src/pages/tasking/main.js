@@ -3026,7 +3026,7 @@ function VM() {
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
-    registerBOMLandWarningsLayer(self);
+    registerBOMLandWarningsLayer(self, sourceUrl);
     registerBOMSevereThunderstormWarningLayer(self, sourceUrl);
     registerBOMVolcanicAshLayer(self, sourceUrl);
     registerBOMRainfallLayer(self, sourceUrl);

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest *)",
+      "Bash(npx eslint *)",
+      "Bash(gh pr create:*)"
+    ]
+  }
+}
