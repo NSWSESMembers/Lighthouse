@@ -646,6 +646,15 @@ body.env-devbeacon .incidents-header {
 .tsm-drive--done .tsm-drive-main {
   color: #0a58ca;
 }
+.tsm-drive--outdated .tsm-drive-sub {
+  color: #b45309;
+}
+.tsm-drive--outdated .tsm-drive-action {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #0d6efd;
+  color: #fff;
+}
 .tsm-drive--blocked .tsm-drive-icon,
 .tsm-drive--blocked .tsm-drive-main {
   color: #adb5bd;

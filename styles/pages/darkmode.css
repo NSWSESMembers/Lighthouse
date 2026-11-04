@@ -689,6 +689,8 @@ body.dark-mode .tsm-drive--unknown .tsm-drive-sub,
 body.dark-mode .tsm-drive--error .tsm-drive-sub { color: #fca5a5; }
 body.dark-mode .tsm-drive--done { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; }
 body.dark-mode .tsm-drive--done .tsm-drive-main { color: #93c5fd; }
+body.dark-mode .tsm-drive--outdated .tsm-drive-sub { color: #fbbf24; }
+body.dark-mode .tsm-drive--outdated .tsm-drive-action { background: #3b82f6; color: #fff; }
 body.dark-mode .tsm-drive--blocked .tsm-drive-icon,
 body.dark-mode .tsm-drive--blocked .tsm-drive-main { color: #6c757d; }
 body.dark-mode .eta-chip {

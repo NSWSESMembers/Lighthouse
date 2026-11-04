@@ -853,7 +853,8 @@ export function Tasking(data = {}) {
         if (!self.driveSource()) return "No tracked asset location for this team";
         return null;
     });
-    // null | { loading: true } | { error } | { minutes, summary }
+    // null | { loading: true } | { error } | { minutes, summary, from }
+    // (`from`: the asset fix the route started at)
     self.driveTime = ko.observable(null);
     let driveTimeRequest = 0;
     self.resetDriveTime = function () {
@@ -883,11 +884,25 @@ export function Tasking(data = {}) {
                 self.driveTime({
                     minutes: result.minutes,
                     summary: `${formatMinutes(result.minutes)} drive` + (m != null ? ` · ${m < 950 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`} by road` : ""),
+                    from: { lat: src.lat, lng: src.lng, lastSeen: src.lastSeen },
                 });
             });
     };
     // The "Or the drive time" row: what it would use (or did), and the
-    // location age underneath, coloured by how old it is.
+    // location age underneath, coloured by how old it is. Once used, the age
+    // is of the fix the route started at, not the asset's latest -- a newer
+    // fix doesn't redo the route (or move the ETA under the operator), it
+    // just flags the result as out of date until they click Redo.
+    const usedFix = ko.pureComputed(() => {
+        const d = self.driveTime();
+        if (!d || !d.minutes) return null;
+        _etaTick();
+        return { ...d.from, ...fixFreshness(d.from.lastSeen) };
+    });
+    self.driveTimeOutdated = ko.pureComputed(() => {
+        const used = usedFix(), src = self.driveSource();
+        return !!used && !!src && (src.lastSeen !== used.lastSeen || src.lat !== used.lat || src.lng !== used.lng);
+    });
     self.driveRowTitle = ko.pureComputed(() => {
         const d = self.driveTime(), src = self.driveSource();
         if (self.driveTimeBlocked()) return "Drive time unavailable";
@@ -900,10 +915,14 @@ export function Tasking(data = {}) {
         const blocked = self.driveTimeBlocked(), d = self.driveTime(), src = self.driveSource();
         if (blocked) return blocked;
         if (d && d.error) return "Set the ETA by hand";
-        const age = `Location ${src.ageLabel}`;
-        return d && d.minutes && src.state !== "fresh" ? `${age}: check with the team` : age;
+        if (self.driveTimeOutdated()) return "New location since: Redo to update";
+        const used = usedFix();
+        if (used) return used.state !== "fresh" ? `Location ${used.ageLabel}: check with the team` : `Location ${used.ageLabel}`;
+        return `Location ${src.ageLabel}`;
     });
-    self.driveRowWarn = ko.pureComputed(() => !self.driveTimeBlocked() && self.driveSource().state !== "fresh");
+    // Freshness grade of the fix the row is talking about.
+    const rowFixState = () => (usedFix() || self.driveSource()).state;
+    self.driveRowWarn = ko.pureComputed(() => !self.driveTimeBlocked() && (self.driveTimeOutdated() || rowFixState() !== "fresh"));
     self.driveRowAction = ko.pureComputed(() => {
         const d = self.driveTime();
         if (self.driveTimeBlocked() || (d && d.loading)) return "";
@@ -912,7 +931,8 @@ export function Tasking(data = {}) {
     self.driveRowCss = ko.pureComputed(() => {
         if (self.driveTimeBlocked()) return "tsm-drive--blocked";
         const d = self.driveTime();
-        return `tsm-drive--${self.driveSource().state}` + (d && d.minutes ? " tsm-drive--done" : "") + (d && d.error ? " tsm-drive--error" : "");
+        return `tsm-drive--${rowFixState()}` + (d && d.minutes ? " tsm-drive--done" : "") + (d && d.error ? " tsm-drive--error" : "")
+            + (self.driveTimeOutdated() ? " tsm-drive--outdated" : "");
     });
 
     // --- Status-change page header and time line ---

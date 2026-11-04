@@ -1092,6 +1092,33 @@ describe('drive-time ETA', () => {
     expect(t.driveRowAction()).toBe('Redo');
   });
 
+  it('keeps the age of the fix it used, and flags a newer fix without redoing the route', async () => {
+    const t = tasked();
+    t.needsETA(true);
+    t.calculateDriveTime();
+    await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
+    expect(t.driveTimeOutdated()).toBe(false);
+
+    const a = t.team.trackableAssets()[0];
+    a.lastSeen('2026-06-15T09:59:50');
+    a.latitude(-33.15);
+    expect(t.driveTimeOutdated()).toBe(true);
+    expect(t.driveRowTitle()).toBe('18m drive · 12.3 km by road');
+    expect(t.driveRowDetail()).toBe('New location since: Redo to update');
+    expect(t.driveRowCss()).toBe('tsm-drive--stale tsm-drive--done tsm-drive--outdated');
+    expect(t.driveRowWarn()).toBe(true);
+    expect(t.eta()).toBe('2026-06-15T10:18'); // left alone
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    t.calculateDriveTime(); // Redo uses the new fix
+    await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
+    expect(t.driveTimeOutdated()).toBe(false);
+    expect(JSON.parse(global.fetch.mock.calls[1][1].body).coordinates[0]).toEqual([151.1, -33.15]);
+    expect(t.driveRowDetail()).toBe('Location updated just now');
+    expect(t.driveRowCss()).toBe('tsm-drive--fresh tsm-drive--done');
+  });
+
   it('sets the draft in the Change ETA editor', async () => {
     const t = tasked();
     t.currentStatus('Enroute');
