@@ -36,6 +36,7 @@ Full details in `scripts/lad-docs/README.md`.
 npm run dev                                         # required first: serves dist/pages/tasking.html
 npm run lad:demo                                    # headed Chrome window
 npm run lad:shots -- --only main --out <dir>        # headless screenshots (shot list in capture.mjs)
+npm run lad:serve                                   # serve it on the LAN for a real iPad/phone (?trace=1 logs taps)
 ```
 
 For ad-hoc scripted checks, write a throwaway `.mjs` that imports from

@@ -1,3 +1,4 @@
+import { defaultLayoutPreset } from './utils/layoutPreset.js';
 
 export function ResizeDividers(map) {
 
@@ -19,9 +20,11 @@ const LAYOUT_PRESETS = [
   'map-right-tasking-only',
   'map-left-teams-only',
   'map-left-tasking-only',
+  'map-right-tabbed',
+  'map-left-tabbed',
   'map-only'
 ];
-const DEFAULT_LAYOUT_PRESET = 'map-right-teams-top';
+const DEFAULT_LAYOUT_PRESET = defaultLayoutPreset(); // tabbed on tablets
 const normalizeLayoutPreset = (value) => {
   const key = String(value || '').trim();
   return LAYOUT_PRESETS.includes(key) ? key : DEFAULT_LAYOUT_PRESET;
@@ -57,16 +60,28 @@ function resetPaneHeights() {
   paneBottomEl.style.height = '';
 }
 
+// 800px suits a desktop monitor. A landscape tablet (an iPad's ~1100px) would
+// be left with a sliver of map, so touch screens start nearer half and half.
+function defaultSidebarPx() {
+  const landscapeTouch = window.matchMedia?.('(pointer: coarse)').matches && window.innerWidth > window.innerHeight;
+  return landscapeTouch ? Math.min(800, Math.round(window.innerWidth * 0.55)) : 800;
+}
+
 // ===== Restore persisted sizes on load =====
 function restoreSizes() {
   resetPaneHeights();
 
   // Left↔Right
-  const savedSidebarPx = Number(localStorage.getItem(layoutStorageKey('sidebarWidthPx'))) || 800;
+  const savedSidebarPx = Number(localStorage.getItem(layoutStorageKey('sidebarWidthPx'))) || defaultSidebarPx();
   if (Number.isFinite(savedSidebarPx) && savedSidebarPx > 0) {
     sidebarEl.style.width = savedSidebarPx + 'px';
     appEl.style.setProperty('--sidebar-w', savedSidebarPx + 'px');
   }
+
+  // Drawer height when stacked (tabbed layouts in portrait)
+  const savedStackedPx = Number(localStorage.getItem(layoutStorageKey('sidebarHeightPx')));
+  if (Number.isFinite(savedStackedPx) && savedStackedPx > 0) appEl.style.setProperty('--sidebar-h', savedStackedPx + 'px');
+  else appEl.style.removeProperty('--sidebar-h');
 
   // Top↔Bottom
   const savedTopPx = Number(localStorage.getItem(layoutStorageKey('paneTopHeightPx')) || 500);
@@ -89,15 +104,37 @@ restoreSizes();
 // to call invalidateSize() again (e.g. the user drags a splitter). Watch
 // the map container itself so any real size change -- however it happens --
 // keeps Leaflet's cached size correct without relying on a guessed delay.
+// It also publishes the map's width as --map-w, so map controls (the alerts
+// banners) can size themselves against a narrow map.
 if (typeof ResizeObserver !== 'undefined') {
-  const mapContainerRO = new ResizeObserver(invalidateMap);
-  mapContainerRO.observe(map.getContainer());
+  const mapEl = map.getContainer();
+  const mapContainerRO = new ResizeObserver(() => {
+    mapEl.style.setProperty('--map-w', mapEl.clientWidth + 'px');
+    invalidateMap();
+  });
+  mapContainerRO.observe(mapEl);
 }
 
 // ===== Left↔Right (vertical splitter) =====
 let resizingLR = false, rafLR = 0;
 
-function applyLR(clientX) {
+// The tabbed layouts stack the drawer above (or below) the map in portrait
+// (see tasking.css); the same splitter then sets the drawer's height.
+const isStacked = () => getComputedStyle(appEl).flexDirection.startsWith('column');
+
+function applyStackedHeight(clientY) {
+  const appRect = appEl.getBoundingClientRect();
+  const splitH  = vsplitEl.getBoundingClientRect().height;
+  const minPane = 160;
+  const mapOnTop = Number(getComputedStyle(sidebarEl).order) > Number(getComputedStyle(vsplitEl).order);
+  let h = mapOnTop ? appRect.bottom - clientY : clientY - appRect.top;
+  h = Math.max(minPane, Math.min(appRect.height - splitH - minPane, h));
+  appEl.style.setProperty('--sidebar-h', h + 'px');
+  localStorage.setItem(layoutStorageKey('sidebarHeightPx'), String(Math.round(h)));
+}
+
+function applyLR(clientX, clientY) {
+  if (isStacked()) { applyStackedHeight(clientY); return; }
   const appRect = appEl.getBoundingClientRect();
   const splitW  = vsplitEl.getBoundingClientRect().width;
   const minSidebar = 260;
@@ -115,21 +152,25 @@ function applyLR(clientX) {
   localStorage.setItem(layoutStorageKey('mapWidthPx'), String(Math.max(0, Math.floor(mapW))));
 }
 
-function startLR() { resizingLR = true; vsplitEl.classList.add('resizing'); document.body.classList.add('sidebar-resizing'); document.body.style.cursor = 'col-resize'; }
-function moveLR(x) {
+function startLR() { resizingLR = true; vsplitEl.classList.add('resizing'); document.body.classList.add('sidebar-resizing'); document.body.style.cursor = isStacked() ? 'row-resize' : 'col-resize'; }
+// Applies the latest pointer position once per frame (not the first one in
+// the frame), so a quick swipe ends where the finger stopped.
+let lastLR = null;
+function moveLR(x, y) {
   if (!resizingLR) return;
+  lastLR = [x, y];
   if (rafLR) return;
-  rafLR = requestAnimationFrame(() => { rafLR = 0; applyLR(x); invalidateMap(); });
+  rafLR = requestAnimationFrame(() => { rafLR = 0; applyLR(...lastLR); invalidateMap(); });
 }
 function endLR() { if (!resizingLR) return; resizingLR = false; vsplitEl.classList.remove('resizing'); document.body.classList.remove('sidebar-resizing'); document.body.style.cursor=''; invalidateMap(); }
 
 if (vsplitEl) {
   vsplitEl.addEventListener('mousedown', e => { e.preventDefault(); startLR(); });
-  window.addEventListener('mousemove', e => moveLR(e.clientX));
+  window.addEventListener('mousemove', e => moveLR(e.clientX, e.clientY));
   window.addEventListener('mouseup', endLR);
 
   vsplitEl.addEventListener('touchstart', e => { e.preventDefault(); startLR(); }, { passive:false });
-  window.addEventListener('touchmove', e => { const t=e.touches?.[0]; if (t) moveLR(t.clientX); }, { passive:false });
+  window.addEventListener('touchmove', e => { const t=e.touches?.[0]; if (t) moveLR(t.clientX, t.clientY); }, { passive:false });
   window.addEventListener('touchend', endLR);
 }
 
@@ -154,10 +195,12 @@ function applyTB(clientY) {
 }
 
 function startTB() { resizingTB = true; hsplitEl.classList.add('resizing'); document.body.style.cursor = 'row-resize'; }
+let lastTB = 0;
 function moveTB(y) {
   if (!resizingTB) return;
+  lastTB = y;
   if (rafTB) return;
-  rafTB = requestAnimationFrame(() => { rafTB = 0; applyTB(y); /* map not required here */ });
+  rafTB = requestAnimationFrame(() => { rafTB = 0; applyTB(lastTB); /* map not required here */ });
 }
 function endTB() { if (!resizingTB) return; resizingTB = false; hsplitEl.classList.remove('resizing'); document.body.style.cursor=''; }
 

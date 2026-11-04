@@ -11,6 +11,7 @@
  * time the dropdown opens.
  */
 import ko from 'knockout';
+import { dropdownHomeOf } from '../utils/dropdownPortal.js';
 
 ko.bindingHandlers.holdHeight = {
     init: function (element, valueAccessor) {
@@ -24,7 +25,7 @@ ko.bindingHandlers.holdHeight = {
             // Looked up lazily: the template may not be in the document yet
             // when this binding initialises.
             if (!dropdown) {
-                dropdown = element.closest('.dropdown');
+                dropdown = dropdownHomeOf(element);
                 if (dropdown) dropdown.addEventListener('show.bs.dropdown', reset);
             }
             const h = element.offsetHeight;

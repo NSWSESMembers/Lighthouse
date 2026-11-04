@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lighthouse - LAD</title>
 </head>
 
@@ -14,8 +15,21 @@
     <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
         style="z-index:2000; width:600px; max-width:90%;"></div>
 
-    <div class="app"><!-- make .app a flex row in tasking.css -->
+    <div class="app" data-bind="css: { 'tabbed-incidents': layoutTab() === 'incidents' }"><!-- make .app a flex row in tasking.css -->
         <aside class="sidebar"><!-- fixed-width column in tasking.css -->
+            <!-- Tabbed layouts only: which list the drawer shows -->
+            <div class="drawer-tabs" role="tablist" aria-label="Side drawer list">
+                <button type="button" class="drawer-tab" role="tab"
+                    data-bind="click: showTeamsTab, css: { active: layoutTab() === 'teams' }, attr: { 'aria-selected': teamsTabSelected }">
+                    <i class="fa fa-users" aria-hidden="true"></i>
+                    <span>Teams (<!-- ko if: showInViewTeamsOnly --><span data-bind="text: listedTeams().length"></span>/<!-- /ko --><span data-bind="text: filteredTeams().length"></span>)</span>
+                </button>
+                <button type="button" class="drawer-tab" role="tab"
+                    data-bind="click: showIncidentsTab, css: { active: layoutTab() === 'incidents' }, attr: { 'aria-selected': incidentsTabSelected }">
+                    <i class="fa fa-list-ul" aria-hidden="true"></i>
+                    <span>Incidents (<!-- ko if: showInViewIncidentsOnly --><span data-bind="text: listedJobs().length"></span>/<!-- /ko --><span data-bind="text: filteredJobs().length"></span>)</span>
+                </button>
+            </div>
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 pane-toolbar">
@@ -1784,7 +1798,7 @@
                                             <label class="form-label">Filter by Headquarters</label>
                                             <div class="input-group position-relative">
                                                 <input id="locationSearch" type="search" class="form-control" placeholder="Search…"
-                                                    autocomplete="off" data-bind="value: config.query, valueUpdate: 'afterkeydown', hasFocus: config.inputHasFocus,
+                                                    autocomplete="off" data-bind="textInput: config.query, hasFocus: config.inputHasFocus,
                                                     event: { blur: config.closeDropdown }">
                                                 <button id="clearSearch" class="btn btn-outline-secondary" type="button" title="Clear"
                                                     data-bind="click: config.clearSearch">&times;</button>
@@ -2891,8 +2905,7 @@
                                                     <!-- ko if: !selected() -->
                                                     <div class="input-group input-group-sm position-relative">
                                                         <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
-                                                            value: searchQuery,
-                                                            valueUpdate: 'afterkeydown',
+                                                            textInput: searchQuery,
                                                             hasFocus: hasFocus,
                                                             event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                         <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -2943,8 +2956,7 @@
                                                         <!-- ko if: !selected() -->
                                                         <div class="input-group input-group-sm position-relative">
                                                             <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
-                                                                value: searchQuery,
-                                                                valueUpdate: 'afterkeydown',
+                                                                textInput: searchQuery,
                                                                 hasFocus: hasFocus,
                                                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                             <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3047,8 +3059,7 @@
                                                         <div class="small text-muted mb-1">Moderators</div>
                                                         <div class="input-group input-group-sm position-relative">
                                                             <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
-                                                                value: searchQuery,
-                                                                valueUpdate: 'afterkeydown',
+                                                                textInput: searchQuery,
                                                                 hasFocus: hasFocus,
                                                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                             <button class="btn btn-outline-secondary" type="button" title="Clear"
@@ -3128,8 +3139,7 @@
                                                     <!-- ko if: !selected() -->
                                                     <div class="input-group input-group-sm position-relative">
                                                         <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
-                                                            value: searchQuery,
-                                                            valueUpdate: 'afterkeydown',
+                                                            textInput: searchQuery,
                                                             hasFocus: hasFocus,
                                                             event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                         <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3268,28 +3278,25 @@
 
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-sidebar" role="tabpanel" aria-labelledby="cfgTab-sidebar" tabindex="0">
-                                                <label class="form-label">
-                                                    <i class="fa fa-columns me-1"></i>Section Layout Preset
-                                                </label>
-                                                <div class="layout-preset-grid"
-                                                    data-bind="foreach: { data: config.layoutPresetDefs, as: 'preset' }">
-                                                    <label class="layout-preset-card"
-                                                        data-bind="css: { 'is-active': $root.config.layoutPreset() === preset.id }">
-                                                        <input class="form-check-input layout-preset-radio"
-                                                            type="radio" name="layoutPreset"
-                                                            data-bind="checked: $root.config.layoutPreset, checkedValue: preset.id">
-                                                        <div class="layout-preset-preview"
-                                                            data-bind="css: preset.previewClass">
-                                                            <div class="preview-block preview-block--teams">Teams</div>
-                                                            <div class="preview-block preview-block--tasking">Tasking</div>
-                                                            <div class="preview-block preview-block--map">Map</div>
+                                                <!-- Layout = a tile (Config.layoutLists) + the map side (Config.layoutMapLeft) -->
+                                                <div class="layout-tiles" role="radiogroup" aria-label="Layout"
+                                                    data-bind="foreach: { data: config.layoutListChoices, as: 'choice' }">
+                                                    <label class="layout-tile" data-bind="css: { active: $root.config.layoutLists() === choice.id }">
+                                                        <input type="radio" class="visually-hidden" name="layoutLists"
+                                                            data-bind="checked: $root.config.layoutLists, checkedValue: choice.id">
+                                                        <div class="layout-preset-preview" data-bind="css: choice.previewClass" aria-hidden="true">
+                                                            <div class="preview-block preview-block--teams"><i class="fa fa-users"></i></div>
+                                                            <div class="preview-block preview-block--tasking"><i class="fa fa-list-ul"></i></div>
+                                                            <div class="preview-block preview-block--map"><i class="fa fa-map"></i></div>
                                                         </div>
-                                                        <div class="layout-preset-name" data-bind="text: preset.name"></div>
-                                                        <div class="layout-preset-description small text-muted"
-                                                            data-bind="text: preset.description"></div>
+                                                        <span class="layout-tile-name" data-bind="text: choice.name"></span>
                                                     </label>
                                                 </div>
-                                                <div class="form-text">Pick a layout to instantly preview and apply section placement.</div>
+                                                <div class="form-check form-switch mt-3">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="layoutMapLeft"
+                                                        data-bind="checked: config.layoutMapLeft, enable: config.layoutSideEnabled">
+                                                    <label class="form-check-label" for="layoutMapLeft">Map on the left</label>
+                                                </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-starred" role="tabpanel" aria-labelledby="cfgTab-starred" tabindex="0">
                                                 <div
@@ -3655,8 +3662,7 @@
                         <!-- ko if: !selected() -->
                         <div class="input-group input-group-sm position-relative">
                             <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
-                                value: searchQuery,
-                                valueUpdate: 'afterkeydown',
+                                textInput: searchQuery,
                                 hasFocus: hasFocus,
                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                             <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3700,8 +3706,7 @@
                         <!-- ko if: !selected() -->
                         <div class="input-group input-group-sm position-relative">
                             <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
-                                value: searchQuery,
-                                valueUpdate: 'afterkeydown',
+                                textInput: searchQuery,
                                 hasFocus: hasFocus,
                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                             <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3745,8 +3750,7 @@
                         <div class="small text-muted mb-1">Moderators</div>
                         <div class="input-group input-group-sm position-relative">
                             <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
-                                value: searchQuery,
-                                valueUpdate: 'afterkeydown',
+                                textInput: searchQuery,
                                 hasFocus: hasFocus,
                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                             <button class="btn btn-outline-secondary" type="button" title="Clear"
@@ -4225,8 +4229,7 @@
                         <div class="input-group position-relative">
                             <input id="smsRecipientSearch" type="search" class="form-control"
                                 placeholder="Search contacts…" autocomplete="off" data-bind="
-        value: recipientSearchQuery,
-        valueUpdate: 'afterkeydown',
+        textInput: recipientSearchQuery,
         hasFocus: recipientSearchHasFocus,
         event: { blur: closeRecipientSearchDropdown, keydown: onRecipientSearchKeydown }
       " />
@@ -4846,8 +4849,7 @@
                     <div class="input-group input-group-lg">
                         <input id="spotlightSearchInput" type="search" class="form-control form-control-lg"
                             placeholder="Search teams, incidents, or enter a command" autocomplete="off" data-bind="
-                value: query,
-                valueUpdate: 'afterkeydown',
+                textInput: query,
                 event: { keydown: onInputKeyDown }
               " />
                         <button class="btn btn-outline-secondary" type="button" title="Clear"

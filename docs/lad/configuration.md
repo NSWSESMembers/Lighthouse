@@ -173,9 +173,11 @@ The **Collaborative layers** tab is where you subscribe to existing collaborativ
 
 ## Layout
 
-Choose a preset layout for LAD — which side the map is on, whether teams or taskings are on top, single-pane layouts, or map only.
+Pick a layout by its picture, and use **Map on the left** to move the map to the other side. The page changes as you pick.
 
-![Section layout presets](images/config-layout.png)
+**Tabs** shows one list at a time at full height, which suits tablets such as an iPad, and is the default there. Switch between the lists with the **Teams** and **Incidents** tabs at the top of the side drawer; LAD remembers which one was showing. When the window is taller than it is wide (an iPad in portrait), the side drawer runs across the full width with the map below it (map on the right) or above it (map on the left); drag the divider between them to share the height.
+
+![Layout settings](images/config-layout.png)
 
 ## Starred Teams & Incidents
 

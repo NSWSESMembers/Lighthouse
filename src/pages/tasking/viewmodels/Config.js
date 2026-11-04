@@ -18,6 +18,7 @@ import {
     ONSITE_GEOFENCE_DEFAULT_METRES, ONSITE_GEOFENCE_MIN_METRES, ONSITE_GEOFENCE_MAX_METRES,
 } from '../utils/onsiteGeofence.js';
 import { RESET_GROUPS, keysToReset } from '../utils/resetGroups.js';
+import { defaultLayoutPreset, splitLayoutPreset, joinLayoutPreset } from '../utils/layoutPreset.js';
 
 
 
@@ -336,9 +337,11 @@ export function ConfigVM(root, deps) {
         'map-right-tasking-only',
         'map-left-teams-only',
         'map-left-tasking-only',
+        'map-right-tabbed',
+        'map-left-tabbed',
         'map-only'
     ];
-    const DEFAULT_LAYOUT_PRESET = 'map-right-teams-top';
+    const DEFAULT_LAYOUT_PRESET = defaultLayoutPreset(); // tabbed on tablets
     const normalizeLayoutPreset = (value) => {
         const key = String(value || '').trim();
         return LAYOUT_PRESETS.includes(key) ? key : DEFAULT_LAYOUT_PRESET;
@@ -1364,63 +1367,41 @@ export function ConfigVM(root, deps) {
         return false;
     };
 
-    self.layoutPresetDefs = [
-        {
-            id: 'map-right-teams-top',
-            name: 'Map Right · Teams Top',
-            description: 'Teams above tasking in the side drawer, map on the right.',
-            previewClass: 'preset-map-right-teams-top'
-        },
-        {
-            id: 'map-right-tasking-top',
-            name: 'Map Right · Tasking Top',
-            description: 'Tasking above teams in the side drawer, map on the right.',
-            previewClass: 'preset-map-right-tasking-top'
-        },
-        {
-            id: 'map-left-teams-top',
-            name: 'Map Left · Teams Top',
-            description: 'Map on the left, side drawer on the right with teams above tasking.',
-            previewClass: 'preset-map-left-teams-top'
-        },
-        {
-            id: 'map-left-tasking-top',
-            name: 'Map Left · Tasking Top',
-            description: 'Map on the left, side drawer on the right with tasking above teams.',
-            previewClass: 'preset-map-left-tasking-top'
-        },
-        {
-            id: 'map-right-teams-only',
-            name: 'Map Right · Teams Only',
-            description: 'Side drawer shows teams only, map on the right.',
-            previewClass: 'preset-map-right-teams-only'
-        },
-        {
-            id: 'map-right-tasking-only',
-            name: 'Map Right · Tasking Only',
-            description: 'Side drawer shows tasking only, map on the right.',
-            previewClass: 'preset-map-right-tasking-only'
-        },
-        {
-            id: 'map-left-teams-only',
-            name: 'Map Left · Teams Only',
-            description: 'Map on the left, side drawer shows teams only.',
-            previewClass: 'preset-map-left-teams-only'
-        },
-        {
-            id: 'map-left-tasking-only',
-            name: 'Map Left · Tasking Only',
-            description: 'Map on the left, side drawer shows tasking only.',
-            previewClass: 'preset-map-left-tasking-only'
-        },
-        {
-            id: 'map-only',
-            name: 'Map Only',
-            description: 'Hide the side drawer and use the full map view.',
-            previewClass: 'preset-map-only'
-        }
-    ];
     self.layoutPreset = ko.observable(DEFAULT_LAYOUT_PRESET);
+
+    // The Layout tab picks the preset as two choices: the map's side and how
+    // the side drawer shows the lists (see utils/layoutPreset.js). 'Map only'
+    // has no side, so the last side picked is kept for when lists come back.
+    let lastLayoutSide = splitLayoutPreset(DEFAULT_LAYOUT_PRESET).side || 'right';
+    self.layoutSide = ko.pureComputed({
+        read: () => splitLayoutPreset(self.layoutPreset()).side || lastLayoutSide,
+        write: (side) => {
+            lastLayoutSide = side;
+            self.layoutPreset(joinLayoutPreset(side, splitLayoutPreset(self.layoutPreset()).lists));
+        },
+    });
+    self.layoutLists = ko.pureComputed({
+        read: () => splitLayoutPreset(self.layoutPreset()).lists,
+        write: (lists) => self.layoutPreset(joinLayoutPreset(self.layoutSide(), lists)),
+    });
+    self.layoutSideEnabled = ko.pureComputed(() => self.layoutLists() !== 'none');
+    self.layoutMapLeft = ko.pureComputed({
+        read: () => self.layoutSide() === 'left',
+        write: (left) => self.layoutSide(left ? 'left' : 'right'),
+    });
+    // The Layout tab's tiles: each one's thumbnail follows the map side.
+    self.layoutListChoices = [
+        ['teams-top', 'Teams on top'],
+        ['tasking-top', 'Incidents on top'],
+        ['tabbed', 'Tabs'],
+        ['teams-only', 'Teams only'],
+        ['tasking-only', 'Incidents only'],
+        ['none', 'Map only'],
+    ].map(([id, name]) => ({
+        id,
+        name,
+        previewClass: ko.pureComputed(() => `preset-${joinLayoutPreset(self.layoutSide(), id)}`),
+    }));
 
     //blown away on load
     self.teamStatusFilter = ko.observableArray([]);

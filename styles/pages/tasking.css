@@ -617,7 +617,8 @@ td.chev[draggable='true'] * {
   user-select: none !important;
 }
 
-.pane .small {
+.pane .small,
+.dropdown-menu.lifted-from-pane .small { /* see utils/dropdownPortal.js */
   font-size: 0.8rem;
 }
 .input-group-sm .form-control {
@@ -667,27 +668,32 @@ td.chev[draggable='true'] * {
 .app {
   display: flex;
   height: 100vh;
+  /* Visible height on tablets/phones, where 100vh runs under the browser's toolbar. */
+  height: 100dvh;
   width: 100vw;
 }
 
 .app.layout-map-left-teams-top .sidebar,
 .app.layout-map-left-tasking-top .sidebar,
 .app.layout-map-left-teams-only .sidebar,
-.app.layout-map-left-tasking-only .sidebar {
+.app.layout-map-left-tasking-only .sidebar,
+.app.layout-map-left-tabbed .sidebar {
   order: 3;
 }
 
 .app.layout-map-left-teams-top .vsplit,
 .app.layout-map-left-tasking-top .vsplit,
 .app.layout-map-left-teams-only .vsplit,
-.app.layout-map-left-tasking-only .vsplit {
+.app.layout-map-left-tasking-only .vsplit,
+.app.layout-map-left-tabbed .vsplit {
   order: 2;
 }
 
 .app.layout-map-left-teams-top .map-wrap,
 .app.layout-map-left-tasking-top .map-wrap,
 .app.layout-map-left-teams-only .map-wrap,
-.app.layout-map-left-tasking-only .map-wrap {
+.app.layout-map-left-tasking-only .map-wrap,
+.app.layout-map-left-tabbed .map-wrap {
   order: 1;
 }
 
@@ -919,40 +925,235 @@ body.sidebar-collapsed .vsplit {
   border-bottom: 0;
 }
 
-.layout-preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 10px;
+/* Tabbed layouts: one list at full height, picked by the tab buttons in the
+    tab bar (.drawer-tabs); .tabbed-incidents on .app = incidents. */
+.app.layout-map-right-tabbed #hsplit,
+.app.layout-map-left-tabbed #hsplit,
+.app.layout-map-right-tabbed:not(.tabbed-incidents) #paneBottom,
+.app.layout-map-left-tabbed:not(.tabbed-incidents) #paneBottom,
+.app.layout-map-right-tabbed.tabbed-incidents #paneTop,
+.app.layout-map-left-tabbed.tabbed-incidents #paneTop {
+  display: none !important;
 }
 
-.layout-preset-card {
-  border: 1px solid var(--bs-border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+.app.layout-map-right-tabbed #paneTop,
+.app.layout-map-left-tabbed #paneTop,
+.app.layout-map-right-tabbed #paneBottom,
+.app.layout-map-left-tabbed #paneBottom {
+  order: 1;
+  flex: 1 1 auto;
+  height: auto;
+  border-bottom: 0;
+}
+
+/* Tabbed layouts in portrait: drawer and map stacked, full width. Map Right
+   puts the map below the drawer, Map Left above it. The side splitter
+   becomes a row splitter setting --sidebar-h (resize.js). */
+@media (orientation: portrait) {
+  .app.layout-map-right-tabbed,
+  .app.layout-map-left-tabbed {
+    flex-direction: column;
+  }
+  .app.layout-map-right-tabbed .sidebar,
+  .app.layout-map-left-tabbed .sidebar {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 0 min(var(--sidebar-h, 55%), calc(100% - 160px));
+  }
+  body.sidebar-collapsed .app.layout-map-right-tabbed .sidebar,
+  body.sidebar-collapsed .app.layout-map-left-tabbed .sidebar {
+    flex-basis: 0;
+  }
+  .app.layout-map-right-tabbed .vsplit,
+  .app.layout-map-left-tabbed .vsplit {
+    width: auto !important;
+    height: 6px;
+    flex: 0 0 auto;
+    cursor: row-resize;
+  }
+  .app.layout-map-right-tabbed .vsplit::after,
+  .app.layout-map-left-tabbed .vsplit::after {
+    inset: 1px 0;
+  }
+  .app.layout-map-right-tabbed .map-wrap,
+  .app.layout-map-left-tabbed .map-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .app.layout-map-right-tabbed .vsplit,
+  .app.layout-map-left-tabbed .vsplit {
+    height: 16px;
+  }
+}
+
+/* Tabbed layouts: with the header pill gone, the list's search box and
+   buttons span the whole row, the buttons sharing the space evenly. */
+.app.layout-map-right-tabbed .pane-toolbar > :last-child,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .dropdown,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .dropdown {
+  flex: 1 1 0;
+  min-width: 32px;
+}
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .dropdown > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .dropdown > .btn {
+  width: 100%;
+}
+/* Equal shares: drop the buttons' own side padding (px-1/px-2), which would
+   otherwise be added on top of each share. */
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .dropdown > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .dropdown > .btn {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Tab bar across the top of the drawer (tabbed layouts only). The active
+   tab takes the environment colour of the list headers it replaces. */
+.drawer-tabs {
+  display: none;
+}
+
+.app.layout-map-right-tabbed .drawer-tabs,
+.app.layout-map-left-tabbed .drawer-tabs {
+  display: flex;
+  order: 0;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 6px 8px 3px;
+}
+
+.app.layout-map-right-tabbed .toolbar-label,
+.app.layout-map-left-tabbed .toolbar-label {
+  display: none !important;
+}
+
+.drawer-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 2px solid #f7931d;
+  border-radius: 10px;
+  background: #fff;
+  color: #9a5a0f;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-tab.active {
+  background: #f7931d;
+  color: #fff;
+}
+
+body.env-trainbeacon .drawer-tab {
+  border-color: #219f56;
+  color: #176b3a;
+}
+body.env-trainbeacon .drawer-tab.active {
+  background: #219f56;
+  color: #fff;
+}
+
+body.env-devbeacon .drawer-tab {
+  border-color: #2d9ee0;
+  color: #1c6b99;
+}
+body.env-devbeacon .drawer-tab.active {
+  background: #2d9ee0;
+  color: #fff;
+}
+
+.dark-mode .drawer-tab:not(.active) {
+  background: transparent;
+  color: #ddd;
+}
+
+/* Layout tab: six tiles, each a thumbnail of the page (3 x 2). */
+.layout-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 760px;
+}
+
+.layout-tile {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  background: var(--bs-body-bg);
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: 0.6rem;
   cursor: pointer;
 }
 
-.layout-preset-card.is-active {
+.layout-tile.active {
   border-color: var(--bs-primary);
-  box-shadow: inset 0 0 0 1px var(--bs-primary);
+  background: var(--bs-primary-bg-subtle);
 }
 
-.layout-preset-radio {
-  align-self: flex-start;
-  margin: 0;
+.layout-tile:has(input:focus-visible) {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
 
-.layout-preset-name {
-  font-weight: 600;
+/* Thumbnails keep the page's shape and grow with the modal; the icons
+   scale with them (cqw = % of the thumbnail's width). */
+.layout-tile .layout-preset-preview {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  container-type: inline-size;
+}
+
+/* (Selectors one class stronger than the .layout-preset-preview rules
+   further down, which would otherwise win.) */
+.layout-tile .layout-preset-preview .preview-block {
+  font-size: clamp(11px, 7cqw, 22px);
+  color: var(--bs-secondary-color);
+}
+
+/* List blocks: the icon as a header with faint rows under it. */
+.layout-tile .layout-preset-preview .preview-block--teams,
+.layout-tile .layout-preset-preview .preview-block--tasking {
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0.35em 0.45em;
+  background:
+    linear-gradient(var(--bs-body-bg), var(--bs-body-bg)) top / 100% 1.6em no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 0.75em, rgba(0, 0, 0, 0.07) 0.75em 1.05em) var(--bs-body-bg);
+}
+
+/* Map block: a soft map tint. */
+.layout-tile .layout-preset-preview .preview-block--map {
+  background: #e6efe1;
+}
+
+.layout-tile.active .layout-preset-preview .preview-block {
+  color: var(--bs-primary);
+}
+
+.layout-tile-name {
+  font-size: 0.95rem;
   line-height: 1.2;
-}
-
-.layout-preset-description {
-  line-height: 1.25;
+  text-align: center;
 }
 
 .layout-preset-preview {
@@ -1042,6 +1243,35 @@ body.sidebar-collapsed .vsplit {
 .layout-preset-preview.preset-map-right-tasking-only .preview-block--tasking,
 .layout-preset-preview.preset-map-left-tasking-only .preview-block--tasking {
   grid-row: 1 / span 2;
+}
+
+/* Tabbed: one drawer block, with the other list as a tab in its corner. */
+.layout-preset-preview.preset-map-right-tabbed .preview-block--teams,
+.layout-preset-preview.preset-map-left-tabbed .preview-block--teams {
+  grid-row: 1 / span 2;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px 0 0 4px;
+}
+
+.layout-preset-preview.preset-map-right-tabbed .preview-block--tasking,
+.layout-preset-preview.preset-map-left-tabbed .preview-block--tasking {
+  grid-row: 1;
+  align-self: start;
+  justify-self: end;
+  margin: 3px 4px 0 0;
+  padding: 1px 4px;
+  border-style: dashed;
+  z-index: 1;
+}
+
+.layout-preset-preview.preset-map-left-tabbed .preview-block--teams,
+.layout-preset-preview.preset-map-left-tabbed .preview-block--tasking {
+  grid-column: 2;
+}
+
+.layout-preset-preview.preset-map-left-tabbed .preview-block--map {
+  grid-column: 1;
 }
 
 .layout-preset-preview.preset-map-only {
@@ -2648,7 +2878,7 @@ overflow: hidden;
    sized and rounded to match them. */
 .leaflet-control.simex-notice {
   pointer-events: auto;
-  max-width: 360px;
+  max-width: min(360px, var(--map-w, 100vw) - 64px);
   margin-bottom: 0;
   padding: 10px 2.25rem 10px 12px;
   font: 13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -2665,7 +2895,8 @@ overflow: hidden;
 }
 .alerts {
   font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  max-width: 360px;
+  /* Leave room for the zoom/tool controls on the left of a narrow map. */
+  max-width: min(360px, var(--map-w, 100vw) - 64px);
   backdrop-filter: blur(2px);
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -5438,6 +5669,13 @@ body.dark-mode .ops-log-status-details {
   text-align: left;
 }
 
+/* Spelled out, not left to the browser's button default: that's black in
+   desktop Chrome but the system blue on iPadOS. (Dark mode sets its own.) */
+.alerts__btn,
+.alerts__hide-btn {
+  color: #000;
+}
+
 .alerts__hide-btn {
   flex: 0 0 auto;
   border: none;
@@ -5867,4 +6105,88 @@ input[type="search"]:focus {
   display: block;
   font-size: 11.5px;
   color: #6c757d;
+}
+
+/* Popups never wider than the map (--map-w, see resize.js). On a map
+   narrower than their content -- a tablet, or a squeezed desktop window --
+   the content scrolls sideways inside the popup instead of being cut off
+   at the map's edge. */
+.leaflet-popup-content {
+  max-width: calc(var(--map-w, 100vw) - 90px);
+  overflow-x: auto;
+}
+
+/* ===== Touch screens (iPad etc.) =====
+   (pointer: coarse) only matches when the main pointer is a finger, so mouse
+   and trackpad users keep the desktop sizes. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+@media (pointer: coarse) {
+  /* Splitters wide enough to grab with a finger. */
+  .vsplit {
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .hsplit {
+    height: 16px;
+  }
+  /* iOS zooms the page when focusing a field under 16px, and leaves it zoomed. */
+  input.form-control,
+  select.form-select,
+  textarea.form-control {
+    font-size: 16px;
+  }
+  /* Finger-sized hit areas for the small controls. The negative margins
+     cancel the padding, so the rows lay out exactly as before. */
+  .btn.btn-link.p-0 {
+    padding: 6px !important;
+    margin: -6px;
+  }
+  .jobstatus-dropdown-btn {
+    padding: 8px 0;
+    margin: -6px 0 -8px;
+  }
+  .alerts__hide-btn {
+    padding: 10px 8px;
+    margin: -10px -4px -10px 0;
+  }
+  .sidebar .btn-sm,
+  .team-status-button,
+  #teamMenu,
+  #jobMenu {
+    min-height: 32px;
+  }
+  .sidebar .btn-sm {
+    min-width: 32px;
+  }
+  /* The py-0 (icon) buttons are now taller than their line box, so centre
+     the icon explicitly (iOS otherwise leaves it riding high). Labelled
+     buttons keep their own padding and inline layout, so their text wraps
+     after the icon as on desktop. */
+  .sidebar .btn-sm.py-0,
+  #teamMenu,
+  #jobMenu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3em;
+  }
+  .ld-rail-item {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  /* No double-tap-to-zoom on controls, so taps register straight away. */
+  button,
+  a,
+  label,
+  input,
+  select,
+  .btn,
+  .dropdown-item,
+  th,
+  td {
+    touch-action: manipulation;
+  }
 }

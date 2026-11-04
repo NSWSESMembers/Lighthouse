@@ -37,7 +37,8 @@
     "advexport:check": "node scripts/advexport-docs/check.mjs",
     "nitcexport:demo": "node scripts/nitcexport-docs/demo.mjs",
     "nitcexport:shots": "node scripts/nitcexport-docs/capture.mjs",
-    "nitcexport:check": "node scripts/nitcexport-docs/check.mjs"
+    "nitcexport:check": "node scripts/nitcexport-docs/check.mjs",
+    "lad:serve": "node scripts/lad-docs/serve.mjs"
   },
   "husky": {
     "hooks": {

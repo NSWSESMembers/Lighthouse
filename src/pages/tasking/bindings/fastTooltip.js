@@ -59,11 +59,24 @@ function hideTip() {
     }
 }
 
+// On a touch screen a tap fires mouseenter, but mouseleave only comes with the
+// next tap somewhere else, so the bubble would sit over the page. After a
+// touch, hide it again on its own, and on the next touch.
+const TOUCH_TIP_MS = 1500;
+let lastPointerWasTouch = false;
+let touchHideTimer = 0;
+document.addEventListener('pointerdown', function (e) {
+    lastPointerWasTouch = e.pointerType === 'touch';
+    if (lastPointerWasTouch) hideTip();
+}, true);
+
 ko.bindingHandlers.fastTooltip = {
     init: function (element, valueAccessor) {
         element.addEventListener('mouseenter', function () {
             const text = ko.unwrap(valueAccessor());
             showTip(element, text);
+            clearTimeout(touchHideTimer);
+            if (lastPointerWasTouch) touchHideTimer = setTimeout(hideTip, TOUCH_TIP_MS);
         });
         element.addEventListener('mouseleave', function () {
             hideTip();
