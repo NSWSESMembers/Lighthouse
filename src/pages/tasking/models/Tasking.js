@@ -5,7 +5,7 @@ import L from "leaflet";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { showAlert } from '../components/windowAlert.js';
 import { Enum } from "../utils/enum.js";
-import { driveSourceFor, fixFreshness, fetchDriveTime } from "../utils/driveTime.js";
+import { driveSourceFor, fixFreshness, fetchDriveTime, fetchNearAddress } from "../utils/driveTime.js";
 
 
 
@@ -856,10 +856,14 @@ export function Tasking(data = {}) {
     // null | { loading: true } | { error } | { minutes, summary, from }
     // (`from`: the asset fix the route started at)
     self.driveTime = ko.observable(null);
+    // Rough address of the fix the route started at, once the reverse
+    // geocode (sent alongside the route) comes back; null without one.
+    self.driveNear = ko.observable(null);
     let driveTimeRequest = 0;
     self.resetDriveTime = function () {
         driveTimeRequest++;
         self.driveTime(null);
+        self.driveNear(null);
     };
     self.driveTimeLoading = ko.pureComputed(() => !!(self.driveTime() && self.driveTime().loading));
     self.calculateDriveTime = function (data, event) {
@@ -871,6 +875,12 @@ export function Tasking(data = {}) {
         const request = ++driveTimeRequest;
         const target = self.isEstimateMode() ? self.estimateDraft : self.eta;
         self.driveTime({ loading: true });
+        self.driveNear(null);
+        // In parallel with the route, but shown on its own: a slow or failed
+        // lookup never holds up or blocks the ETA.
+        fetchNearAddress(src).then(near => {
+            if (request === driveTimeRequest) self.driveNear(near);
+        });
         fetchDriveTime(src, to)
             .catch(() => null)
             .then(result => {
@@ -917,7 +927,7 @@ export function Tasking(data = {}) {
         if (d && d.error) return "Set the ETA by hand";
         if (self.driveTimeOutdated()) return "New location since: Redo to update";
         const used = usedFix();
-        if (used) return `Location ${used.ageLabel}`;
+        if (used) return self.driveNear() ? `Near ${self.driveNear()} · ${used.ageLabel}` : `Location ${used.ageLabel}`;
         return `Location ${src.ageLabel}`;
     });
     // Freshness grade of the fix the row is talking about.

@@ -5,15 +5,18 @@
  * tracked asset to the incident, via the same route Lambda as the Instant
  * Task suggestions (batchRoute). An asset's last fix can be old -- radios go
  * quiet when parked or out of coverage -- so the source always carries the
- * fix's age and a freshness grade for the operator to judge it by.
+ * fix's age and a freshness grade for the operator to judge it by, and is
+ * reverse-geocoded (geocode-v2 Lambda) to say roughly where the team is.
  *
  * @module driveTime
  */
 import ko from "knockout";
 import { batchRoute } from "./batchRoute.js";
 
+const GEOCODE_URL = "https://lambda.lighthouse-extension.com/lad_v2/geocode";
+
 let _getToken = null;
-/** Beacon token getter for the route Lambda -- set once by main.js. */
+/** Beacon token getter for the route and geocode Lambdas -- set once by main.js. */
 export function setDriveTimeTokenGetter(getTokenFn) { _getToken = getTokenFn; }
 
 // Fix age grades: fresh up to FIX_AGING_MINUTES, then aging (amber), stale
@@ -77,4 +80,45 @@ export async function fetchDriveTime(from, to, opts = {}) {
         minutes: Math.max(1, Math.ceil(summary.travelTimeSeconds / 60)),
         distanceMeters: summary.distanceMeters,
     };
+}
+
+/**
+ * A short address for a reverse-geocode result: "12 Smith St, Parramatta".
+ * In Australian results the suburb is District (Locality is the city), as in
+ * the map's "Geocode here".
+ */
+export function shortAddress(item) {
+    const a = item && item.Address;
+    if (!a) return (item && item.Title) || null;
+    const suburb = a.District || a.Locality;
+    const street = a.Street ? `${a.AddressNumber ? `${a.AddressNumber} ` : ""}${a.Street}` : null;
+    const parts = [street, suburb].filter(Boolean);
+    return parts.length ? parts.join(", ") : item.Title || a.Label || null;
+}
+
+/**
+ * The street address nearest { lat, lng }, shortened (shortAddress), or null
+ * if the lookup fails or finds nothing.
+ */
+export async function fetchNearAddress(pos, { timeoutMs = 10000 } = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const url = new URL(GEOCODE_URL);
+        url.searchParams.set("lat", String(pos.lat));
+        url.searchParams.set("lon", String(pos.lng));
+        url.searchParams.set("maxResults", "1");
+        const token = _getToken ? await _getToken() : null;
+        const res = await fetch(url.toString(), {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            signal: controller.signal,
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        return shortAddress(Array.isArray(json?.results) ? json.results[0] : null);
+    } catch {
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
 }

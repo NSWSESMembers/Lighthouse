@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ko from 'knockout';
-import { driveSourceFor, fixFreshness, fetchDriveTime, setDriveTimeTokenGetter } from './driveTime.js';
+import { driveSourceFor, fixFreshness, fetchDriveTime, fetchNearAddress, shortAddress, setDriveTimeTokenGetter } from './driveTime.js';
 
 const asset = (name, lat, lng, lastSeen = '2026-06-15T09:58:00') => ({
   name: ko.observable(name),
@@ -62,5 +62,43 @@ describe('fetchDriveTime', () => {
   it('is null when no route comes back', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
     expect(await fetchDriveTime({ lat: 1, lng: 1 }, { lat: 2, lng: 2 })).toBeNull();
+  });
+});
+
+describe('shortAddress', () => {
+  it('is number + street, suburb (District)', () => {
+    expect(shortAddress({ Address: { AddressNumber: '12', Street: 'Smith St', District: 'Parramatta', Locality: 'Sydney' } })).toBe('12 Smith St, Parramatta');
+  });
+  it('copes with no number, no suburb, or no street', () => {
+    expect(shortAddress({ Address: { Street: 'Smith St', Locality: 'Sydney' } })).toBe('Smith St, Sydney');
+    expect(shortAddress({ Address: { Street: 'Smith St' } })).toBe('Smith St');
+    expect(shortAddress({ Title: 'Somewhere', Address: {} })).toBe('Somewhere');
+    expect(shortAddress(null)).toBeNull();
+  });
+});
+
+describe('fetchNearAddress', () => {
+  beforeEach(() => vi.restoreAllMocks());
+
+  it('reverse-geocodes with the token and shortens the first result', async () => {
+    setDriveTimeTokenGetter(async () => 'tok');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [{ Address: { AddressNumber: '3', Street: 'High St', District: 'Penrith' } }] }),
+    });
+    expect(await fetchNearAddress({ lat: -33.75, lng: 150.69 })).toBe('3 High St, Penrith');
+    const [url, opts] = global.fetch.mock.calls[0];
+    const u = new URL(url);
+    expect([u.searchParams.get('lat'), u.searchParams.get('lon'), u.searchParams.get('maxResults')]).toEqual(['-33.75', '150.69', '1']);
+    expect(opts.headers.Authorization).toBe('Bearer tok');
+  });
+
+  it('is null on a failed lookup or no results', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
+    expect(await fetchNearAddress({ lat: 1, lng: 1 })).toBeNull();
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [] }) });
+    expect(await fetchNearAddress({ lat: 1, lng: 1 })).toBeNull();
+    global.fetch = vi.fn().mockRejectedValue(new Error('offline'));
+    expect(await fetchNearAddress({ lat: 1, lng: 1 })).toBeNull();
   });
 });

@@ -1038,11 +1038,15 @@ describe('drive-time ETA', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-06-15T10:00:00'));
-    global.fetch = vi.fn().mockResolvedValue({
+    global.fetch = vi.fn(async (url) => ({
       ok: true,
-      json: async () => ({ Routes: [{ Summary: { Overview: { Distance: 12300, Duration: 17 * 60 + 5 } } }] }),
-    });
+      json: async () => (String(url).includes('/geocode')
+        ? { results: [{ Address: { AddressNumber: '12', Street: 'Smith St', District: 'Parramatta' } }] }
+        : { Routes: [{ Summary: { Overview: { Distance: 12300, Duration: 17 * 60 + 5 } } }] }),
+    }));
   });
+
+  const routeCalls = () => global.fetch.mock.calls.filter(([url]) => !String(url).includes('/geocode'));
 
   afterEach(() => {
     vi.useRealTimers();
@@ -1087,7 +1091,8 @@ describe('drive-time ETA', () => {
     await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
     expect(t.eta()).toBe('2026-06-15T10:18');
     expect(t.driveRowTitle()).toBe('18m drive · 12.3 km by road');
-    expect(t.driveRowDetail()).toBe('Location updated 20 min ago');
+    await vi.waitFor(() => expect(t.driveNear()).toBe('12 Smith St, Parramatta'));
+    expect(t.driveRowDetail()).toBe('Near 12 Smith St, Parramatta · updated 20 min ago');
     expect(t.driveRowCss()).toBe('tsm-drive--stale tsm-drive--done');
     expect(t.driveRowAction()).toBe('Redo');
   });
@@ -1108,15 +1113,28 @@ describe('drive-time ETA', () => {
     expect(t.driveRowCss()).toBe('tsm-drive--stale tsm-drive--done tsm-drive--outdated');
     expect(t.driveRowWarn()).toBe(true);
     expect(t.eta()).toBe('2026-06-15T10:18'); // left alone
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(routeCalls()).toHaveLength(1);
 
     t.calculateDriveTime(); // Redo uses the new fix
-    await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(routeCalls()).toHaveLength(2));
     await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
     expect(t.driveTimeOutdated()).toBe(false);
-    expect(JSON.parse(global.fetch.mock.calls[1][1].body).coordinates[0]).toEqual([151.1, -33.15]);
-    expect(t.driveRowDetail()).toBe('Location updated just now');
+    expect(JSON.parse(routeCalls()[1][1].body).coordinates[0]).toEqual([151.1, -33.15]);
+    await vi.waitFor(() => expect(t.driveNear()).toBe('12 Smith St, Parramatta'));
+    expect(t.driveRowDetail()).toBe('Near 12 Smith St, Parramatta · updated just now');
     expect(t.driveRowCss()).toBe('tsm-drive--fresh tsm-drive--done');
+  });
+
+  it('still sets the ETA when the address lookup fails', async () => {
+    global.fetch = vi.fn(async (url) => (String(url).includes('/geocode')
+      ? { ok: false, json: async () => ({}) }
+      : { ok: true, json: async () => ({ Routes: [{ Summary: { Overview: { Distance: 12300, Duration: 17 * 60 } } }] }) }));
+    const t = tasked();
+    t.needsETA(true);
+    t.calculateDriveTime();
+    await vi.waitFor(() => expect(t.eta()).toBe('2026-06-15T10:17'));
+    expect(t.driveNear()).toBeNull();
+    expect(t.driveRowDetail()).toBe('Location updated 20 min ago');
   });
 
   it('sets the draft in the Change ETA editor', async () => {

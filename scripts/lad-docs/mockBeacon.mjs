@@ -157,7 +157,16 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
     // Shared default assets, collab map layers, share/load config, geocode,
     // routing: nothing shared in the demo.
     log(`[mock] lambda ${method} ${url.pathname} (empty)`);
-    if (/geocode/.test(url.pathname)) return json(route, { results: [] });
+    if (/geocode/.test(url.pathname)) {
+      // Reverse lookups (?lat=&lon=, e.g. Drive time's "Near ...") get an
+      // invented street address; address searches find nothing.
+      if (!url.searchParams.has('lat')) return json(route, { results: [] });
+      return json(route, { results: [{
+        Title: '14 Example St, Demoville NSW 2999, Australia',
+        Address: { Label: '14 Example St, Demoville NSW 2999, Australia', AddressNumber: '14', Street: 'Example St', District: 'Demoville', Locality: 'Demo City', PostalCode: '2999' },
+        Position: [Number(url.searchParams.get('lon')), Number(url.searchParams.get('lat'))],
+      }] });
+    }
     if (/\/route$/.test(url.pathname) && method === 'POST') return json(route, fakeRoute(route.request().postDataJSON()));
     return json(route, method === 'GET' ? [] : {});
   }
