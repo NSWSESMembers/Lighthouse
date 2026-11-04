@@ -5974,8 +5974,8 @@ input[type="search"]:focus {
   box-shadow: none;
 }
 
-/* ── Job search autosuggest dropdown ── */
-.job-search-suggestions {
+/* ── Toolbar search autosuggest dropdown (incidents + teams) ── */
+.search-suggestions {
   position: fixed;
   z-index: 9999;
   background: #fff;
@@ -5988,7 +5988,7 @@ input[type="search"]:focus {
   font-size: 11.5px;
 }
 
-.job-search-suggestions li {
+.search-suggestions li {
   display: flex;
   align-items: center;
   padding: 4px 8px;
@@ -5996,19 +5996,19 @@ input[type="search"]:focus {
   gap: 6px;
 }
 
-.job-search-suggestions li:hover,
-.job-search-suggestions li.active {
+.search-suggestions li:hover,
+.search-suggestions li.active {
   background: #e9ecef;
 }
 
-.job-search-suggestions .suggestion-label {
+.search-suggestions .suggestion-label {
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.job-search-suggestions .suggestion-category {
+.search-suggestions .suggestion-category {
   flex: 0 0 auto;
   font-size: 9.5px;
   font-weight: 500;
@@ -6016,13 +6016,13 @@ input[type="search"]:focus {
 }
 
 /* Dark-mode support */
-.dark-mode .job-search-suggestions {
+.dark-mode .search-suggestions {
   background: #2b2b2b;
   border-color: #555;
 }
 
-.dark-mode .job-search-suggestions li:hover,
-.dark-mode .job-search-suggestions li.active {
+.dark-mode .search-suggestions li:hover,
+.dark-mode .search-suggestions li.active {
   background: #3a3a3a;
 }
 

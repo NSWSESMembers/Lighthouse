@@ -17,6 +17,12 @@ Sort by Callsign, Status, HQ or Task Count by clicking the column heading; click
 
 ![Team Register](images/team-register.png)
 
+## Searching
+
+Type in the **Search teams…** box above the register to list only matching teams. It matches anywhere in the callsign (e.g. `n13` finds BAN13) or in the name, number plate or radio ID of an asset matched to the team, and the start of a team member's first or last name, or their member number. Each word you type has to match, so `ban alex` finds BAN teams with an Alex in them. Suggestions (callsigns, members, assets and plates) appear as you type: use the arrow keys and <kbd>Enter</kbd>, or click one, to fill it in, and <kbd>Esc</kbd> to close the list. Click **×** to clear the search.
+
+The search only narrows what's shown within your LAD team filters. [Spotlight](spotlight.md) also searches teams (including by HQ) and takes you straight to the one you pick.
+
 Each row's background colour shows the team's current tasking load, so you can quickly spot teams that are (or will soon be) available, teams that may be overloaded, or teams yet to complete their taskings in Beacon:
 
 | Colour | Active taskings |

@@ -54,7 +54,8 @@ import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
 import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
-import { buildJobSuggestionPool, buildJobSearchSuggestions, filterJobsBySearchTerm } from './utils/searchMatching.js';
+import { buildJobSuggestionPool, buildTeamSuggestionPool, filterJobsBySearchTerm, filterTeamsBySearchTerm } from './utils/searchMatching.js';
+import { createSearchSuggest } from './utils/searchSuggest.js';
 import { createMarkerBatcher } from './utils/markerBatcher.js';
 import { subscribeMembership } from './utils/arrayChanges.js';
 import { selectJobsToDrop } from './utils/jobSweep.js';
@@ -840,101 +841,24 @@ function VM() {
 
     //Job filtering/searching
     self.jobSearch = ko.observable('');
-    self.clearJobSearch = () => { self.jobSearch(''); self.jobSearchSuggestions([]); };
 
     // --- Autosuggest for job search ---
-    self.jobSearchSuggestions = ko.observableArray([]);
-    self.jobSearchActiveIndex = ko.observable(-1);
-    self.jobSearchShowSuggestions = ko.observable(false);
-
     // Build suggestion pool once, recompute when filtered jobs change
     // See utils/searchMatching.js for the pool-building/matching logic.
     self._jobSuggestionPool = ko.pureComputed(() => {
         return buildJobSuggestionPool(self.filteredJobsAgainstConfig());
     }).extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } });
 
-    // React to typing — produce up to 8 suggestions
-    self.jobSearch.subscribe(val => {
-        const result = buildJobSearchSuggestions(self._jobSuggestionPool(), val);
-        self.jobSearchSuggestions(result.suggestions);
-        if (result.showSuggestions === false) {
-            self.jobSearchShowSuggestions(false);
-            return;
-        }
-        if (!('showSuggestions' in result)) return; // no matchable last token -- leave showSuggestions/activeIndex untouched
-        self.jobSearchActiveIndex(-1);
-        self.jobSearchShowSuggestions(true);
-    });
-
-    // Pick a suggestion — replace the last token with the selected label
-    self.pickJobSuggestion = function (suggestion) {
-        if (suggestion.isExact) {
-            // "Search" row — just dismiss the dropdown, keep current text
-            self.jobSearchShowSuggestions(false);
-            document.getElementById('jobSearch')?.focus();
-            return;
-        }
-        const current = self.jobSearch().trim();
-        const tokens = current.split(/\s+/);
-        tokens[tokens.length - 1] = suggestion.label;
-        self.jobSearch(tokens.join(' '));
-        self.jobSearchShowSuggestions(false);
-        document.getElementById('jobSearch')?.focus();
-    };
-
-    // Keyboard navigation for suggestions
-    self.jobSearchKeyDown = function (_, e) {
-        const suggestions = self.jobSearchSuggestions();
-        if (!suggestions.length || !self.jobSearchShowSuggestions()) return true;
-
-        if (e.key === 'ArrowDown') {
-            self.jobSearchActiveIndex(Math.min(self.jobSearchActiveIndex() + 1, suggestions.length - 1));
-            e.preventDefault();
-            return false;
-        }
-        if (e.key === 'ArrowUp') {
-            self.jobSearchActiveIndex(Math.max(self.jobSearchActiveIndex() - 1, -1));
-            e.preventDefault();
-            return false;
-        }
-        if (e.key === 'Enter' && self.jobSearchActiveIndex() >= 0) {
-            self.pickJobSuggestion(suggestions[self.jobSearchActiveIndex()]);
-            e.preventDefault();
-            return false;
-        }
-        if (e.key === 'Escape') {
-            self.jobSearchShowSuggestions(false);
-            return false;
-        }
-        return true;
-    };
-
-    // Position the fixed dropdown beneath the search input
-    self._positionJobSuggestions = function () {
-        const input = document.getElementById('jobSearch');
-        const list = document.querySelector('.job-search-suggestions');
-        if (!input || !list) return;
-        const rect = input.closest('.input-group')?.getBoundingClientRect() || input.getBoundingClientRect();
-        list.style.top = rect.bottom + 'px';
-        list.style.left = rect.left + 'px';
-        list.style.width = rect.width + 'px';
-    };
-
-    // Reposition whenever suggestions are shown
-    self.jobSearchShowSuggestions.subscribe(v => {
-        if (v) requestAnimationFrame(() => self._positionJobSuggestions());
-    });
-
-    // Close suggestions on blur (with slight delay for click to register)
-    self.jobSearchBlur = function () {
-        setTimeout(() => self.jobSearchShowSuggestions(false), 200);
-    };
-
-    self.jobSearchFocus = function () {
-        if (self.jobSearchSuggestions().length > 0) {
-            self.jobSearchShowSuggestions(true);
-        }
-    };
+    // Dropdown state and handlers -- see utils/searchSuggest.js.
+    const jobSuggest = createSearchSuggest(ko, { search: self.jobSearch, pool: self._jobSuggestionPool, inputId: 'jobSearch' });
+    self.clearJobSearch = jobSuggest.clear;
+    self.jobSearchSuggestions = jobSuggest.suggestions;
+    self.jobSearchActiveIndex = jobSuggest.activeIndex;
+    self.jobSearchShowSuggestions = jobSuggest.showSuggestions;
+    self.pickJobSuggestion = jobSuggest.pick;
+    self.jobSearchKeyDown = jobSuggest.keyDown;
+    self.jobSearchBlur = jobSuggest.blur;
+    self.jobSearchFocus = jobSuggest.focus;
 
     // --- End autosuggest ---
 
@@ -994,7 +918,6 @@ function VM() {
 
     // Team filtering/searching
     self.teamSearch = ko.observable('');
-    self.clearTeamSearch = () => self.teamSearch('');
 
 
     // Extracted so it can be reused as a single-team admission check (e.g. for
@@ -1009,25 +932,31 @@ function VM() {
         return ko.utils.arrayFilter(self.teams(), tm => self.teamMatchesConfigFilters(tm));
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
+    // --- Autosuggest for team search (same dropdown as job search) ---
+    self._teamSuggestionPool = ko.pureComputed(() => {
+        return buildTeamSuggestionPool(self.filteredTeamsAgainstConfig());
+    }).extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } });
+
+    const teamSuggest = createSearchSuggest(ko, { search: self.teamSearch, pool: self._teamSuggestionPool, inputId: 'teamSearch' });
+    self.clearTeamSearch = teamSuggest.clear;
+    self.teamSearchSuggestions = teamSuggest.suggestions;
+    self.teamSearchActiveIndex = teamSuggest.activeIndex;
+    self.teamSearchShowSuggestions = teamSuggest.showSuggestions;
+    self.pickTeamSuggestion = teamSuggest.pick;
+    self.teamSearchKeyDown = teamSuggest.keyDown;
+    self.teamSearchBlur = teamSuggest.blur;
+    self.teamSearchFocus = teamSuggest.focus;
+
     self.filteredTeams = ko.pureComputed(() => {
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
         const pinnedTeamSet = new Set((pinnedTeamIds || []).map(id => String(id)));
         console.log("Filtering teams... filteredTeamsAgainstConfig count:", self.filteredTeamsAgainstConfig().length);
-        return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
-
+        // Callsign or member name/number -- see utils/searchMatching.js.
+        const bySearchTerm = filterTeamsBySearchTerm(self.filteredTeamsAgainstConfig(), self.teamSearch());
+        return ko.utils.arrayFilter(bySearchTerm, tm => {
             // pinned-only filter
-            if (pinnedOnlyTeams && !pinnedTeamSet.has(String(tm.id()))) {
-                return false;
-            }
-
-            const term = self.teamSearch().toLowerCase();
-
-            if (tm.callsign().toLowerCase().includes(term)) {
-                return true;
-            }
-
-
+            return !pinnedOnlyTeams || pinnedTeamSet.has(String(tm.id()));
         })
 
 
@@ -2191,12 +2120,20 @@ function VM() {
     // subscribeMembership, not KO's arrayChange diffs, which can report a
     // still-listed item as deleted -- see utils/arrayChanges.js.
 
-    //fetch tasking if a team is added
-    subscribeMembership(self.filteredTeams, ({ added, removed }) => {
+    // Alert only when a refresh drops a team the user was viewing out of the
+    // config filters -- not when the user's own search or pinned-only toggle
+    // hides it (same as the incident alert below).
+    subscribeMembership(self.filteredTeamsAgainstConfig, ({ removed }) => {
         removed.forEach(team => {
             if (team.expanded() || team.popUpIsOpen()) {
                 showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
             }
+        });
+    });
+
+    //fetch tasking if a team is added
+    subscribeMembership(self.filteredTeams, ({ added, removed }) => {
+        removed.forEach(team => {
             team.isFilteredIn(false);
         });
         added.forEach(team => {
