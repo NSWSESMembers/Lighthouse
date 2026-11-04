@@ -77,6 +77,10 @@ The home page shows the first three `##` entries, so keep the title short.
 - **A reminder in Beacon:** while an exercise is chosen, a **Simulated locations** pill next to the **Lighthouse** menu on every Beacon page says the locations Lighthouse shows aren't live. Click it to change or stop the exercise. See [Choosing an Exercise](https://lighthouse.ses.nsw.gov.au/guides/lad/simulated-exercises.html#choosing-an-exercise).
 - The [privacy policy](https://lighthouse.ses.nsw.gov.au/privacy/#the-cadence-exercise-service) now covers the CADence exercise service: what Lighthouse sends to it, and what it keeps.
 
+### Beacon Incident Page
+
+- **Instant Category shows the incident's current category.** On an incident in Beacon, the **Instant Category** menu now checks the incident when you open it and shows its current category in bold, as **Instant Sector** does for sectors.
+
 ### LAD
 
 - **Layer presets: turn a set of map layers on or off with one click.** The **Layers** menu has a new **Presets** section under **On the map**. Lighthouse comes with **Weather** (BOM Severe Thunderstorm Cells and BOM Rain Radar Still) **Roads** (Transport NSW Cameras and Transport NSW Incidents) and **Boundaries** (Unit/Zone Boundaries Hybrid). Save the layers you have on as your own preset, and pin up to three presets as buttons on the map, grouped with the Layers button. See [Layer Presets](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#layer-presets).

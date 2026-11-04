@@ -2251,18 +2251,61 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function (newVal
 });
 
 function InstantCategoryButton() {
-  if ($(quickCategory).find('li').length < 1) {
+  $(quickCategory).find('ul').empty();
+  var loading = (
+    <li>
+      <a href="#" style="text-align: center;">
+        <i class="fa fa-refresh fa-spin fa-2x fa-fw"></i>
+      </a>
+    </li>
+  );
+  $(quickCategory).find('ul').append(loading);
+
+  //fetch the job so the current category is fresh and not stale on page.
+  $.ajax({
+    type: 'GET',
+    url: urls.Base + '/Api/v1/Jobs/' + jobId + '?viewModelType=2',
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+    },
+    cache: false,
+    dataType: 'json',
+    data: { LighthouseFunction: 'InstantCategoryButton', userId: user.Id },
+    complete: function (response, textStatus) {
+      //still show the list if the fetch fails, just without the current one marked
+      var currentCategory = null;
+      if (textStatus == 'success' && response.responseJSON) {
+        currentCategory = response.responseJSON.TaskingCategory;
+      }
+      BuildCategoryList(currentCategory);
+    },
+  });
+
+  function BuildCategoryList(currentCategory) {
+    $(quickCategory).find('ul').empty();
     var categories = ['NA', '1', '2', '3', '4', '5'];
     let finalli = [];
 
     categories.forEach(function (entry) {
-      let item = (
-        <li>
-          <a style="text-align:left" href="#">
-            {entry}
-          </a>
-        </li>
-      );
+      let item;
+      if (CategoryId(entry) !== currentCategory) {
+        item = (
+          <li>
+            <a style="text-align:left" href="#">
+              {entry}
+            </a>
+          </li>
+        );
+      } else {
+        //if it is the current category, make it bold.
+        item = (
+          <li>
+            <a style="text-align:left" href="#">
+              <b>{entry}</b>
+            </a>
+          </li>
+        );
+      }
       //click handler
       $(item).click(function (e) {
         SetCategory(entry);
@@ -2271,6 +2314,10 @@ function InstantCategoryButton() {
       finalli.push(item);
     });
     $(quickCategory).find('ul').append(finalli);
+  }
+
+  function CategoryId(entry) {
+    return entry == 'NA' ? 0 : parseInt(entry);
   }
 
   function SetCategory(id) {
