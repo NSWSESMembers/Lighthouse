@@ -2531,20 +2531,20 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   --bs-btn-active-color: var(--bs-btn-color);
   --bs-btn-active-border-color: var(--bs-btn-border-color);
 }
-.team-no-asset .fa-stack {
-  width: 1.25em;
-  height: 1em;
-  line-height: 1em;
-  vertical-align: -0.125em;
+/* Full-size car (same as the other buttons' icons) with a small ban badge
+   on its corner, so the car stays recognisable. */
+.team-no-asset__icon {
+  position: relative;
+  display: inline-block;
 }
-.team-no-asset .fa-stack-1x {
-  font-size: 0.6em;
-  line-height: calc(1em / 0.6);
-}
-.team-no-asset .fa-stack-2x {
-  font-size: 1.25em;
-  line-height: 0.8em;
+.team-no-asset__ban {
+  position: absolute;
+  right: -0.45em;
+  bottom: -0.3em;
+  font-size: 0.75em;
   color: tomato;
+  background: var(--bs-body-bg, #fff);
+  border-radius: 50%;
 }
 
 /* Task Count cell: the ETA/ETC chip sits on a second line */
