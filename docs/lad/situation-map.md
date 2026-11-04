@@ -95,7 +95,7 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 
 ![Popup from clicking a traffic incident marker](images/overlay-marker-popup.png)
 
-Some area overlays also open a popup when you click inside an area: **BOM Land Warnings** (warning type, severity and times) and **WaterNSW Special & Controlled Areas** (area name and class). Other overlays, such as boundaries, radar and BOM observations, are pictures only and don't respond to clicks.
+**WaterNSW Special & Controlled Areas** also opens a popup when you click inside an area, with the area's name and class. Other overlays, such as boundaries, radar, BOM warnings and BOM observations, are pictures only and don't respond to clicks.
 
 Overlay markers are drawn under incidents by default. If one is hidden behind an incident, move it up on the [Map layers](configuration.md#map-layers) tab of the Configuration screen.
 
@@ -125,6 +125,7 @@ Most layers are described by their name. Those that need more explanation:
 
 **BOM Warnings**
 
+- **BOM Land Warnings**: BOM's current flood warnings, flood watches, severe weather, severe thunderstorm and fire weather warnings, drawn by BOM in its own colours. It's a picture only: clicking a warning area doesn't open a popup.
 - **BOM Severe Thunderstorm Warning**: the areas under a current severe thunderstorm warning.
 - **BOM Severe Thunderstorm Cells**: the storm cells named in those warnings, with an arrow for the direction each is moving and the time of the cell's position (UTC).
 - **BOM Volcanic Ash Advisory**: advisories from the Darwin Volcanic Ash Advisory Centre: the erupting volcano, the ash cloud now, and where it's forecast to be in 6, 12 and 18 hours.
