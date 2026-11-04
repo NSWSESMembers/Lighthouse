@@ -917,7 +917,7 @@ export function Tasking(data = {}) {
         if (d && d.error) return "Set the ETA by hand";
         if (self.driveTimeOutdated()) return "New location since: Redo to update";
         const used = usedFix();
-        if (used) return used.state !== "fresh" ? `Location ${used.ageLabel}: check with the team` : `Location ${used.ageLabel}`;
+        if (used) return `Location ${used.ageLabel}`;
         return `Location ${src.ageLabel}`;
     });
     // Freshness grade of the fix the row is talking about.

@@ -1087,7 +1087,7 @@ describe('drive-time ETA', () => {
     await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
     expect(t.eta()).toBe('2026-06-15T10:18');
     expect(t.driveRowTitle()).toBe('18m drive · 12.3 km by road');
-    expect(t.driveRowDetail()).toBe('Location updated 20 min ago: check with the team');
+    expect(t.driveRowDetail()).toBe('Location updated 20 min ago');
     expect(t.driveRowCss()).toBe('tsm-drive--stale tsm-drive--done');
     expect(t.driveRowAction()).toBe('Redo');
   });

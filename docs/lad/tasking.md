@@ -86,7 +86,7 @@ When setting an ETA, the **Or the drive time** row works out how long the team w
 - 6 to 15 minutes old, it turns amber with a warning sign.
 - Over 15 minutes old, or if the update time isn't known, it turns red.
 
-Once the ETA is set, the row shows the drive time and road distance, e.g. *18m drive · 12.3 km by road*, and if the location was old it adds *check with the team*. If the asset reports a new location while the menu is open, the ETA isn't changed: the row says *New location since: Redo to update*. Click **Redo** to work it out again from the new location, or adjust the ETA with the quick buttons or an exact time. The row is greyed out if the team has no asset with a location, or the incident has no location. It's in both the status menu (going **En route**) and **Change ETA**.
+Once the ETA is set, the row shows the drive time and road distance, e.g. *18m drive · 12.3 km by road*, still with the age of the location it started from. If the asset reports a new location while the menu is open, the ETA isn't changed: the row says *New location since: Redo to update*. Click **Redo** to work it out again from the new location, or adjust the ETA with the quick buttons or an exact time. The row is greyed out if the team has no asset with a location, or the incident has no location. It's in both the status menu (going **En route**) and **Change ETA**.
 
 ![Drive time with an old asset location](images/tasking-status-drive-time.png)
 
