@@ -7,6 +7,7 @@ import { createRadioConsoleViewModel } from './viewmodels/RadioConsoleViewModel.
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection } from '../tasking/signalr/connection.js';
 import { registerAcronymTextBinding } from '../tasking/components/acronymText.js';
 import { installModalHotkeys } from '../tasking/components/modalHotKeys.js';
+import { needsHostPermission, requestHostPermission } from '../../shared/optionalHostPermission.js';
 
 function getSearchParameters() {
   var prmstr = window.location.search.substr(1);
@@ -36,6 +37,23 @@ var tokenReady = new Promise(function (resolve) {
 function getToken() {
   if (token) return Promise.resolve(token);
   return tokenReady;
+}
+
+// The Test and Dev Beacon live feed hosts are optional host permissions
+// (manifest): the feed only starts once the user has allowed the host.
+var liveFeedAllowed = false;
+var liveFeedChecked = params.signalr
+  ? needsHostPermission(params.signalr).then(function (needed) {
+      liveFeedAllowed = !needed;
+      return needed;
+    })
+  : Promise.resolve(false);
+
+function startLiveFeed() {
+  if (!params.signalr || !liveFeedAllowed || !token) return;
+  window.__radioSignalRConnection = startBeaconSignalRConnection(params.signalr, function () {
+    return token;
+  });
 }
 
 // Applied synchronously, before the Knockout bundle/view model exist, so
@@ -81,9 +99,22 @@ document.addEventListener('DOMContentLoaded', function () {
       userId: params.userId,
       personId: params.personId,
       signalrExpected: !!params.signalr,
+      // no await before the request, or Chrome drops the click's user gesture and refuses
+      onAllowLiveFeed: function () {
+        requestHostPermission(params.signalr).then(function (granted) {
+          if (!granted) return;
+          liveFeedAllowed = true;
+          viewModel.liveFeedNeedsPermission(false);
+          startLiveFeed();
+        });
+      },
       hq: params.hq,
       getToken: getToken,
       ko: ko,
+    });
+
+    liveFeedChecked.then(function (needed) {
+      viewModel.liveFeedNeedsPermission(needed);
     });
 
     ko.applyBindings(viewModel);
@@ -153,9 +184,5 @@ BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(params.host, params.sour
     window.__radioResolveToken(token);
     window.__radioResolveToken = null;
   }
-  if (params.signalr) {
-    window.__radioSignalRConnection = startBeaconSignalRConnection(params.signalr, function () {
-      return token;
-    });
-  }
+  liveFeedChecked.then(startLiveFeed);
 });

@@ -43,6 +43,10 @@
     "https://api.rainviewer.com/*",
     "https://portal.spatial.nsw.gov.au/*"
   ],
+  "optional_host_permissions": [
+    "https://beacon-test-comms.azurewebsites.net/*",
+    "https://beacon-dev-comms.azurewebsites.net/*"
+  ],
   "permissions": [
     "storage",
     "notifications",

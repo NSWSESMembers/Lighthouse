@@ -11,6 +11,7 @@
     <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected">
         <span class="signalr-status-banner__icon">⚠</span>
         <span data-bind="text: signalrStatusText"></span>
+        <button type="button" class="btn btn-sm btn-warning py-0" data-bind="visible: signalrNeedsPermission, click: allowLiveUpdatesHost">Allow</button>
     </div>
     <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
         style="z-index:2000; width:600px; max-width:90%;"></div>

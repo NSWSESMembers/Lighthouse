@@ -155,6 +155,7 @@ var esriVector = require('esri-leaflet-vector');
 
 import GeoSearchControl from 'leaflet-geosearch/lib/SearchControl';
 import { AwsLambdaGeocoderProvider } from './utils/geocode.js';
+import { needsHostPermission, requestHostPermission } from '../../shared/optionalHostPermission.js';
 
 
 
@@ -4328,14 +4329,19 @@ document.addEventListener('DOMContentLoaded', function () {
         // Before that the connection isn't *meant* to be up yet, so a
         // 'disconnected' status is expected, not a problem.
         myViewModel.signalrConnectionAttempted = ko.observable(false);
+        // The Test and Dev Beacon live update hosts are optional host
+        // permissions (manifest), so they need an Allow click before the
+        // first connection. reconcileSignalRToConfig sets this.
+        myViewModel.signalrNeedsPermission = ko.observable(false);
         // Deliberately disabled -- or not started yet -- isn't "disconnected":
         // only show the banner when the feature is meant to be running but isn't.
         myViewModel.signalrDisconnected = ko.pureComputed(() =>
             myViewModel.config.signalrEnabled()
-            && myViewModel.signalrConnectionAttempted()
-            && myViewModel.signalrStatus() !== 'connected'
+            && (myViewModel.signalrNeedsPermission()
+                || (myViewModel.signalrConnectionAttempted() && myViewModel.signalrStatus() !== 'connected'))
         );
         myViewModel.signalrStatusText = ko.pureComputed(() => {
+            if (myViewModel.signalrNeedsPermission()) return 'Live updates on this Beacon need your permission';
             switch (myViewModel.signalrStatus()) {
                 case 'connecting': return 'Connecting to live updates…';
                 case 'reconnecting': return 'Live updates disconnected — reconnecting…';
@@ -4561,6 +4567,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.warn('[SignalR] no signalr param on the page URL -- skipping connection');
                 return;
             }
+            if (await needsHostPermission(negotiateUrl)) {
+                myViewModel.signalrNeedsPermission(true);
+                return;
+            }
+            myViewModel.signalrNeedsPermission(false);
             await getToken();
             if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
             // Closure over the module-level `token` var (kept current by
@@ -4569,6 +4580,13 @@ document.addEventListener('DOMContentLoaded', function () {
             // startBeaconSignalRConnection no-ops if already connected.
             myViewModel.signalrConnectionAttempted(true);
             window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
+        };
+        // The banner's Allow button. No await before the request, or Chrome
+        // drops the click's user gesture and refuses.
+        myViewModel.allowLiveUpdatesHost = () => {
+            requestHostPermission(params.signalr).then((granted) => {
+                if (granted) reconcileSignalRToConfig();
+            });
         };
 
         ko.applyBindings(myViewModel);

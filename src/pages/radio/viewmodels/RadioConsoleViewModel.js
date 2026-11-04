@@ -59,11 +59,12 @@ const REPEAT_OPTIONS = [
  * @param {string} [params.userId]
  * @param {string} [params.personId]  the logged-in user's Beacon Person id
  * @param {boolean} [params.signalrExpected]  the page was opened with a live-feed (SignalR) address
+ * @param {() => void} [params.onAllowLiveFeed]  asks for the live feed's host permission (Test/Dev Beacon), from the Allow button
  * @param {string|number} [params.hq]  the HQ Lighthouse was launched with -- used as the entry's HQ, fixed and shown separately from the list's own scope filter
  * @param {() => Promise<string>} params.getToken
  * @param {ko: any} params.ko
  */
-export function createRadioConsoleViewModel({ host, source, userId, personId, signalrExpected = false, hq, getToken, ko }) {
+export function createRadioConsoleViewModel({ host, source, userId, personId, signalrExpected = false, onAllowLiveFeed, hq, getToken, ko }) {
   const self = {};
   self.personId = personId || null;
 
@@ -120,6 +121,11 @@ export function createRadioConsoleViewModel({ host, source, userId, personId, si
   self.lastRefreshAt = ko.observable(null);
   self.hasMore = ko.observable(false);
   self.connectionState = ko.observable(getConnectionStatus());
+  // The Test and Dev Beacon live feed hosts are optional host permissions:
+  // until the user clicks Allow, main.js doesn't start the feed and the
+  // console runs on its background poll alone.
+  self.liveFeedNeedsPermission = ko.observable(false);
+  self.allowLiveFeed = () => onAllowLiveFeed?.();
   self.paused = ko.observable(false);
   self.pendingCount = ko.observable(0);
   // Declared here (not down with the rest of the reminders/live-update
@@ -187,12 +193,16 @@ export function createRadioConsoleViewModel({ host, source, userId, personId, si
     }
     self.connectionCheckTick(Date.now());
   });
+  self.liveFeedNeedsPermission.subscribe((needed) => {
+    // the first-connect allowance starts when the feed is allowed, not at page load
+    if (!needed && self.connectionState() !== 'connected') notConnectedSinceMs = Date.now();
+  });
   self.connectionCheckTick = ko.observable(Date.now());
   const connectionCheckTimer = setInterval(() => self.connectionCheckTick(Date.now()), 3000); // grace periods pass with no other event
 
   self.connectionAssessment = ko.pureComputed(() =>
     assessConnection({
-      signalrExpected,
+      signalrExpected: signalrExpected && !self.liveFeedNeedsPermission(),
       state: self.connectionState(),
       everConnected,
       notConnectedSinceMs,
