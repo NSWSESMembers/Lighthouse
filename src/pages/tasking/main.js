@@ -44,6 +44,7 @@ import { matchesHotkeyEvent } from "./utils/hotkeyMatch.js";
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
 import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl, setDefaultAssetTokenGetter } from './models/Team.js';
+import { setDriveTimeTokenGetter } from './utils/driveTime.js';
 import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
@@ -280,6 +281,7 @@ const markerActorId = params.personId;
 // Tell Team model which API URL to use for shared default-asset pushes
 setDefaultAssetApiUrl(sourceUrl);
 setDefaultAssetTokenGetter(() => getToken());
+setDriveTimeTokenGetter(() => getToken());
 
 var ko;
 var myViewModel;

@@ -802,6 +802,23 @@ const SHOTS = {
     },
     target: (page) => page.locator('.tasking-dropdown-menu.show'),
   },
+  'tasking-status-drive-time': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 1);
+      await menu.locator('.tsm-next').click();
+      await settle(page, 300);
+      // An old fix, to show the warning.
+      await page.evaluate(() => {
+        const t = ko.dataFor(document.querySelector('.tasking-dropdown-menu.show .tsm-drive'));
+        (t.team.defaultAsset() || t.team.trackableAssets()[0]).lastSeen(new Date(Date.now() - 22 * 60000).toISOString());
+      });
+      await menu.locator('.tsm-drive').click();
+      await settle(page, 800);
+      await page.mouse.move(0, 0); // no hover highlight on the buttons
+      await settle(page, 200);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
   'tasking-status-onsite': {
     run: (page) => openTaskingStatusMenu(page, 0),
     target: (page) => page.locator('.tasking-dropdown-menu.show'),

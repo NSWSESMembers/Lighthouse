@@ -5127,6 +5127,7 @@
                 <div class="tsm-eu-quick" data-bind="foreach: estimateQuickButtons">
                     <button type="button" data-bind="text: label, click: $parent.onEstimateQuickClick, clickBubble: false"></button>
                 </div>
+                <!-- ko if: showDriveTime --><!-- ko template: { name: 'tsm-drive-time-template' } --><!-- /ko --><!-- /ko -->
                 <div class="tsm-eu-label">Or an exact time</div>
                 <div class="mb-2" data-bind="dateTime24: estimateDraft"></div>
             </div>
@@ -5172,6 +5173,7 @@
             <div class="tsm-eu-quick" data-bind="foreach: etaQuickButtons">
                 <button type="button" data-bind="text: label, click: $parent.onEtaQuickButtonClick, clickBubble: false"></button>
             </div>
+            <!-- ko if: showDriveTime --><!-- ko template: { name: 'tsm-drive-time-template' } --><!-- /ko --><!-- /ko -->
             <div class="tsm-eu-label">Or an exact time</div>
             <div class="mb-2" data-bind="dateTime24: eta"></div>
             <!-- /ko -->
@@ -5209,6 +5211,25 @@
         </div>
         <!-- /ko -->
         </div>
+    </script>
+
+    <!-- "Or the drive time": an ETA option between the quick buttons and an
+         exact time. Routes from the team's asset to the incident; the
+         asset's location age is always on the second line so the operator
+         can judge whether the route starts where the team really is. -->
+    <script type="text/html" id="tsm-drive-time-template">
+        <div class="tsm-eu-label">Or the drive time</div>
+        <button type="button" class="tsm-drive" data-bind="css: driveRowCss, click: calculateDriveTime, clickBubble: false, enable: !driveTimeBlocked() && !driveTimeLoading()">
+            <i class="fa tsm-drive-icon" data-bind="css: { 'fa-route': !driveTimeLoading(), 'fa-spinner fa-spin': driveTimeLoading }"></i>
+            <span class="tsm-drive-text">
+                <span class="tsm-drive-main" data-bind="text: driveRowTitle"></span>
+                <span class="tsm-drive-sub">
+                    <!-- ko if: driveRowWarn --><i class="fa fa-exclamation-triangle"></i><!-- /ko -->
+                    <span data-bind="text: driveRowDetail"></span>
+                </span>
+            </span>
+            <span class="tsm-drive-action" data-bind="text: driveRowAction"></span>
+        </button>
     </script>
 
     <script src="tasking/main.js" type="text/javascript"></script>

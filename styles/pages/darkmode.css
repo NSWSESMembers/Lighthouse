@@ -678,6 +678,19 @@ body.dark-mode .tsm-eu-new .v,
 body.dark-mode .tsm-eu-new .r { color: #93c5fd; }
 body.dark-mode .tsm-eu-label { color: #ced4da; }
 body.dark-mode .tsm-eu-reset { color: #adb5bd; }
+body.dark-mode .tsm-drive { background: transparent; border-color: #495057; color: #f8f9fa; }
+body.dark-mode .tsm-drive:hover:not(:disabled) { border-color: #3b82f6; }
+body.dark-mode .tsm-drive-icon,
+body.dark-mode .tsm-drive-action { color: #93c5fd; }
+body.dark-mode .tsm-drive-sub { color: #adb5bd; }
+body.dark-mode .tsm-drive--aging .tsm-drive-sub { color: #fbbf24; }
+body.dark-mode .tsm-drive--stale .tsm-drive-sub,
+body.dark-mode .tsm-drive--unknown .tsm-drive-sub,
+body.dark-mode .tsm-drive--error .tsm-drive-sub { color: #fca5a5; }
+body.dark-mode .tsm-drive--done { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; }
+body.dark-mode .tsm-drive--done .tsm-drive-main { color: #93c5fd; }
+body.dark-mode .tsm-drive--blocked .tsm-drive-icon,
+body.dark-mode .tsm-drive--blocked .tsm-drive-main { color: #6c757d; }
 body.dark-mode .eta-chip {
   background: rgba(59, 130, 246, 0.18);
   border-color: rgba(96, 165, 250, 0.45);
