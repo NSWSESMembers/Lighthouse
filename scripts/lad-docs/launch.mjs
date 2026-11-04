@@ -28,9 +28,48 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const DIST = path.join(ROOT, 'dist');
 const APP_ORIGIN = 'http://lighthouse.demo.test';
 
-function fakeJwt(sub) {
+export function fakeJwt(sub) {
   const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
   return `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ sub: String(sub), exp: 4102444800 })}.demo`;
+}
+
+/**
+ * Runs in the page before its scripts: the chrome.* APIs the tasking page
+ * touches, holding a fake bearer token. Shared with serve.mjs, which inlines
+ * it into the served page.
+ */
+export function installChromeStub({ tokenKey, token, manifest, config, remoteTab }) {
+  const store = { [tokenKey]: JSON.stringify({ token, expdate: '2099-01-01T00:00:00Z' }) };
+  window.chrome = {
+    runtime: {
+      id: 'lighthouse-demo',
+      getManifest: () => manifest,
+      // "Open in Beacon" etc. Replies mirror src/background.js's
+      // tasking-openURL handler; nothing is actually opened.
+      sendMessage: (msg, cb) => {
+        let reply = { success: true, message: 'Demo mode: not opened' };
+        if (msg?.type === 'tasking-openURL' && remoteTab === 'missing') reply = { error: 'No remote tab registered' };
+        if (msg?.type === 'tasking-openURL' && remoteTab === 'closed') reply = { error: 'Failed to send tasking remote command', message: 'No tab with id: 123.' };
+        if (cb) setTimeout(() => cb(reply), 0);
+      },
+      onMessage: { addListener() {}, removeListener() {} },
+    },
+    storage: {
+      local: {
+        get: (keys, cb) => {
+          const list = typeof keys === 'string' ? [keys] : Array.isArray(keys) ? keys : Object.keys(keys || store);
+          const out = {};
+          list.forEach((k) => { if (k in store) out[k] = store[k]; });
+          setTimeout(() => cb(out), 0);
+        },
+        set: (obj, cb) => { Object.assign(store, obj); cb && setTimeout(cb, 0); },
+      },
+    },
+  };
+  if (config && !localStorage.getItem('lh-taskingConfig.__seeded')) {
+    localStorage.setItem('lh-taskingConfig', JSON.stringify(config));
+    localStorage.setItem('lh-taskingConfig.__seeded', '1');
+  }
 }
 
 /**
@@ -72,39 +111,7 @@ export async function launchLad(opts = {}) {
   }
 
   const operatorId = scenario.jobs[0].CreatedBy.Id;
-  await context.addInitScript(({ tokenKey, token, manifest, config, remoteTab }) => {
-    const store = { [tokenKey]: JSON.stringify({ token, expdate: '2099-01-01T00:00:00Z' }) };
-    window.chrome = {
-      runtime: {
-        id: 'lighthouse-demo',
-        getManifest: () => manifest,
-        // "Open in Beacon" etc. Replies mirror src/background.js's
-        // tasking-openURL handler; nothing is actually opened.
-        sendMessage: (msg, cb) => {
-          let reply = { success: true, message: 'Demo mode: not opened' };
-          if (msg?.type === 'tasking-openURL' && remoteTab === 'missing') reply = { error: 'No remote tab registered' };
-          if (msg?.type === 'tasking-openURL' && remoteTab === 'closed') reply = { error: 'Failed to send tasking remote command', message: 'No tab with id: 123.' };
-          if (cb) setTimeout(() => cb(reply), 0);
-        },
-        onMessage: { addListener() {}, removeListener() {} },
-      },
-      storage: {
-        local: {
-          get: (keys, cb) => {
-            const list = typeof keys === 'string' ? [keys] : Array.isArray(keys) ? keys : Object.keys(keys || store);
-            const out = {};
-            list.forEach((k) => { if (k in store) out[k] = store[k]; });
-            setTimeout(() => cb(out), 0);
-          },
-          set: (obj, cb) => { Object.assign(store, obj); cb && setTimeout(cb, 0); },
-        },
-      },
-    };
-    if (config && !localStorage.getItem('lh-taskingConfig.__seeded')) {
-      localStorage.setItem('lh-taskingConfig', JSON.stringify(config));
-      localStorage.setItem('lh-taskingConfig.__seeded', '1');
-    }
-  }, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, token: fakeJwt(operatorId), manifest, config: config || null, remoteTab });
+  await context.addInitScript(installChromeStub, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, token: fakeJwt(operatorId), manifest, config: config || null, remoteTab });
 
   photoImagesCache ??= await renderPhotos(context);
   const mock = createMockRouter(scenario, { log, photoImages: photoImagesCache, manifest });

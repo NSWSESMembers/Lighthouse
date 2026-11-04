@@ -1473,23 +1473,22 @@ body.dark-mode .border-info-subtle {
   border-color: #087990 !important;
 }
 
-/* Section Layout Preset picker (config modal -> Layout).
-   .layout-preset-card / -preview / .preview-block are styled off
+/* Layout picker preview (config modal -> Layout). The mock-up is styled off
    --bs-body-bg / --bs-secondary-bg / --bs-border-color / --bs-emphasis-color,
-   which stay light without [data-bs-theme="dark"] -- so every card and its
-   mini mock-up rendered as a white block on the dark modal. */
-body.dark-mode .layout-preset-card {
-  background: #2d2d2d;
-  border-color: #444;
+   which stay light without [data-bs-theme="dark"]. */
+body.dark-mode .layout-tile.active {
+  background: rgba(13, 110, 253, 0.18);
 }
 
-body.dark-mode .layout-preset-card.is-active {
-  border-color: #0d6efd;
-  box-shadow: inset 0 0 0 1px #0d6efd;
+body.dark-mode .layout-tile .layout-preset-preview .preview-block--teams,
+body.dark-mode .layout-tile .layout-preset-preview .preview-block--tasking {
+  background:
+    linear-gradient(#383838, #383838) top / 100% 1.6em no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 0.75em, rgba(255, 255, 255, 0.08) 0.75em 1.05em) #383838;
 }
 
-body.dark-mode .layout-preset-name {
-  color: #f0f0f0;
+body.dark-mode .layout-tile .layout-preset-preview .preview-block--map {
+  background: #2f3a2c;
 }
 
 body.dark-mode .layout-preset-preview {

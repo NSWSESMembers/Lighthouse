@@ -76,6 +76,11 @@ export function installMapContextMenu({
         ctxMenu.style.left = `${clientX}px`;
         ctxMenu.style.top = `${clientY}px`;
         ctxMenu.style.display = "block";
+        // Near the right/bottom edge (a narrow map), open towards the point
+        // instead of running off screen.
+        const { width, height } = ctxMenu.getBoundingClientRect();
+        if (clientX + width > window.innerWidth) ctxMenu.style.left = `${Math.max(0, clientX - width)}px`;
+        if (clientY + height > window.innerHeight) ctxMenu.style.top = `${Math.max(0, clientY - height)}px`;
     };
 
     map.on("click zoomstart movestart", hideMenu);

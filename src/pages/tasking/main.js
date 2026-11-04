@@ -16,6 +16,7 @@ import { describeBeaconError } from './utils/beaconError.js';
 
 import { ResizeDividers } from './resize.js';
 import { initPopupAutoPan } from './utils/popupAutoPan.js';
+import { installDropdownPortal } from './utils/dropdownPortal.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { attachUnmatchedAssetMarker, detachUnmatchedAssetMarker } from './markers/assetMarker.js';
@@ -297,7 +298,11 @@ const map = L.map('map', {
     zoomControl: true, // 1 / 10th of the original zoom step
     zoomSnap: .5,
     // Faster debounce time while zooming
-    wheelDebounceTime: 50
+    wheelDebounceTime: 50,
+    // Long-press opens the map context menu on touch. Leaflet only turns this
+    // on for mobile Safari, but iPadOS browsers report a desktop Mac user agent.
+    // Other touch browsers fire a native contextmenu on long-press already.
+    tapHold: L.Browser.safari && L.Browser.touchNative
 }).setView([-33.8688, 151.2093], 11);
 
 // Keep popup auto-pan padding aware of whatever's actually docked in the
@@ -1034,6 +1039,15 @@ function VM() {
     self.showInViewTeamsOnly = ko.observable(localStorage.getItem('tasking.teamsInViewOnly') === 'true');
     self.showInViewTeamsOnly.subscribe(v => localStorage.setItem('tasking.teamsInViewOnly', v ? 'true' : 'false'));
     self.toggleInViewTeamsOnly = () => { self.showInViewTeamsOnly(!self.showInViewTeamsOnly()); return true; };
+
+    // Which list the side drawer shows in the tabbed layouts ("Map Right ·
+    // Tabbed" / "Map Left · Tabbed"); the tabs sit in the list headers.
+    self.layoutTab = ko.observable(localStorage.getItem('lh.layout.tab') === 'incidents' ? 'incidents' : 'teams');
+    self.layoutTab.subscribe(v => localStorage.setItem('lh.layout.tab', v));
+    self.showTeamsTab = () => self.layoutTab('teams');
+    self.showIncidentsTab = () => self.layoutTab('incidents');
+    self.teamsTabSelected = ko.pureComputed(() => String(self.layoutTab() === 'teams'));
+    self.incidentsTabSelected = ko.pureComputed(() => String(self.layoutTab() === 'incidents'));
 
     self.listedTeams = ko.pureComputed(() => {
         const teams = self.filteredTeams();
@@ -4300,10 +4314,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const toggle = e.target;
         if (!toggle.classList || !toggle.classList.contains('team-status-button')) return;
 
-        const scope = toggle.closest('.dropdown');
-        const menu = scope && scope.querySelector('.tasking-dropdown-menu');
         const instance = bootstrap.Dropdown.getInstance(toggle);
-        if (!menu || !instance) return;
+        const menu = instance?._menu;
+        if (!menu || !menu.classList.contains('tasking-dropdown-menu')) return;
 
         let pending = false;
         const ro = new ResizeObserver(() => {
@@ -4323,6 +4336,10 @@ document.addEventListener('DOMContentLoaded', function () {
         ro.observe(menu);
         toggle.addEventListener('hidden.bs.dropdown', () => ro.disconnect(), { once: true });
     });
+
+    // Lift the fixed-position menus to <body> while open: iPadOS clips them to
+    // the scrolling lists despite position:fixed (see utils/dropdownPortal.js).
+    installDropdownPortal(bootstrap);
 
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
