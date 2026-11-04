@@ -33,7 +33,7 @@ Each row's background colour shows the team's current tasking load, so you can q
 
 > **Note:** The task count includes taskings to incidents outside your LAD incident filters (e.g. local storm incidents when your filter is set to flood rescues only).
 
-If a team can't be matched to a radio asset, a car icon with a cross through it <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> shows next to its callsign and the map focus button is disabled. See [Setting up a Team for Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking).
+If a team can't be matched to a radio asset, a car icon with a red no-entry badge <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> takes the place of its **Focus on map** button. See [Setting up a Team for Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking).
 
 ## Team Row Actions
 
@@ -44,7 +44,7 @@ Every team row has four action buttons, whether or not the team is expanded:
 - **Radio Log**: opens [New Radio Log](logs-and-messages.md#new-radio-log) with the team filled in. The log isn't attached to an incident.
 - **Message Team**: opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
 - **Open in Remote Tab**: opens the team's edit page in the Beacon [remote tab](getting-started.md#remote-beacon-tab), e.g. to change the team's name or members.
-- **Focus on map**: focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
+- **Focus on map**: focuses the Situation Map on the team's radio location. If no radios are matched, the button is replaced by a car with a red no-entry badge <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="16">.
   - If multiple radios are matched, the button shows the count <img class="icon" src="images/icon-multiple-radios.png" alt="2" height="16"> and toggles between them on each click.
   - If one radio is matched to multiple teams, a yellow group icon <img class="icon" src="images/icon-shared-radio.png" alt="Shared radio" height="16"> is shown.
 

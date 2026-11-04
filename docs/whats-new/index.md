@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD team rows
+
+*5 November 2026*
+
+- **Clearer "no matching asset" icon.** A team that can't be matched to a radio asset now shows a car with a red no-entry badge in place of its **Focus on map** button, instead of a crossed-out car next to its callsign. See [Team Row Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-row-actions).
+
 ## New Statistics, Summary and Export pages
 
 *4 November 2026 · [v2026.11.04](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.04)*
