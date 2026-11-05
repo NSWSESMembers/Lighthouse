@@ -18,29 +18,9 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## Footers at the bottom
-
-*5 November 2026*
-
-- **The footer stays at the bottom of the window** on Incident Summary, Incident Statistics, Incident Export and NITC Export, instead of sitting partway up a short page.
-
-## LAD drive time for ETAs
-
-*5 November 2026*
-
-- **Work out an ETA from the drive time.** When setting a team En route, or changing its ETA, click **Or the drive time** to set the ETA to now plus the road travel time from the team's asset to the incident. Under it is how long ago the asset last reported its location, turning amber after 5 minutes and red after 15, so you can tell whether the route starts where the team really is. Once worked out, it also says roughly where the team was, e.g. *Near 12 Smith St, Parramatta*. See [Drive time](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#drive-time).
-
-## LAD team rows
-
-*5 November 2026*
-
-- **Dropdown menus close when you click away.** The status, sector and task-team menus sometimes stayed open after a click on the map controls or another button, or got stuck open after their team was collapsed.
-- **Clearer "no matching asset" icon.** A team that can't be matched to a radio asset now shows a car with a red no-entry badge in place of its **Focus on map** button, instead of a crossed-out car next to its callsign. See [Team Row Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-row-actions).
-- **Member capabilities are hidden by default** in an expanded team, and the heading is now **Members (count)** so it fits. Click the tags icon to show them; LAD remembers your choice. See [Toggle Member Capability](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#toggle-member-capability).
-
 ## New Statistics, Summary and Export pages
 
-*4 November 2026 · [v2026.11.04](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.04)*
+*5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*
 
 ### Incident Statistics
 
@@ -87,6 +67,7 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Times are right, in ISO 8601 format** (e.g. *2026-10-15T09:41:00+11:00*). The old export's times were 11 hours early in daylight saving (10 hours outside it), and in the long *Thu Oct 15 2026 09:41:00 GMT+1100 (…)* text. See [Hours and times](https://lighthouse.ses.nsw.gov.au/guides/nitc/#hours-and-times).
 - Task names keep any *#* in them (it used to be removed), and a member with no sign-off time gets the task's end time instead of a nonsense number of hours.
 - If Beacon can't be reached, or no tasks match, the page now says so, instead of doing nothing.
+- On all four pages, the footer stays at the bottom of the window instead of sitting partway up a short page.
 
 ### CADence Simulated Exercise
 
@@ -103,6 +84,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 ### LAD
 
+- **Work out an ETA from the drive time.** When setting a team En route or changing its ETA, click **Or the drive time** to use the road travel time from the team's asset, with how long ago the asset last reported its location. See [Drive time](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#drive-time).
 - **Search teams by member or asset.** The **Teams** search box now finds teams by member name or member number, and by the name, number plate or radio ID of the team's matched asset, as well as callsign. It suggests matches as you type, like the **Incidents** search. Searching no longer warns that the team you had open was "filtered out". See [Searching](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#searching).
 - **LAD works on tablets such as an iPad.** Buttons, dividers and close buttons are easier to hit with a finger, and a long press on the map opens its menu. Status menus open over the other list instead of being cut off at the edge of the one you're in, incident popups fit a narrow map, and the searches on the **Configuration** screen and elsewhere no longer drop letters as you type on an iPad. Desktop LAD is unchanged.
 - **New Tabs layout: one list at a time, at full height.** Switch between **Teams** and **Incidents** with the tabs at the top of the side drawer. It's the starting layout on tablets. With the iPad in portrait, the map moves below the lists at full width; drag the divider between them to share the height. See [Layout](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#layout).
@@ -118,6 +100,13 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Performance improvements** for LAD left open for a long time.
 - **The pulsing ring on New incidents and the marching ring on Active incidents now move with their marker.** They used to stay behind for a moment when markers gathered into a cluster or spread out of one, and could go missing until the next zoom. See [Incident Clustering](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-clustering).
 - With clustering turned off, an incident that drops off the list now disappears from the map too.
+- **Member capabilities are hidden by default** in an expanded team, under a shorter **Members (count)** heading. Click the tags icon to show them. See [Toggle Member Capability](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#toggle-member-capability).
+- A team with no matching radio asset shows a car with a red no-entry badge in place of its **Focus on map** button. See [Team Row Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-row-actions).
+- Status, sector and task-team menus now close when you click anywhere else.
+
+### All Lighthouse pages
+
+- Lighthouse pages now only open from Beacon, and say **Open this page from Beacon** otherwise.
 - **BOM Thunderstorm Tracking is now drawn above BOM Rain Radar Still** by default, so storm cells and their tracks aren't hidden under the rain. If you've already arranged your layers, use **Reset** on the Map layers tab to get the new order. See [Map Layers](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#map-layers).
 - **BOM radar, satellite and lightning no longer tear or change between zoom levels.** BOM map layers used to be stretched out of place, by up to tens of kilometres when zoomed out, and the radar could show different scans side by side. All BOM layers now line up with the map, and radar, thunderstorm tracking, satellite and lightning load as one picture of the area you're looking at, so the whole map shows the same scan. **BOM Wind Barbs & Raster** and **BOM MSLP Contours** show the same forecast hour across the whole map. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
 - **New BOM overlays:** **BOM Severe Thunderstorm Warning** (the warning areas), **BOM Severe Thunderstorm Cells** (the warned storm cells, which way they're heading and when), **BOM Volcanic Ash Advisory** and **BOM Sea Surface Temperature (°C)**. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
