@@ -66,7 +66,7 @@ The expanded view lists the team's members, including the team leader.
 
 #### Toggle Member Capability
 
-Show or hide member capabilities with the tags icon to the right of the **Team Members** heading. Hidden by default.
+Show or hide member capabilities with the tags icon to the right of the **Members** heading. Hidden by default; LAD remembers your choice.
 
 ![Member capability toggle](images/team-member-capability-toggle.png)
 

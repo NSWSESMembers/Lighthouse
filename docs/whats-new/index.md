@@ -23,6 +23,7 @@ The home page shows the first three `##` entries, so keep the title short.
 *5 November 2026*
 
 - **Clearer "no matching asset" icon.** A team that can't be matched to a radio asset now shows a car with a red no-entry badge in place of its **Focus on map** button, instead of a crossed-out car next to its callsign. See [Team Row Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-row-actions).
+- **Member capabilities are hidden by default** in an expanded team, and the heading is now **Members (count)** so it fits. Click the tags icon to show them; LAD remembers your choice. See [Toggle Member Capability](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#toggle-member-capability).
 
 ## New Statistics, Summary and Export pages
 
