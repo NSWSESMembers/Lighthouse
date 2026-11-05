@@ -11,10 +11,15 @@ concurrency:
   group: sync-website-docs
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   sync:
     name: Sync docs to lighthouse.ses.nsw.gov.au
     runs-on: ubuntu-latest
+    # WEBSITE_SYNC_TOKEN lives in this environment: master and master-dev only.
+    environment: website-sync
     steps:
       # Pick where this branch's docs go on the site. Any other branch (e.g. a
       # manual run from a feature branch) is refused.
