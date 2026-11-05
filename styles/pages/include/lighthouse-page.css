@@ -62,7 +62,25 @@ body.watermark {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
 }
 
+/* At least a screen tall, so the footer sits at the bottom of the window
+   on a short page. Stats keeps its footer inside a wrapper div, which
+   stretches to fill instead. */
+body:has(.lh-page-footer),
+body > :has(> .lh-page-footer) {
+  display: flex;
+  flex-direction: column;
+}
+
+body:has(.lh-page-footer) {
+  min-height: 100vh;
+}
+
+body > :has(> .lh-page-footer) {
+  flex: 1 0 auto;
+}
+
 .lh-page-footer {
+  margin-top: auto;
   font-size: .8rem;
 }
 

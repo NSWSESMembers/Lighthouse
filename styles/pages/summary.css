@@ -48,6 +48,11 @@ body {
 
 .summary-page {
   padding: 4px;
+  /* At least a screen tall, so the footer sits at the bottom of the window
+     when the boxes don't fill it. */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* ---- boxes ----------------------------------------------------------- */
@@ -269,6 +274,7 @@ body {
 /* ---- footer ---------------------------------------------------------- */
 
 .summary-footer {
+  margin-top: auto;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;

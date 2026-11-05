@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Footers at the bottom
+
+*5 November 2026*
+
+- **The footer stays at the bottom of the window** on Incident Summary, Incident Statistics, Incident Export and NITC Export, instead of sitting partway up a short page.
+
 ## LAD drive time for ETAs
 
 *5 November 2026*
