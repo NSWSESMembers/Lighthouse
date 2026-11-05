@@ -45,40 +45,22 @@ function deliverIfNewer(candidate, cb) {
   if (cb) cb({ token: candidate.token, tokenexp: candidate.tokenexp });
 }
 
-// wait for token to have loaded
-export function fetchBeaconToken(apiHost, source, cb) {
-  if (!knownEnvironment(apiHost, source)) return;
-  const waiting = setInterval(function () {
-    chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
-      const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
-      if (tokenJSON?.token && tokenJSON?.expdate) {
-        const { token, expdate: tokenexp } = tokenJSON;
-        clearInterval(waiting); // stop timer
-
-        latestCb = cb;
-        latest = { token, tokenexp };
-        startTokenValidation(apiHost, source, cb); // Start periodic validation
-        cb({ token, tokenexp }); // callback with token
-      }
-    });
-  }, 200);
-}
-
-// wait for token to have loaded and keep returning valid tokens
+// Wait for a token to be stored (a Beacon tab stores it), hand it to `cb`,
+// then keep handing over newer ones: renewed by this page before expiry, or
+// stored by a Beacon tab or another Lighthouse page.
 export function fetchBeaconTokenAndKeepReturningValidTokens(apiHost, source, cb) {
   if (!knownEnvironment(apiHost, source)) return;
+  let found = false; // a slow read can still be in flight when the token turns up
   const waiting = setInterval(function () {
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
-      const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
-      if (tokenJSON?.token && tokenJSON?.expdate) {
-        const { token, expdate: tokenexp } = tokenJSON;
-        clearInterval(waiting); // stop timer
-
-        latestCb = cb;
-        latest = { token, tokenexp };
-        startTokenValidation(apiHost, source, cb); // Start periodic validation
-        cb({ token, tokenexp }); // callback with token
-      }
+      const stored = readStored(data, apiHost);
+      if (found || !stored) return; // already handed over, or nothing stored yet
+      found = true;
+      clearInterval(waiting);
+      latestCb = cb;
+      latest = stored;
+      startTokenValidation(apiHost, source, cb);
+      cb({ token: stored.token, tokenexp: stored.tokenexp });
     });
   }, 200);
 }

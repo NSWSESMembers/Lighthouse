@@ -71,6 +71,31 @@ describe('fetchBeaconTokenAndKeepReturningValidTokens', () => {
     expect(cb).toHaveBeenCalledWith({ token: 'fake-token-1', tokenexp: at(NOW + 60 * MINUTE) });
   });
 
+  it('waits quietly for a token a Beacon tab stores later, and hands it over once', async () => {
+    const { fetchBeaconTokenAndKeepReturningValidTokens } = await load();
+    const cb = vi.fn();
+    fetchBeaconTokenAndKeepReturningValidTokens(HOST, SOURCE, cb);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cb).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+
+    storeToken('fake-token-1', at(NOW + 60 * MINUTE));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cb).toHaveBeenCalledTimes(1);
+    expect(cb).toHaveBeenCalledWith({ token: 'fake-token-1', tokenexp: at(NOW + 60 * MINUTE) });
+  });
+
+  it('hands the first token over once even when storage reads are slower than the poll', async () => {
+    const { fetchBeaconTokenAndKeepReturningValidTokens } = await load();
+    chrome.storage.local.get = (key, cb) => setTimeout(() => cb({ [key]: store[key] }), 500);
+    const cb = vi.fn();
+    fetchBeaconTokenAndKeepReturningValidTokens(HOST, SOURCE, cb);
+    await vi.advanceTimersByTimeAsync(300);
+    storeToken('fake-token-1', at(NOW + 60 * MINUTE));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
   it('hands over a token renewed elsewhere (a Beacon tab or another page) on the next check', async () => {
     const { fetchBeaconTokenAndKeepReturningValidTokens } = await load();
     storeToken('fake-token-1', at(NOW + 60 * MINUTE));
