@@ -14,6 +14,13 @@
   or code stripped the class (Tasking.closeStatusDropdown does). It does this
   in every browser, not just on iPads, so there's one code path to keep
   working; on desktop the menu looks and sits exactly where it did.
+
+  Lifted menus also get their own outside-click close. Bootstrap closes
+  dropdowns from a bubbling click on document, so a click that something
+  stopped on the way up (Leaflet map controls, `clickBubble: false` buttons)
+  left the menu open, and a menu whose toggle went away while it was open (its
+  team card collapsed, its list re-rendered) could never be closed at all.
+  This listener runs in the capture phase, before anything can stop the click.
 */
 
 export const LIFTED_MENUS = '.tasking-dropdown-menu, .jobstatusDropdown, .sectorDropdown, .job-taskteam-dropdown';
@@ -65,7 +72,7 @@ export function installDropdownPortal(bootstrap) {
             if (!menu.classList.contains('show')) putBack(menu);
         });
         observer.observe(menu, { attributes: true, attributeFilter: ['class'] });
-        lifted.set(menu, { placeholder, observer });
+        lifted.set(menu, { placeholder, observer, toggle, instance });
 
         // Re-place it now it's out. forceUpdate is synchronous; Bootstrap's
         // update() is deferred, and a first placement computed inside a
@@ -76,9 +83,29 @@ export function installDropdownPortal(bootstrap) {
         } catch { /* popper already torn down */ }
     };
 
+    // Same rule as Bootstrap's own clearMenus: clicks on the toggle, or inside
+    // an auto-close "outside" menu, leave it open; autoClose false/"inside"
+    // menus are left to Bootstrap.
+    const onClickCapture = (e) => {
+        if (e.button === 2) return;
+        const path = e.composedPath();
+        lifted.forEach(({ toggle, instance }, menu) => {
+            if (path.includes(menu) || path.includes(toggle)) return;
+            const autoClose = instance._config?.autoClose ?? true;
+            if (!toggle.isConnected) {
+                menu.classList.remove('show'); // orphaned: putBack drops it
+                return;
+            }
+            if (autoClose !== true && autoClose !== 'outside') return;
+            try { instance.hide(); } catch { menu.classList.remove('show'); }
+        });
+    };
+
     document.addEventListener('shown.bs.dropdown', onShown);
+    document.addEventListener('click', onClickCapture, true);
     return () => {
         document.removeEventListener('shown.bs.dropdown', onShown);
+        document.removeEventListener('click', onClickCapture, true);
         [...lifted.keys()].forEach(putBack);
     };
 }

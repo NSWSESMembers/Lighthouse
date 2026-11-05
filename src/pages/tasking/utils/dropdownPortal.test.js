@@ -14,12 +14,14 @@ function setup(menuClass = 'tasking-dropdown-menu') {
     const toggle = document.getElementById('toggle');
     const menu = document.getElementById('menu');
     const update = vi.fn();
-    const bootstrap = { Dropdown: { getInstance: (el) => (el === toggle ? { _menu: menu, update } : null) } };
+    const hide = vi.fn(() => menu.classList.remove('show'));
+    const instance = { _menu: menu, _config: { autoClose: 'outside' }, update, hide };
+    const bootstrap = { Dropdown: { getInstance: (el) => (el === toggle ? instance : null) } };
     const open = () => {
         menu.classList.add('show');
         toggle.dispatchEvent(new Event('shown.bs.dropdown', { bubbles: true }));
     };
-    return { toggle, menu, update, bootstrap, open };
+    return { toggle, menu, update, hide, instance, bootstrap, open };
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -57,6 +59,45 @@ describe('installDropdownPortal', () => {
         open();
         document.querySelector('.pane').remove();
         menu.classList.remove('show');
+        await flush();
+        expect(menu.isConnected).toBe(false);
+    });
+
+    it('closes on an outside click even when something stops it bubbling', async () => {
+        const { menu, hide, bootstrap, open } = setup();
+        document.body.insertAdjacentHTML('beforeend', '<button id="elsewhere"></button>');
+        const elsewhere = document.getElementById('elsewhere');
+        elsewhere.addEventListener('click', (e) => e.stopPropagation()); // Leaflet control, clickBubble: false
+        uninstall = installDropdownPortal(bootstrap);
+        open();
+
+        document.getElementById('item').click(); // inside: stays open
+        document.getElementById('toggle').click(); // toggle: Bootstrap's to handle
+        expect(hide).not.toHaveBeenCalled();
+
+        elsewhere.click();
+        expect(hide).toHaveBeenCalledTimes(1);
+        await flush();
+        expect(menu.parentElement.id).toBe('dd');
+    });
+
+    it('leaves autoClose false/inside menus to Bootstrap', () => {
+        const { hide, instance, bootstrap, open } = setup();
+        instance._config.autoClose = false;
+        uninstall = installDropdownPortal(bootstrap);
+        open();
+        document.body.click();
+        expect(hide).not.toHaveBeenCalled();
+    });
+
+    it('drops a menu orphaned by its toggle going away on the next outside click', async () => {
+        const { menu, bootstrap, open } = setup();
+        uninstall = installDropdownPortal(bootstrap);
+        open();
+        document.querySelector('.pane').remove(); // team card collapsed
+        menu.click(); // still usable while open
+        expect(menu.isConnected).toBe(true);
+        document.body.click();
         await flush();
         expect(menu.isConnected).toBe(false);
     });
