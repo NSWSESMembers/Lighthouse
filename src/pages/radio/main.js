@@ -8,6 +8,7 @@ import { startBeaconSignalRConnection, stopBeaconSignalRConnection } from '../ta
 import { registerAcronymTextBinding } from '../tasking/components/acronymText.js';
 import { installModalHotkeys } from '../tasking/components/modalHotKeys.js';
 import { needsHostPermission, requestHostPermission } from '../../shared/optionalHostPermission.js';
+import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 
 function getSearchParameters() {
   var prmstr = window.location.search.substr(1);
@@ -21,6 +22,7 @@ function getSearchParameters() {
 }
 
 var params = getSearchParameters();
+blockUnlessOpenedFromBeacon(params);
 
 // Same environment colour-coding as tasking.html (orange=prod, green=train,
 // blue=dev) -- see styles/pages/tasking.css's `body .modal-header` rules.

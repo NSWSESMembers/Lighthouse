@@ -100,14 +100,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // A content script found session storage closed: answer once it's open.
     simulatedExerciseShareReady.then(() => sendResponse({ ok: true }));
     return true;
-  } else if (request.type === 'API_TOKEN_UPDATE') {
-    let key = 'beaconAPIToken-' + request.host;
-    chrome.storage.local
-      .set({ key: JSON.stringify(request.token) })
-      .then(() => {
-        console.log(key + ' is set');
-      });
-    return true;
   } else if (request.type === 'rfs') {
     fetchRfsIncidents(function (data) {
       sendResponse(data);

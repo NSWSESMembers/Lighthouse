@@ -1,4 +1,5 @@
 import * as signalR from '@microsoft/signalr';
+import { isExtensionPage, isKnownSignalRHub } from '../../../shared/beaconEnvironments.js';
 import { getSubject } from './subjects.js';
 import { KNOWN_EVENTS } from './knownEvents.js';
 import { Subject } from './subject.js';
@@ -65,6 +66,11 @@ function scheduleManualRestart(negotiateUrl, getAccessToken) {
  * the live token rather than a captured string.
  */
 export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
+    // The hub gets the Beacon token: only ever one of Beacon's own.
+    if (isExtensionPage() && !isKnownSignalRHub(negotiateUrl)) {
+        console.error('[SignalR] not a Beacon SignalR hub, not connecting', negotiateUrl);
+        return null;
+    }
     // An explicit start overrides a previous intentional stop.
     stoppedIntentionally = false;
     if (manualRestartTimer) {

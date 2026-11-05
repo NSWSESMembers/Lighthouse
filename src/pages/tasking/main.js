@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
+import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import BeaconClient from '../../shared/BeaconClient.js';
 import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
@@ -259,6 +260,7 @@ async function getToken() {
 
 
 const params = getSearchParameters();
+blockUnlessOpenedFromBeacon(params);
 const apiHost = params.host
 const sourceUrl = params.source
 

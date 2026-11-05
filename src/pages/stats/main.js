@@ -11,6 +11,7 @@ import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 
 import { parsePageParams } from '../shared/params.js';
+import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import { colourScheme, markPage, guideUrl, withKnockout } from '../shared/pageSetup.js';
 import { registerLoadRing } from '../shared/loadRing.js';
 import { loadClusters } from './data/loadStats.js';
@@ -23,6 +24,7 @@ import { StatsVM } from './viewmodels/StatsVM.js';
 import '../../../styles/pages/stats.css';
 
 const params = parsePageParams(window.location.search);
+blockUnlessOpenedFromBeacon(params);
 // Follow the OS light/dark setting (Bootstrap 5.3 colour modes).
 colourScheme();
 
