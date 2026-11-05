@@ -197,3 +197,49 @@ describe('freshBeaconToken', () => {
     await expect(fresh).resolves.toBeNull();
   });
 });
+
+describe('on an extension page opened for an unknown Beacon environment', () => {
+  beforeEach(() => {
+    globalThis.location = { protocol: 'chrome-extension:' };
+  });
+  afterEach(() => {
+    delete globalThis.location;
+  });
+
+  it('never hands over the stored token or sends it for renewal', async () => {
+    const { fetchBeaconTokenAndKeepReturningValidTokens, freshBeaconToken } = await load();
+    storeToken('fake-token-1', at(NOW - MINUTE)); // expired: would renew straight away
+    renewWith(200, { access_token: 'fake-token-2', expires_at: at(NOW + 60 * MINUTE) });
+    const cb = vi.fn();
+    fetchBeaconTokenAndKeepReturningValidTokens(HOST, 'https://evil.example', cb);
+    const fresh = freshBeaconToken(HOST, 'https://evil.example');
+    await vi.advanceTimersByTimeAsync(2 * MINUTE);
+    await expect(fresh).resolves.toBeNull();
+    expect(cb).not.toHaveBeenCalled();
+    expect(ajax).not.toHaveBeenCalled();
+    expect(stored()).toEqual({ token: 'fake-token-1', expdate: at(NOW - MINUTE) });
+  });
+
+  it('still renews for a known environment', async () => {
+    const { freshBeaconToken } = await load();
+    storeToken('fake-token-1', at(NOW - MINUTE));
+    renewWith(200, { access_token: 'fake-token-2', expires_at: at(NOW + 60 * MINUTE) });
+    const fresh = freshBeaconToken(HOST, SOURCE);
+    await vi.advanceTimersByTimeAsync(10);
+    await expect(fresh).resolves.toBe('fake-token-2');
+  });
+});
+
+describe('renewal response', () => {
+  it("doesn't store a reply without a token and expiry", async () => {
+    const { freshBeaconToken } = await load();
+    storeToken('fake-token-1', at(NOW - MINUTE));
+    for (const body of [{}, { access_token: 'fake-token-2' }, { access_token: 42, expires_at: at(NOW) }, { access_token: 'fake-token-2', expires_at: 'soon' }]) {
+      renewWith(200, body);
+      const fresh = freshBeaconToken(HOST, SOURCE);
+      await vi.advanceTimersByTimeAsync(10);
+      await expect(fresh).resolves.toBe('fake-token-1');
+    }
+    expect(stored()).toEqual({ token: 'fake-token-1', expdate: at(NOW - MINUTE) });
+  });
+});

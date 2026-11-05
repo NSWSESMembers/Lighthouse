@@ -92,9 +92,6 @@ window.addEventListener('message', function (event) {
     } else if (event.data.type === 'LH_GET_TRANSPORT_KEY') {
       var transportApiKeyOpsLog = '';
       switch (location.origin) {
-        case 'https://previewbeacon.ses.nsw.gov.au':
-          transportApiKeyOpsLog = '46273';
-          break;
         case 'https://beacon.ses.nsw.gov.au':
           transportApiKeyOpsLog = '515514';
           break;

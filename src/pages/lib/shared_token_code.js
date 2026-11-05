@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import moment from 'moment';
+import { pageParamsAllowed } from '../../shared/beaconEnvironments.js';
 var periodicCheck = null;
 
 // The token this page last handed its callback, and that callback. A Beacon
@@ -26,6 +27,14 @@ function nearExpiry(tokenexp) {
   return moment().isAfter(moment(tokenexp).subtract(5, "minutes"));
 }
 
+// The token is only ever handed over, or sent for renewal to `source`, for a
+// known Beacon environment (beaconEnvironments.js).
+function knownEnvironment(apiHost, source) {
+  if (pageParamsAllowed({ host: apiHost, source })) return true;
+  console.error('Lighthouse: not a known Beacon environment, not using the Beacon token', apiHost, source);
+  return false;
+}
+
 // Hand `candidate` to the callback if it's a different token that expires no
 // earlier than the one handed over last.
 function deliverIfNewer(candidate, cb) {
@@ -38,6 +47,7 @@ function deliverIfNewer(candidate, cb) {
 
 // wait for token to have loaded
 export function fetchBeaconToken(apiHost, source, cb) {
+  if (!knownEnvironment(apiHost, source)) return;
   const waiting = setInterval(function () {
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
       const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
@@ -56,6 +66,7 @@ export function fetchBeaconToken(apiHost, source, cb) {
 
 // wait for token to have loaded and keep returning valid tokens
 export function fetchBeaconTokenAndKeepReturningValidTokens(apiHost, source, cb) {
+  if (!knownEnvironment(apiHost, source)) return;
   const waiting = setInterval(function () {
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
       const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
@@ -86,6 +97,7 @@ export function fetchBeaconTokenAndKeepReturningValidTokens(apiHost, source, cb)
  */
 export function freshBeaconToken(apiHost, source) {
   return new Promise(function (resolve) {
+    if (!knownEnvironment(apiHost, source)) return resolve(null);
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
       const stored = readStored(data, apiHost);
       // The later-expiring of the stored token and the one this page holds.
@@ -128,6 +140,7 @@ function startTokenValidation(apiHost, source, cb) {
 // failed; a renewal already running is shared rather than sent twice.
 function renewToken(apiHost, source, token, cb) {
   if (renewing) return renewing;
+  if (!knownEnvironment(apiHost, source)) return Promise.resolve(null);
   console.log("Token expiry triggered. Attempting to renew.");
   renewing = new Promise(function (resolve) {
   $.ajax({
@@ -139,9 +152,9 @@ function renewToken(apiHost, source, token, cb) {
     cache: false,
     dataType: 'json',
     complete: function (response, _textStatus) {
-      if (response.status === 200 && response.responseJSON) {
-        const newToken = response.responseJSON.access_token;
-        const newTokenExp = response.responseJSON.expires_at;
+      const newToken = response.responseJSON?.access_token;
+      const newTokenExp = response.responseJSON?.expires_at;
+      if (response.status === 200 && typeof newToken === 'string' && newToken && newTokenExp && moment(newTokenExp).isValid()) {
         chrome.storage.local.set({
           ['beaconAPIToken-' + apiHost]: JSON.stringify({
             token: newToken,

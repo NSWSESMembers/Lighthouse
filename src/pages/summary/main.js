@@ -13,6 +13,7 @@ const BeaconToken = require('../lib/shared_token_code.js');
 import { Modal } from 'bootstrap5';
 
 import { parsePageParams } from '../shared/params.js';
+import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import { colourScheme, markPage, guideUrl, withKnockout } from '../shared/pageSetup.js';
 import { registerLoadRing } from '../shared/loadRing.js';
 import { SummaryVM } from './viewmodels/SummaryVM.js';
@@ -21,6 +22,7 @@ import { SummaryVM } from './viewmodels/SummaryVM.js';
 import '../../../styles/pages/summary.css';
 
 const params = parsePageParams(window.location.search);
+blockUnlessOpenedFromBeacon(params);
 const setColourScheme = colourScheme();
 
 document.addEventListener('DOMContentLoaded', function () {

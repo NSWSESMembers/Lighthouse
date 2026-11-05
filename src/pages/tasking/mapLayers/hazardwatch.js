@@ -124,9 +124,6 @@ export function registerHazardWatchWarningsLayer(vm, apiHost) {
     let hazardenv
 
         switch (apiHost) {
-        case 'https://previewbeacon.ses.nsw.gov.au':
-            hazardenv = 'hazard-watch-training';
-            break
         case 'https://apibeacon.ses.nsw.gov.au':
             hazardenv = 'hazard-watch';
             break

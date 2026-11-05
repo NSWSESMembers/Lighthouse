@@ -2,6 +2,7 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1) {
   var inject = require('../lib/inject.js');
   var $ = require('jquery');
   require('../pages/lib/shared_chrome_code.js');
+  var { knownBeaconEnvironment } = require('../shared/beaconEnvironments.js');
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   var DOM = require('jsx-dom-factory').default;
@@ -80,6 +81,8 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1) {
         // do nothing
       });
     } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
+      // Only under this Beacon site's own API host.
+      if (!knownBeaconEnvironment(event.data.host, location.origin)) return;
       chrome.storage.local.set({ ['beaconAPIToken-' + event.data.host]: JSON.stringify({ token: event.data.token, expdate: event.data.tokenexp }) }, function () {
         console.log('local data set - beaconAPIToken');
       })

@@ -11,6 +11,7 @@
 const BeaconToken = require('../lib/shared_token_code.js');
 
 import { parsePageParams } from '../shared/params.js';
+import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import { colourScheme, markPage, isDevBuild, withKnockout } from '../shared/pageSetup.js';
 import { SimulatedExercisePageVM } from './viewmodels/SimulatedExercisePageVM.js';
 
@@ -18,6 +19,7 @@ import { SimulatedExercisePageVM } from './viewmodels/SimulatedExercisePageVM.js
 import '../../../styles/pages/simulatedexercise.css';
 
 const params = parsePageParams(window.location.search);
+blockUnlessOpenedFromBeacon(params);
 colourScheme();
 
 // The guide is a page of the LAD guide, as that's where the exercise shows.

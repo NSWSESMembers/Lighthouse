@@ -12,6 +12,7 @@ import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 
 import { parsePageParams } from '../shared/params.js';
+import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import { colourScheme, markPage, guideUrl, withKnockout } from '../shared/pageSetup.js';
 import { registerLoadRing } from '../shared/loadRing.js';
 import { saveCsv } from '../shared/csv.js';
@@ -21,6 +22,7 @@ import { ExportVM } from './viewmodels/ExportVM.js';
 import '../../../styles/pages/advexport.css';
 
 const params = parsePageParams(window.location.search);
+blockUnlessOpenedFromBeacon(params);
 colourScheme();
 
 document.addEventListener('DOMContentLoaded', function () {
