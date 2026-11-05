@@ -122,6 +122,14 @@ value (names, callsigns, ids, phones, addresses, plates) is invented. Never
 copy values from `build/lad-samples/` (real payloads from
 `npm run lad:samples`) into committed files, and never commit that folder.
 
+## Test UI changes in dark mode before raising a PR
+
+Check every UI/UX change in dark mode as well as light before opening a PR
+(text contrast, backgrounds, borders, hover/active states, popups, modals).
+In the harnesses: LAD takes `launchLad({ config: { darkMode: true } })`; the
+other pages take `dark: true` (`scripts/page-docs/launchPage.mjs`), which
+emulates a dark OS colour scheme.
+
 ## Gotchas
 
 - **knockout-secure-binding.** `data-bind` attributes use a restricted parser:
