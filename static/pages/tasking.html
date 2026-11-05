@@ -309,13 +309,6 @@
                                             <!-- 2. Callsign -->
                                             <div class="team-cell">
                                                 <span data-bind="text: t.callsign"></span>
-
-                                                <span class="fa-stack" data-bind="visible: !t.trackableAssets().length"
-                                                    title="No matching asset found">
-                                                    <i class="fas fa-car fa-stack-1x"></i>
-                                                    <i class="fa fa-ban fa-stack-2x text-danger"
-                                                        style="color:Tomato"></i>
-                                                </span>
                                             </div>
 
                                             <!-- 3. Status -->
@@ -359,9 +352,18 @@
                                                         data-bind="click: t.openBeaconEditTeam, clickBubble: false">
                                                         <i class="fas fa-external-link-alt"></i>
                                                     </button>
+                                                    <!-- No matching asset: the Zoom to slot says so instead -->
+                                                    <span class="btn btn-outline-secondary team-no-asset"
+                                                        title="No matching asset found" aria-label="No matching asset found"
+                                                        data-bind="visible: !t.trackableAssets().length, clickBubble: false">
+                                                        <span class="team-no-asset__icon" aria-hidden="true">
+                                                            <i class="fas fa-car"></i>
+                                                            <i class="fa fa-ban team-no-asset__ban"></i>
+                                                        </span>
+                                                    </span>
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Zoom to"
-                                                        data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false, event: { mouseover: t.mouseEnterButton, mouseleave: t.mouseLeaveButton }">
+                                                        data-bind="visible: t.trackableAssets().length, click: t.markerFocus, clickBubble: false, event: { mouseover: t.mouseEnterButton, mouseleave: t.mouseLeaveButton }">
                                                         <i class="fa fa-solid fa-crosshairs"></i>
                                                         <span
                                                             class="position-absolute top-0 start-100 badge rounded-pill bg-info"
@@ -395,7 +397,7 @@
                                                                 <fieldset>
                                                                     <div
                                                                         class="team-members-header d-flex justify-content-between align-items-center mb-2">
-                                                                        <legend class="job-details-legend text-nowrap me-2">Team Members
+                                                                        <legend class="job-details-legend text-nowrap me-2" title="Team members">Members
                                                                             (<span
                                                                                 data-bind="text: membersSorted().length"></span>)
                                                                         </legend>

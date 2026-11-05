@@ -14,7 +14,7 @@ import { getSingleFetchCooldownMs } from '../signalr/pushMode.js';
 
 // Shared across all Team instances — single localStorage key
 const _capKey = 'lh_showCapabilities';
-const _showCapabilities = ko.observable(localStorage.getItem(_capKey) !== 'false');
+const _showCapabilities = ko.observable(localStorage.getItem(_capKey) === 'true');
 _showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
 
 // ── Default-asset persistence (shared across all teams) ──

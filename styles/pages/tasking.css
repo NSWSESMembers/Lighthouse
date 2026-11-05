@@ -2600,6 +2600,33 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   overflow: hidden;
 }
 
+/* No matching asset: sits in the Zoom to slot of the Actions group, so it
+   looks like the other buttons but doesn't react to hover/press. */
+.team-no-asset {
+  cursor: default;
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-color: var(--bs-btn-color);
+  --bs-btn-hover-border-color: var(--bs-btn-border-color);
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-color: var(--bs-btn-color);
+  --bs-btn-active-border-color: var(--bs-btn-border-color);
+}
+/* Full-size car (same as the other buttons' icons) with a small ban badge
+   on its corner, so the car stays recognisable. */
+.team-no-asset__icon {
+  position: relative;
+  display: inline-block;
+}
+.team-no-asset__ban {
+  position: absolute;
+  right: -0.45em;
+  bottom: -0.3em;
+  font-size: 0.75em;
+  color: tomato;
+  background: var(--bs-body-bg, #fff);
+  border-radius: 50%;
+}
+
 /* Task Count cell: the ETA/ETC chip sits on a second line */
 .team-cell--count {
   white-space: normal;

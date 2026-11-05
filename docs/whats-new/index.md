@@ -24,6 +24,13 @@ The home page shows the first three `##` entries, so keep the title short.
 
 - **Work out an ETA from the drive time.** When setting a team En route, or changing its ETA, click **Or the drive time** to set the ETA to now plus the road travel time from the team's asset to the incident. Under it is how long ago the asset last reported its location, turning amber after 5 minutes and red after 15, so you can tell whether the route starts where the team really is. Once worked out, it also says roughly where the team was, e.g. *Near 12 Smith St, Parramatta*. See [Drive time](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#drive-time).
 
+## LAD team rows
+
+*5 November 2026*
+
+- **Clearer "no matching asset" icon.** A team that can't be matched to a radio asset now shows a car with a red no-entry badge in place of its **Focus on map** button, instead of a crossed-out car next to its callsign. See [Team Row Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-row-actions).
+- **Member capabilities are hidden by default** in an expanded team, and the heading is now **Members (count)** so it fits. Click the tags icon to show them; LAD remembers your choice. See [Toggle Member Capability](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#toggle-member-capability).
+
 ## New Statistics, Summary and Export pages
 
 *4 November 2026 · [v2026.11.04](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.04)*

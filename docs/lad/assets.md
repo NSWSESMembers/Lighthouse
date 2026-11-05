@@ -36,9 +36,9 @@ LAD uses the Beacon **team name** to work out which radio to track. Where a call
 
 ### Unmatched Teams
 
-Teams not linked to a radio asset show a location marker with a cross through it <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24">, and their focus button is greyed out. They aren't shown on the map.
+Teams not linked to a radio asset show a car with a red no-entry badge <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> in place of their focus button. They aren't shown on the map.
 
-![Unmatched team row with the crossed-out marker and disabled focus button](images/team-unmatched-row.png)
+![Unmatched team row with the no-matching-asset car in place of the focus button](images/team-unmatched-row.png)
 
 ### Troubleshooting Radio Matching
 
