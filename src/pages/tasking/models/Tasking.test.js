@@ -1033,3 +1033,137 @@ describe('Call off gating (port of Beacon canCallOff)', () => {
     expect(onsite.correctionEntries()[0].stillNoCallOff).toBe(false); // back to En route makes Call off available
   });
 });
+
+describe('drive-time ETA', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-06-15T10:00:00'));
+    global.fetch = vi.fn(async (url) => ({
+      ok: true,
+      json: async () => (String(url).includes('/geocode')
+        ? { results: [{ Address: { AddressNumber: '12', Street: 'Smith St', District: 'Parramatta' } }] }
+        : { Routes: [{ Summary: { Overview: { Distance: 12300, Duration: 17 * 60 + 5 } } }] }),
+    }));
+  });
+
+  const routeCalls = () => global.fetch.mock.calls.filter(([url]) => !String(url).includes('/geocode'));
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const tasked = (lastSeen = '2026-06-15T09:40:00') => {
+    const t = new Tasking({ CurrentStatus: 'Tasked' });
+    const a = { name: ko.observable('Truck 1'), latitude: ko.observable(-33.1), longitude: ko.observable(151.1), lastSeen: ko.observable(lastSeen) };
+    const trackableAssets = ko.observableArray([a]);
+    t.team = { trackableAssets, defaultAsset: () => trackableAssets()[0] || null };
+    t.job = { address: { latitude: ko.observable(-33.2), longitude: ko.observable(151.2) } };
+    return t;
+  };
+
+  it('shows the asset and how old its location is before calculating', () => {
+    const t = tasked();
+    expect(t.driveSource()).toMatchObject({ name: 'Truck 1', ageLabel: 'updated 20 min ago', state: 'stale' });
+    expect(t.driveTimeBlocked()).toBeNull();
+    expect(t.driveRowTitle()).toBe('Drive time from Truck 1');
+    expect(t.driveRowDetail()).toBe('Location updated 20 min ago');
+    expect(t.driveRowWarn()).toBe(true);
+    expect(t.driveRowAction()).toBe('Use');
+  });
+
+  it('is blocked without an asset position or an incident location', () => {
+    const t = tasked();
+    t.team.trackableAssets([]);
+    expect(t.driveTimeBlocked()).toBe('No tracked asset location for this team');
+    expect(t.driveRowTitle()).toBe('Drive time unavailable');
+    expect(t.driveRowDetail()).toBe('No tracked asset location for this team');
+    expect(t.driveRowCss()).toBe('tsm-drive--blocked');
+    t.job.address.latitude(null);
+    expect(t.driveTimeBlocked()).toBe('No incident location to route to');
+  });
+
+  it('sets the ETA to now + drive time, keeping the location age in the result', async () => {
+    const t = tasked();
+    t.needsETA(true);
+    expect(t.showDriveTime()).toBe(true);
+    t.calculateDriveTime();
+    expect(t.driveTimeLoading()).toBe(true);
+    await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
+    expect(t.eta()).toBe('2026-06-15T10:18');
+    expect(t.driveRowTitle()).toBe('18m drive · 12.3 km by road');
+    await vi.waitFor(() => expect(t.driveNear()).toBe('12 Smith St, Parramatta'));
+    expect(t.driveRowDetail()).toBe('Near 12 Smith St, Parramatta · updated 20 min ago');
+    expect(t.driveRowCss()).toBe('tsm-drive--stale tsm-drive--done');
+    expect(t.driveRowAction()).toBe('Redo');
+  });
+
+  it('keeps the age of the fix it used, and flags a newer fix without redoing the route', async () => {
+    const t = tasked();
+    t.needsETA(true);
+    t.calculateDriveTime();
+    await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
+    expect(t.driveTimeOutdated()).toBe(false);
+
+    const a = t.team.trackableAssets()[0];
+    a.lastSeen('2026-06-15T09:59:50');
+    a.latitude(-33.15);
+    expect(t.driveTimeOutdated()).toBe(true);
+    expect(t.driveRowTitle()).toBe('18m drive · 12.3 km by road');
+    expect(t.driveRowDetail()).toBe('New location since: Redo to update');
+    expect(t.driveRowCss()).toBe('tsm-drive--stale tsm-drive--done tsm-drive--outdated');
+    expect(t.driveRowWarn()).toBe(true);
+    expect(t.eta()).toBe('2026-06-15T10:18'); // left alone
+    expect(routeCalls()).toHaveLength(1);
+
+    t.calculateDriveTime(); // Redo uses the new fix
+    await vi.waitFor(() => expect(routeCalls()).toHaveLength(2));
+    await vi.waitFor(() => expect(t.driveTime().minutes).toBe(18));
+    expect(t.driveTimeOutdated()).toBe(false);
+    expect(JSON.parse(routeCalls()[1][1].body).coordinates[0]).toEqual([151.1, -33.15]);
+    await vi.waitFor(() => expect(t.driveNear()).toBe('12 Smith St, Parramatta'));
+    expect(t.driveRowDetail()).toBe('Near 12 Smith St, Parramatta · updated just now');
+    expect(t.driveRowCss()).toBe('tsm-drive--fresh tsm-drive--done');
+  });
+
+  it('still sets the ETA when the address lookup fails', async () => {
+    global.fetch = vi.fn(async (url) => (String(url).includes('/geocode')
+      ? { ok: false, json: async () => ({}) }
+      : { ok: true, json: async () => ({ Routes: [{ Summary: { Overview: { Distance: 12300, Duration: 17 * 60 } } }] }) }));
+    const t = tasked();
+    t.needsETA(true);
+    t.calculateDriveTime();
+    await vi.waitFor(() => expect(t.eta()).toBe('2026-06-15T10:17'));
+    expect(t.driveNear()).toBeNull();
+    expect(t.driveRowDetail()).toBe('Location updated 20 min ago');
+  });
+
+  it('sets the draft in the Change ETA editor', async () => {
+    const t = tasked();
+    t.currentStatus('Enroute');
+    t.openEstimateEditor();
+    expect(t.showDriveTime()).toBe(true);
+    t.calculateDriveTime();
+    await vi.waitFor(() => expect(t.estimateDraft()).toBe('2026-06-15T10:18'));
+  });
+
+  it('drops a result that arrives after the menu was reset', async () => {
+    const t = tasked();
+    t.needsETA(true);
+    t.calculateDriveTime();
+    t.goBackFromDetails();
+    await new Promise(r => setTimeout(r, 0));
+    await new Promise(r => setTimeout(r, 0));
+    expect(t.driveTime()).toBeNull();
+    expect(t.eta()).toBeNull();
+  });
+
+  it('reports a failed route without touching the ETA', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
+    const t = tasked();
+    t.needsETA(true);
+    t.eta('2026-06-15T10:30');
+    t.calculateDriveTime();
+    await vi.waitFor(() => expect(t.driveTime().error).toBeTruthy());
+    expect(t.eta()).toBe('2026-06-15T10:30');
+  });
+});

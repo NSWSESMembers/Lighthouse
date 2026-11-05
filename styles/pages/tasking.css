@@ -580,6 +580,86 @@ body.env-devbeacon .incidents-header {
   text-decoration: underline;
 }
 
+/* "Or the drive time" ETA option: a full-width row like the exact-time
+   inputs, with the age of the asset location it starts from underneath */
+.tsm-drive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+  text-align: left;
+  color: #212529;
+}
+.tsm-drive:hover:not(:disabled) {
+  border-color: #0d6efd;
+}
+.tsm-drive:disabled {
+  cursor: default;
+}
+.tsm-drive-icon {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  color: #0d6efd;
+}
+.tsm-drive-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+.tsm-drive-main {
+  font-size: 12px;
+  font-weight: 600;
+}
+.tsm-drive-sub {
+  font-size: 11px;
+  color: #6c757d;
+}
+.tsm-drive-sub i {
+  margin-right: 3px;
+}
+.tsm-drive-action {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0d6efd;
+}
+.tsm-drive--aging .tsm-drive-sub {
+  color: #b45309;
+}
+.tsm-drive--stale .tsm-drive-sub,
+.tsm-drive--unknown .tsm-drive-sub,
+.tsm-drive--error .tsm-drive-sub {
+  color: #b02a37;
+}
+.tsm-drive--done {
+  border-color: #0d6efd;
+  background: #f1f7ff;
+}
+.tsm-drive--done .tsm-drive-main {
+  color: #0a58ca;
+}
+.tsm-drive--outdated .tsm-drive-sub {
+  color: #b45309;
+}
+.tsm-drive--outdated .tsm-drive-action {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #0d6efd;
+  color: #fff;
+}
+.tsm-drive--blocked .tsm-drive-icon,
+.tsm-drive--blocked .tsm-drive-main {
+  color: #adb5bd;
+}
+
 /* Ensure key UI elements follow the smaller base size */
 button,
 input,

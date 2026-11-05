@@ -5,6 +5,7 @@ import L from "leaflet";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { showAlert } from '../components/windowAlert.js';
 import { Enum } from "../utils/enum.js";
+import { driveSourceFor, fixFreshness, fetchDriveTime, fetchNearAddress } from "../utils/driveTime.js";
 
 
 
@@ -457,6 +458,7 @@ export function Tasking(data = {}) {
         self.eta(null);
         self.etc(null);
         self.callOffReason(null);
+        self.resetDriveTime();
     };
 
     self.statusPageVisible = ko.pureComputed(() => self.statusDropdownPage() === "status");
@@ -622,6 +624,7 @@ export function Tasking(data = {}) {
         self.needsETA(false);
         self.needsETC(false);
         self.needsReason(false);
+        self.resetDriveTime();
     }
 
     /*
@@ -825,6 +828,122 @@ export function Tasking(data = {}) {
         self.statusDropdownPage("details");
         if (event && event.stopPropagation) event.stopPropagation();
     };
+
+    // --- Drive-time ETA ---
+    // Routes from the team's tracked asset to the incident and sets the ETA
+    // (status change, or the Change ETA editor) to now + drive time. The
+    // asset's fix age is always shown beside the button: an old fix means
+    // the team may be nowhere near where the route starts.
+    self.showDriveTime = ko.pureComputed(() =>
+        self.isEstimateMode() ? self.estimateKind() === "ETA" : self.needsETA()
+    );
+    self.driveSource = ko.pureComputed(() => {
+        _etaTick();
+        const src = driveSourceFor(self.team);
+        return src ? { ...src, ...fixFreshness(src.lastSeen) } : null;
+    });
+    // Not getJobLatLng: +null is 0, so a job with no coordinates would route to 0,0.
+    const jobPosition = () => {
+        const a = self.job && self.job.address;
+        const lat = a ? ko.unwrap(a.latitude) : null, lng = a ? ko.unwrap(a.longitude) : null;
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    };
+    self.driveTimeBlocked = ko.pureComputed(() => {
+        if (!jobPosition()) return "No incident location to route to";
+        if (!self.driveSource()) return "No tracked asset location for this team";
+        return null;
+    });
+    // null | { loading: true } | { error } | { minutes, summary, from }
+    // (`from`: the asset fix the route started at)
+    self.driveTime = ko.observable(null);
+    // Rough address of the fix the route started at, once the reverse
+    // geocode (sent alongside the route) comes back; null without one.
+    self.driveNear = ko.observable(null);
+    let driveTimeRequest = 0;
+    self.resetDriveTime = function () {
+        driveTimeRequest++;
+        self.driveTime(null);
+        self.driveNear(null);
+    };
+    self.driveTimeLoading = ko.pureComputed(() => !!(self.driveTime() && self.driveTime().loading));
+    self.calculateDriveTime = function (data, event) {
+        if (event && event.preventDefault) event.preventDefault();
+        if (event && event.stopPropagation) event.stopPropagation();
+        const src = self.driveSource();
+        const to = jobPosition();
+        if (!src || !to || self.driveTimeLoading()) return;
+        const request = ++driveTimeRequest;
+        const target = self.isEstimateMode() ? self.estimateDraft : self.eta;
+        self.driveTime({ loading: true });
+        self.driveNear(null);
+        // In parallel with the route, but shown on its own: a slow or failed
+        // lookup never holds up or blocks the ETA.
+        fetchNearAddress(src).then(near => {
+            if (request === driveTimeRequest) self.driveNear(near);
+        });
+        fetchDriveTime(src, to)
+            .catch(() => null)
+            .then(result => {
+                if (request !== driveTimeRequest) return; // closed or asked again
+                if (!result) {
+                    self.driveTime({ error: "Couldn't get a route. Set the ETA by hand." });
+                    return;
+                }
+                target(toInputTime(moment().seconds(0).milliseconds(0).add(result.minutes, "minutes")));
+                const m = result.distanceMeters;
+                self.driveTime({
+                    minutes: result.minutes,
+                    summary: `${formatMinutes(result.minutes)} drive` + (m != null ? ` · ${m < 950 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`} by road` : ""),
+                    from: { lat: src.lat, lng: src.lng, lastSeen: src.lastSeen },
+                });
+            });
+    };
+    // The "Or the drive time" row: what it would use (or did), and the
+    // location age underneath, coloured by how old it is. Once used, the age
+    // is of the fix the route started at, not the asset's latest -- a newer
+    // fix doesn't redo the route (or move the ETA under the operator), it
+    // just flags the result as out of date until they click Redo.
+    const usedFix = ko.pureComputed(() => {
+        const d = self.driveTime();
+        if (!d || !d.minutes) return null;
+        _etaTick();
+        return { ...d.from, ...fixFreshness(d.from.lastSeen) };
+    });
+    self.driveTimeOutdated = ko.pureComputed(() => {
+        const used = usedFix(), src = self.driveSource();
+        return !!used && !!src && (src.lastSeen !== used.lastSeen || src.lat !== used.lat || src.lng !== used.lng);
+    });
+    self.driveRowTitle = ko.pureComputed(() => {
+        const d = self.driveTime(), src = self.driveSource();
+        if (self.driveTimeBlocked()) return "Drive time unavailable";
+        if (d && d.loading) return "Working out the drive time…";
+        if (d && d.error) return "No route found";
+        if (d && d.minutes) return d.summary;
+        return `Drive time from ${src.name}`;
+    });
+    self.driveRowDetail = ko.pureComputed(() => {
+        const blocked = self.driveTimeBlocked(), d = self.driveTime(), src = self.driveSource();
+        if (blocked) return blocked;
+        if (d && d.error) return "Set the ETA by hand";
+        if (self.driveTimeOutdated()) return "New location since: Redo to update";
+        const used = usedFix();
+        if (used) return self.driveNear() ? `Near ${self.driveNear()} · ${used.ageLabel}` : `Location ${used.ageLabel}`;
+        return `Location ${src.ageLabel}`;
+    });
+    // Freshness grade of the fix the row is talking about.
+    const rowFixState = () => (usedFix() || self.driveSource()).state;
+    self.driveRowWarn = ko.pureComputed(() => !self.driveTimeBlocked() && (self.driveTimeOutdated() || rowFixState() !== "fresh"));
+    self.driveRowAction = ko.pureComputed(() => {
+        const d = self.driveTime();
+        if (self.driveTimeBlocked() || (d && d.loading)) return "";
+        return d && d.minutes ? "Redo" : "Use";
+    });
+    self.driveRowCss = ko.pureComputed(() => {
+        if (self.driveTimeBlocked()) return "tsm-drive--blocked";
+        const d = self.driveTime();
+        return `tsm-drive--${rowFixState()}` + (d && d.minutes ? " tsm-drive--done" : "") + (d && d.error ? " tsm-drive--error" : "")
+            + (self.driveTimeOutdated() ? " tsm-drive--outdated" : "");
+    });
 
     // --- Status-change page header and time line ---
     self.statusChangeTitle = ko.pureComputed(() => {

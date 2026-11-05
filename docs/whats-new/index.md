@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD drive time for ETAs
+
+*5 November 2026*
+
+- **Work out an ETA from the drive time.** When setting a team En route, or changing its ETA, click **Or the drive time** to set the ETA to now plus the road travel time from the team's asset to the incident. Under it is how long ago the asset last reported its location, turning amber after 5 minutes and red after 15, so you can tell whether the route starts where the team really is. Once worked out, it also says roughly where the team was, e.g. *Near 12 Smith St, Parramatta*. See [Drive time](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#drive-time).
+
 ## LAD team rows
 
 *5 November 2026*
