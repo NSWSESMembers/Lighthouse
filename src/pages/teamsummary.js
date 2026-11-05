@@ -643,7 +643,7 @@ function RunForestRun(mp) {
     //prevent multiple overlapping runs
     apiLoadingInterlock = true
 
-    BeaconToken.fetchBeaconToken(apiHost, params.source, function({
+    BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function({
       token    }) {
       pageToken = token
       mp && mp.open();
