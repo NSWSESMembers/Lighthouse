@@ -1,10 +1,16 @@
 name: Publish Dev Preview to Chrome Store
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   lintandpublish:
     name: Publish Dev
     runs-on: ubuntu-latest
+    # Web Store secrets live in this environment: master-dev only, admin approval.
+    environment: chrome-web-store-dev
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
