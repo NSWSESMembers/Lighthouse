@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import ko from 'knockout';
 import {
     normAssetName, splitTeamCallsignIntoParts, tokenVariantsFromPart,
     extractTeamTokens, scoreFuzzy, computeMatchedAssetsForTeam,
+    teamHqId, assetIsForTeamHq,
 } from './assetTeamMatching.js';
 
 describe('normAssetName', () => {
@@ -168,5 +170,42 @@ describe('computeMatchedAssetsForTeam', () => {
 
     it('treats a null/undefined allAssets as no assets', () => {
         expect(computeMatchedAssetsForTeam({ callsign: () => 'PAR56' }, null)).toEqual(new Set());
+    });
+
+    it("keeps an exercise copy's asset to teams assigned to that copy's HQ", () => {
+        const sim = { ...asset('cadence-1', 'PAR56'), exerciseHqId: ko.observable('150') };
+        const atHq = (id) => ({ callsign: () => 'PAR56', assignedTo: ko.observable({ id: ko.observable(id) }) });
+        expect(computeMatchedAssetsForTeam(atHq(150), [sim])).toEqual(new Set([sim]));
+        expect(computeMatchedAssetsForTeam(atHq(151), [sim])).toEqual(new Set());
+        // A fuzzy match is held to the same rule.
+        expect(computeMatchedAssetsForTeam({ ...atHq(150), callsign: () => 'PAR5' }, [sim])).toEqual(new Set([sim]));
+        expect(computeMatchedAssetsForTeam({ ...atHq(151), callsign: () => 'PAR5' }, [sim])).toEqual(new Set());
+    });
+});
+
+describe('teamHqId', () => {
+    it("reads the id of the team's assigned HQ as a string", () => {
+        expect(teamHqId({ assignedTo: ko.observable({ id: ko.observable(150) }) })).toBe('150');
+        expect(teamHqId({ assignedTo: { id: '151' } })).toBe('151');
+    });
+
+    it('is empty when the HQ is unknown', () => {
+        expect(teamHqId({})).toBe('');
+        expect(teamHqId(null)).toBe('');
+        expect(teamHqId({ assignedTo: ko.observable({ id: ko.observable(null) }) })).toBe('');
+    });
+});
+
+describe('assetIsForTeamHq', () => {
+    it('lets any team have an asset that belongs to no exercise HQ', () => {
+        expect(assetIsForTeamHq({ exerciseHqId: ko.observable(null) }, '150')).toBe(true);
+        expect(assetIsForTeamHq({}, '')).toBe(true);
+    });
+
+    it("keeps an exercise copy's asset to its own HQ", () => {
+        const sim = { exerciseHqId: ko.observable('150') };
+        expect(assetIsForTeamHq(sim, '150')).toBe(true);
+        expect(assetIsForTeamHq(sim, '151')).toBe(false);
+        expect(assetIsForTeamHq(sim, '')).toBe(false);
     });
 });

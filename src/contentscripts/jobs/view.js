@@ -8,6 +8,9 @@ var vincenty = require('../../lib/vincenty.js');
 // inject all.css - browserify-css takes care of this
 require('../../styles/jobs.view.css');
 
+// The CADence exercise choice reaches the page's inject script from
+// contentscripts/all.js, which runs on every Beacon page.
+
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
   if (event.source != window)
@@ -298,6 +301,7 @@ let job_nearest_asset_widget = (
           <div id="map-errors" style="visibility:hidden"></div>
           <div id="filter-warning" style="visibility:hidden"></div>
         </div>
+        <div id="asset-simulated-note" style="display:none"></div>
         </div>
   </div>
 );

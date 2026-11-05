@@ -5,6 +5,10 @@ These folders are published to <https://lighthouse.ses.nsw.gov.au>:
 | Folder | Published at |
 | --- | --- |
 | `docs/lad/` | [/guides/lad/](https://lighthouse.ses.nsw.gov.au/guides/lad/), the LAD user guide |
+| `docs/stats/` | [/guides/stats/](https://lighthouse.ses.nsw.gov.au/guides/stats/), the Incident Statistics guide |
+| `docs/summary/` | [/guides/summary/](https://lighthouse.ses.nsw.gov.au/guides/summary/), the Incident Summary guide |
+| `docs/export/` | [/guides/export/](https://lighthouse.ses.nsw.gov.au/guides/export/), the Incident Export guide |
+| `docs/nitc/` | [/guides/nitc/](https://lighthouse.ses.nsw.gov.au/guides/nitc/), the NITC Export guide |
 | `docs/whats-new/` | [/whats-new/](https://lighthouse.ses.nsw.gov.au/whats-new/), changes in each release (the home page shows the latest three) |
 | `docs/privacy/` | [/privacy/](https://lighthouse.ses.nsw.gov.au/privacy/), the privacy policy linked from the Chrome Web Store listing |
 
@@ -12,8 +16,8 @@ There are two copies of each, one per release channel:
 
 | Branch | Extension | Published at |
 | --- | --- | --- |
-| `master` | Lighthouse (Chrome Web Store release) | `/guides/lad/`, `/whats-new/`, `/privacy/` |
-| `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/whats-new/`, `/preview/privacy/` |
+| `master` | Lighthouse (Chrome Web Store release) | `/guides/lad/`, `/guides/stats/`, `/guides/summary/`, `/guides/export/`, `/guides/nitc/`, `/whats-new/`, `/privacy/` |
+| `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/guides/stats/`, `/preview/guides/summary/`, `/preview/guides/export/`, `/preview/guides/nitc/`, `/preview/whats-new/`, `/preview/privacy/` |
 
 Both copies come from the same files, so you only ever write the docs once. A
 change shows up in the preview copy when it merges to `master-dev`, and in the
@@ -31,8 +35,8 @@ When a change to either folder lands on `master` or `master-dev`, the
 [Sync Docs to Website](../.github/workflows/sync_website_docs.yml) workflow copies it
 into
 [NSWSESMembers/lighthouse.ses.nsw.gov.au](https://github.com/NSWSESMembers/lighthouse.ses.nsw.gov.au):
-`master` into `guides/lad/` and `whats-new/`, `master-dev` into `preview/guides/lad/`
-and `preview/whats-new/`. GitHub Pages then builds it with Jekyll. The page layouts
+`master` into `guides/lad/`, `guides/stats/`, `guides/summary/`, `guides/export/`, `guides/nitc/`, `whats-new/` and `privacy/`, `master-dev` into
+`preview/guides/lad/`, `preview/guides/stats/`, `preview/guides/summary/`, `preview/guides/export/`, `preview/guides/nitc/`, `preview/whats-new/` and `preview/privacy/`. GitHub Pages then builds it with Jekyll. The page layouts
 and styles live in the website repo (`_layouts/`, `assets/site.css`), not here.
 
 So the stable guide only describes features users of the release actually have,
@@ -67,15 +71,26 @@ user-facing change, LAD or otherwise. Add bullets under a heading at the top for
 upcoming release (a short title, then an italic line with the date and release tag).
 The comment at the top of the file has the full format.
 
-## Updating the guide
+## Updating the guides
 
-Update the guide in the **same PR** as any user-facing LAD change:
+Update the matching guide in the **same PR** as any user-facing change to LAD
+(`docs/lad/`), Incident Statistics (`docs/stats/`), Incident Summary (`docs/summary/`),
+Incident Export (`docs/export/`) or NITC Export (`docs/nitc/`):
 
-1. Edit the relevant page in `docs/lad/`, or add a new one.
+1. Edit the relevant page in the guide's folder, or add a new one.
 2. Add a bullet to [What's New](whats-new/index.md), linking to the guide section.
-3. Put screenshots in `docs/lad/images/` and use kebab-case names
+3. Put screenshots in the guide's `images/` folder and use kebab-case names
    (`team-expanded.png`). Crop them to the relevant part of the UI, and blur or
-   avoid real phone numbers.
+   avoid real phone numbers. Each page has a harness that captures them from
+   fake data: `npm run lad:shots` ([scripts/lad-docs](../scripts/lad-docs/README.md)),
+   `npm run stats:shots -- --out docs/stats/images`
+   ([scripts/stats-docs](../scripts/stats-docs/README.md)) and
+   `npm run summary:shots -- --out docs/summary/images`
+   ([scripts/summary-docs](../scripts/summary-docs/README.md)),
+   `npm run advexport:shots -- --out docs/export/images`
+   ([scripts/advexport-docs](../scripts/advexport-docs/README.md)) and
+   `npm run nitcexport:shots -- --out docs/nitc/images`
+   ([scripts/nitcexport-docs](../scripts/nitcexport-docs/README.md)).
 
 ## Conventions
 
@@ -93,8 +108,8 @@ Update the guide in the **same PR** as any user-facing LAD change:
   GitHub, and Pages rewrites them to `.html`.
 - Mark a missing or outdated screenshot with `<!-- TODO: screenshot of ... -->` so
   it's easy to find with grep.
-- Don't add a `README.md` inside `docs/lad/` or `docs/whats-new/`. Jekyll would
-  publish it as a page.
+- Don't add a `README.md` inside `docs/lad/`, `docs/stats/`, `docs/summary/`,
+  `docs/export/`, `docs/nitc/`, `docs/whats-new/` or `docs/privacy/`. Jekyll would publish it as a page.
 
 ## Previewing locally
 
@@ -102,6 +117,10 @@ Check out the website repo next to this one, then:
 
 ```sh
 rsync -a --delete docs/lad/ ../lighthouse.ses.nsw.gov.au/guides/lad/
+rsync -a --delete docs/stats/ ../lighthouse.ses.nsw.gov.au/guides/stats/
+rsync -a --delete docs/summary/ ../lighthouse.ses.nsw.gov.au/guides/summary/
+rsync -a --delete docs/export/ ../lighthouse.ses.nsw.gov.au/guides/export/
+rsync -a --delete docs/nitc/ ../lighthouse.ses.nsw.gov.au/guides/nitc/
 rsync -a --delete docs/whats-new/ ../lighthouse.ses.nsw.gov.au/whats-new/
 rsync -a --delete docs/privacy/ ../lighthouse.ses.nsw.gov.au/privacy/
 # or, to preview the Development Preview copy, sync into preview/guides/lad/ and

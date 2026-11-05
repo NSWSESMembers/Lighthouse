@@ -1,4 +1,5 @@
 import BeaconClient from '../shared/BeaconClient.js';
+import { blockUnlessOpenedFromBeacon } from '../shared/beaconEnvironments.js';
 require('./lib/shared_chrome_code.js'); // side-effect
 var BeaconToken = require('./lib/shared_token_code.js');
 var clusterCodes = require('../lib/clusters.js');
@@ -15,6 +16,7 @@ global.jQuery = $;
 var timeoverride = null;
 
 var params = getSearchParameters();
+blockUnlessOpenedFromBeacon(params);
 
 var apiHost = params.host
 
@@ -641,7 +643,7 @@ function RunForestRun(mp) {
     //prevent multiple overlapping runs
     apiLoadingInterlock = true
 
-    BeaconToken.fetchBeaconToken(apiHost, params.source, function({
+    BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function({
       token    }) {
       pageToken = token
       mp && mp.open();

@@ -36,6 +36,11 @@ describe('construction', () => {
     const a = new Asset({ properties: {} }, deps());
     expect(a.licensePlate()).toBe('-');
   });
+
+  it("keeps a simulated asset's exercise HQ, and has none for a real radio", () => {
+    expect(new Asset(assetData({ exerciseHqId: '101' }), deps()).exerciseHqId()).toBe('101');
+    expect(new Asset(assetData(), deps()).exerciseHqId()).toBeNull();
+  });
 });
 
 describe('matchingTeamsInView', () => {
@@ -118,6 +123,14 @@ describe('updateFromJson', () => {
     const a = new Asset(assetData(), deps());
     a.updateFromJson({ lastSeen: '2026-02-01T00:00:00.000Z' });
     expect(a.lastSeen()).toBe('2026-02-01T00:00:00.000Z');
+  });
+
+  it('updates the exercise HQ only when the patch has one', () => {
+    const a = new Asset(assetData({ exerciseHqId: '101' }), deps());
+    a.updateFromJson({ markerLabel: 'x' });
+    expect(a.exerciseHqId()).toBe('101');
+    a.updateFromJson({ exerciseHqId: '102' });
+    expect(a.exerciseHqId()).toBe('102');
   });
 
   it('is a no-op for a null/undefined patch', () => {

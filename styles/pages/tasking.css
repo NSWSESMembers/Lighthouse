@@ -580,6 +580,86 @@ body.env-devbeacon .incidents-header {
   text-decoration: underline;
 }
 
+/* "Or the drive time" ETA option: a full-width row like the exact-time
+   inputs, with the age of the asset location it starts from underneath */
+.tsm-drive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+  text-align: left;
+  color: #212529;
+}
+.tsm-drive:hover:not(:disabled) {
+  border-color: #0d6efd;
+}
+.tsm-drive:disabled {
+  cursor: default;
+}
+.tsm-drive-icon {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  color: #0d6efd;
+}
+.tsm-drive-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+.tsm-drive-main {
+  font-size: 12px;
+  font-weight: 600;
+}
+.tsm-drive-sub {
+  font-size: 11px;
+  color: #6c757d;
+}
+.tsm-drive-sub i {
+  margin-right: 3px;
+}
+.tsm-drive-action {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0d6efd;
+}
+.tsm-drive--aging .tsm-drive-sub {
+  color: #b45309;
+}
+.tsm-drive--stale .tsm-drive-sub,
+.tsm-drive--unknown .tsm-drive-sub,
+.tsm-drive--error .tsm-drive-sub {
+  color: #b02a37;
+}
+.tsm-drive--done {
+  border-color: #0d6efd;
+  background: #f1f7ff;
+}
+.tsm-drive--done .tsm-drive-main {
+  color: #0a58ca;
+}
+.tsm-drive--outdated .tsm-drive-sub {
+  color: #b45309;
+}
+.tsm-drive--outdated .tsm-drive-action {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #0d6efd;
+  color: #fff;
+}
+.tsm-drive--blocked .tsm-drive-icon,
+.tsm-drive--blocked .tsm-drive-main {
+  color: #adb5bd;
+}
+
 /* Ensure key UI elements follow the smaller base size */
 button,
 input,
@@ -617,7 +697,8 @@ td.chev[draggable='true'] * {
   user-select: none !important;
 }
 
-.pane .small {
+.pane .small,
+.dropdown-menu.lifted-from-pane .small { /* see utils/dropdownPortal.js */
   font-size: 0.8rem;
 }
 .input-group-sm .form-control {
@@ -667,27 +748,32 @@ td.chev[draggable='true'] * {
 .app {
   display: flex;
   height: 100vh;
+  /* Visible height on tablets/phones, where 100vh runs under the browser's toolbar. */
+  height: 100dvh;
   width: 100vw;
 }
 
 .app.layout-map-left-teams-top .sidebar,
 .app.layout-map-left-tasking-top .sidebar,
 .app.layout-map-left-teams-only .sidebar,
-.app.layout-map-left-tasking-only .sidebar {
+.app.layout-map-left-tasking-only .sidebar,
+.app.layout-map-left-tabbed .sidebar {
   order: 3;
 }
 
 .app.layout-map-left-teams-top .vsplit,
 .app.layout-map-left-tasking-top .vsplit,
 .app.layout-map-left-teams-only .vsplit,
-.app.layout-map-left-tasking-only .vsplit {
+.app.layout-map-left-tasking-only .vsplit,
+.app.layout-map-left-tabbed .vsplit {
   order: 2;
 }
 
 .app.layout-map-left-teams-top .map-wrap,
 .app.layout-map-left-tasking-top .map-wrap,
 .app.layout-map-left-teams-only .map-wrap,
-.app.layout-map-left-tasking-only .map-wrap {
+.app.layout-map-left-tasking-only .map-wrap,
+.app.layout-map-left-tabbed .map-wrap {
   order: 1;
 }
 
@@ -919,40 +1005,235 @@ body.sidebar-collapsed .vsplit {
   border-bottom: 0;
 }
 
-.layout-preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 10px;
+/* Tabbed layouts: one list at full height, picked by the tab buttons in the
+    tab bar (.drawer-tabs); .tabbed-incidents on .app = incidents. */
+.app.layout-map-right-tabbed #hsplit,
+.app.layout-map-left-tabbed #hsplit,
+.app.layout-map-right-tabbed:not(.tabbed-incidents) #paneBottom,
+.app.layout-map-left-tabbed:not(.tabbed-incidents) #paneBottom,
+.app.layout-map-right-tabbed.tabbed-incidents #paneTop,
+.app.layout-map-left-tabbed.tabbed-incidents #paneTop {
+  display: none !important;
 }
 
-.layout-preset-card {
-  border: 1px solid var(--bs-border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+.app.layout-map-right-tabbed #paneTop,
+.app.layout-map-left-tabbed #paneTop,
+.app.layout-map-right-tabbed #paneBottom,
+.app.layout-map-left-tabbed #paneBottom {
+  order: 1;
+  flex: 1 1 auto;
+  height: auto;
+  border-bottom: 0;
+}
+
+/* Tabbed layouts in portrait: drawer and map stacked, full width. Map Right
+   puts the map below the drawer, Map Left above it. The side splitter
+   becomes a row splitter setting --sidebar-h (resize.js). */
+@media (orientation: portrait) {
+  .app.layout-map-right-tabbed,
+  .app.layout-map-left-tabbed {
+    flex-direction: column;
+  }
+  .app.layout-map-right-tabbed .sidebar,
+  .app.layout-map-left-tabbed .sidebar {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 0 min(var(--sidebar-h, 55%), calc(100% - 160px));
+  }
+  body.sidebar-collapsed .app.layout-map-right-tabbed .sidebar,
+  body.sidebar-collapsed .app.layout-map-left-tabbed .sidebar {
+    flex-basis: 0;
+  }
+  .app.layout-map-right-tabbed .vsplit,
+  .app.layout-map-left-tabbed .vsplit {
+    width: auto !important;
+    height: 6px;
+    flex: 0 0 auto;
+    cursor: row-resize;
+  }
+  .app.layout-map-right-tabbed .vsplit::after,
+  .app.layout-map-left-tabbed .vsplit::after {
+    inset: 1px 0;
+  }
+  .app.layout-map-right-tabbed .map-wrap,
+  .app.layout-map-left-tabbed .map-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .app.layout-map-right-tabbed .vsplit,
+  .app.layout-map-left-tabbed .vsplit {
+    height: 16px;
+  }
+}
+
+/* Tabbed layouts: with the header pill gone, the list's search box and
+   buttons span the whole row, the buttons sharing the space evenly. */
+.app.layout-map-right-tabbed .pane-toolbar > :last-child,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .dropdown,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .dropdown {
+  flex: 1 1 0;
+  min-width: 32px;
+}
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .dropdown > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .dropdown > .btn {
+  width: 100%;
+}
+/* Equal shares: drop the buttons' own side padding (px-1/px-2), which would
+   otherwise be added on top of each share. */
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .btn,
+.app.layout-map-right-tabbed .pane-toolbar > :last-child > .dropdown > .btn,
+.app.layout-map-left-tabbed .pane-toolbar > :last-child > .dropdown > .btn {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Tab bar across the top of the drawer (tabbed layouts only). The active
+   tab takes the environment colour of the list headers it replaces. */
+.drawer-tabs {
+  display: none;
+}
+
+.app.layout-map-right-tabbed .drawer-tabs,
+.app.layout-map-left-tabbed .drawer-tabs {
+  display: flex;
+  order: 0;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 6px 8px 3px;
+}
+
+.app.layout-map-right-tabbed .toolbar-label,
+.app.layout-map-left-tabbed .toolbar-label {
+  display: none !important;
+}
+
+.drawer-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 2px solid #f7931d;
+  border-radius: 10px;
+  background: #fff;
+  color: #9a5a0f;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-tab.active {
+  background: #f7931d;
+  color: #fff;
+}
+
+body.env-trainbeacon .drawer-tab {
+  border-color: #219f56;
+  color: #176b3a;
+}
+body.env-trainbeacon .drawer-tab.active {
+  background: #219f56;
+  color: #fff;
+}
+
+body.env-devbeacon .drawer-tab {
+  border-color: #2d9ee0;
+  color: #1c6b99;
+}
+body.env-devbeacon .drawer-tab.active {
+  background: #2d9ee0;
+  color: #fff;
+}
+
+.dark-mode .drawer-tab:not(.active) {
+  background: transparent;
+  color: #ddd;
+}
+
+/* Layout tab: six tiles, each a thumbnail of the page (3 x 2). */
+.layout-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 760px;
+}
+
+.layout-tile {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  background: var(--bs-body-bg);
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: 0.6rem;
   cursor: pointer;
 }
 
-.layout-preset-card.is-active {
+.layout-tile.active {
   border-color: var(--bs-primary);
-  box-shadow: inset 0 0 0 1px var(--bs-primary);
+  background: var(--bs-primary-bg-subtle);
 }
 
-.layout-preset-radio {
-  align-self: flex-start;
-  margin: 0;
+.layout-tile:has(input:focus-visible) {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
 
-.layout-preset-name {
-  font-weight: 600;
+/* Thumbnails keep the page's shape and grow with the modal; the icons
+   scale with them (cqw = % of the thumbnail's width). */
+.layout-tile .layout-preset-preview {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  container-type: inline-size;
+}
+
+/* (Selectors one class stronger than the .layout-preset-preview rules
+   further down, which would otherwise win.) */
+.layout-tile .layout-preset-preview .preview-block {
+  font-size: clamp(11px, 7cqw, 22px);
+  color: var(--bs-secondary-color);
+}
+
+/* List blocks: the icon as a header with faint rows under it. */
+.layout-tile .layout-preset-preview .preview-block--teams,
+.layout-tile .layout-preset-preview .preview-block--tasking {
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0.35em 0.45em;
+  background:
+    linear-gradient(var(--bs-body-bg), var(--bs-body-bg)) top / 100% 1.6em no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 0.75em, rgba(0, 0, 0, 0.07) 0.75em 1.05em) var(--bs-body-bg);
+}
+
+/* Map block: a soft map tint. */
+.layout-tile .layout-preset-preview .preview-block--map {
+  background: #e6efe1;
+}
+
+.layout-tile.active .layout-preset-preview .preview-block {
+  color: var(--bs-primary);
+}
+
+.layout-tile-name {
+  font-size: 0.95rem;
   line-height: 1.2;
-}
-
-.layout-preset-description {
-  line-height: 1.25;
+  text-align: center;
 }
 
 .layout-preset-preview {
@@ -1042,6 +1323,35 @@ body.sidebar-collapsed .vsplit {
 .layout-preset-preview.preset-map-right-tasking-only .preview-block--tasking,
 .layout-preset-preview.preset-map-left-tasking-only .preview-block--tasking {
   grid-row: 1 / span 2;
+}
+
+/* Tabbed: one drawer block, with the other list as a tab in its corner. */
+.layout-preset-preview.preset-map-right-tabbed .preview-block--teams,
+.layout-preset-preview.preset-map-left-tabbed .preview-block--teams {
+  grid-row: 1 / span 2;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px 0 0 4px;
+}
+
+.layout-preset-preview.preset-map-right-tabbed .preview-block--tasking,
+.layout-preset-preview.preset-map-left-tabbed .preview-block--tasking {
+  grid-row: 1;
+  align-self: start;
+  justify-self: end;
+  margin: 3px 4px 0 0;
+  padding: 1px 4px;
+  border-style: dashed;
+  z-index: 1;
+}
+
+.layout-preset-preview.preset-map-left-tabbed .preview-block--teams,
+.layout-preset-preview.preset-map-left-tabbed .preview-block--tasking {
+  grid-column: 2;
+}
+
+.layout-preset-preview.preset-map-left-tabbed .preview-block--map {
+  grid-column: 1;
 }
 
 .layout-preset-preview.preset-map-only {
@@ -2290,6 +2600,33 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   overflow: hidden;
 }
 
+/* No matching asset: sits in the Zoom to slot of the Actions group, so it
+   looks like the other buttons but doesn't react to hover/press. */
+.team-no-asset {
+  cursor: default;
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-color: var(--bs-btn-color);
+  --bs-btn-hover-border-color: var(--bs-btn-border-color);
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-color: var(--bs-btn-color);
+  --bs-btn-active-border-color: var(--bs-btn-border-color);
+}
+/* Full-size car (same as the other buttons' icons) with a small ban badge
+   on its corner, so the car stays recognisable. */
+.team-no-asset__icon {
+  position: relative;
+  display: inline-block;
+}
+.team-no-asset__ban {
+  position: absolute;
+  right: -0.45em;
+  bottom: -0.3em;
+  font-size: 0.75em;
+  color: tomato;
+  background: var(--bs-body-bg, #fff);
+  border-radius: 50%;
+}
+
 /* Task Count cell: the ETA/ETC chip sits on a second line */
 .team-cell--count {
   white-space: normal;
@@ -2466,6 +2803,7 @@ body.dark-mode .hq-coverage-watermark.is-visible {
 /* Ensure the embedded SVG is a tight, block-level box */
 .leaflet-marker-icon.job-svg-marker > svg {
   display: block; /* no inline baseline */
+  position: relative; /* paints over the marching ring, under the pulse ring */
   overflow: visible; /* avoid stroke clipping */
   shape-rendering: geometricPrecision;
   vector-effect: non-scaling-stroke; /* keeps stroke width stable if scaled */
@@ -2544,16 +2882,11 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   stroke-width: 1.5;
 }
 
-/* PULSE RING (separate follower marker using L.divIcon) */
-.pulse-ring-icon {
-  pointer-events: none; /* clicks go to the base marker */
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  line-height: 0;
-  font-size: 0;
-  will-change: transform;
+/* New pulse ring / Active marching ring — drawn inside the job marker's own
+   icon (see withRings() in job_icon.js), overflowing it, centred on the shape. */
+.job-marker-ring {
+  position: absolute;
+  pointer-events: none; /* clicks go to the marker shape */
 }
 
 .pulse-ring {
@@ -2593,19 +2926,9 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   }
 }
 
-/* STATUS RING — the Active "marching ring" (separate follower marker).
+/* STATUS RING — the Active "marching ring".
    A dashed circle whose <g> rotates, which reads as marching ants and is
    compositor-only (cheap) unlike animating stroke-dashoffset. */
-.status-ring-icon {
-  pointer-events: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  line-height: 0;
-  font-size: 0;
-}
-
 .status-ring-spin {
   animation: status-ring-spin 9s linear infinite;
 }
@@ -2656,9 +2979,31 @@ overflow: hidden;
 .leaflet-control.alerts {
   pointer-events: auto;
 }
+
+/* Simulated exercise ended banner (SimulatedExerciseVM.notice). main.js puts
+   it first in the map's top-right corner, so the map alerts stack below it;
+   sized and rounded to match them. */
+.leaflet-control.simex-notice {
+  pointer-events: auto;
+  max-width: min(360px, var(--map-w, 100vw) - 64px);
+  margin-bottom: 0;
+  padding: 10px 2.25rem 10px 12px;
+  font: 13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+.leaflet-control.simex-notice .btn-close {
+  padding: 0.85rem 0.75rem;
+}
+/* Leaflet colours every link on the map. Keep this one in the banner's own
+   colour: it's bold and underlined, so it still reads as a link. */
+.leaflet-container .simex-notice .alert-link {
+  color: inherit;
+}
 .alerts {
   font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  max-width: 360px;
+  /* Leave room for the zoom/tool controls on the left of a narrow map. */
+  max-width: min(360px, var(--map-w, 100vw) - 64px);
   backdrop-filter: blur(2px);
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -3390,6 +3735,48 @@ overflow: hidden;
   margin-right: 0.5rem;
 }
 
+/* Configuration > Map markers > Layer order & transparency */
+.layer-stack-list {
+  max-height: 26rem;
+  overflow-y: auto;
+}
+
+.layer-stack-row.layer-stack-off .layer-stack-name {
+  opacity: 0.6;
+}
+
+.layer-stack-row.is-dragover {
+  box-shadow: inset 0 2px 0 var(--bs-primary);
+}
+
+/* Rows hidden by the search (beats the row's d-flex !important) */
+.layer-stack-list > .layer-stack-row.layer-stack-hidden {
+  display: none !important;
+}
+
+.layer-stack-showall {
+  font-size: inherit;
+}
+
+.layer-stack-search {
+  max-width: 22rem;
+}
+
+.layer-stack-switch {
+  width: 2.5rem;
+  flex: none;
+}
+
+.layer-stack-opacity {
+  width: 7rem;
+  flex: none;
+}
+
+.layer-stack-pct {
+  width: 2.5rem;
+  flex: none;
+}
+
 .cfg-subhead {
   font-size: 0.8rem;
   font-weight: 600;
@@ -3830,6 +4217,13 @@ body.dark-mode .config-subaccordion .accordion-button::after {
   transform-origin: 50% 50%;
 }
 
+/* Length of the green dashed asset -> incident line (Map.js crowFliesLayer) */
+.crow-flies-distance-label {
+  background: #166534;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 .team-status-button {
   border: 1px solid #ccc;
   min-width: 90px;
@@ -4225,20 +4619,27 @@ body.dark-mode .ops-log-status-details {
   left: 100%;
   margin-left: 6px;
   background: #fff;
-  padding: 8px;
-  width: 760px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* width and height are fitted to the map (fitPanel in main.js) */
+  width: 540px;
+  height: 440px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid #ccc;
   border-radius: 0.5rem;
   z-index: 1000;
+}
+
+/* Open panel draws over the bottom corners' controls (minimap) */
+.leaflet-top.leaflet-left:has(.ld-panel:not(.d-none)) {
+  z-index: 1001;
 }
 
 /* ── Search row ── */
 .ld-search-row {
   border-bottom: 1px solid #e0e0e0;
   padding: 6px 8px;
+  flex: none;
 }
 .ld-search-input {
   font-size: 12px;
@@ -4247,30 +4648,133 @@ body.dark-mode .ops-log-status-details {
   color: #999;
 }
 
-/* ── Basemap dropdown row (full width above grid) ── */
-.ld-basemap-row {
-  margin-bottom: 8px;
+/* ── Section rail + selected section ── */
+.ld-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 152px minmax(0, 1fr);
 }
-.ld-basemap-btn {
-  font-size: 12px;
-  padding: 4px 8px;
-}
-.ld-basemap-menu {
-  font-size: 12px;
-  max-height: 260px;
+.ld-rail {
   overflow-y: auto;
-  width: 100%;
+  border-right: 1px solid #e9ecef;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-.ld-basemap-menu .dropdown-item img {
-  flex-shrink: 0;
+.ld-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: #495057;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 5px 7px;
+  text-align: left;
+}
+.ld-rail-item:hover {
+  background: #f0f1f3;
+}
+.ld-rail-item:focus-visible {
+  outline: 2px solid #86b7fe;
+  outline-offset: -2px;
+}
+.ld-rail-item[aria-current="true"] {
+  background: #6c757d;
+  color: #fff;
+}
+.ld-rail-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ld-rail-sub {
+  display: block;
+  font-size: 10.5px;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ld-rail-count {
+  flex: none;
+  min-width: 1.5em;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e2e5e9;
+  color: #495057;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ld-rail-count:empty {
+  display: none;
+}
+.ld-rail-item[aria-current="true"] .ld-rail-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.ld-rail-sep {
+  height: 1px;
+  background: #e9ecef;
+  margin: 4px 2px;
+  flex: none;
+}
+.ld-pane {
+  overflow-y: auto;
+  min-width: 0;
+  padding: 8px;
+}
+.ld-pane-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #555;
+  margin-bottom: 6px;
+}
+.ld-empty {
+  font-size: 12px;
+  color: #6c757d;
+  padding: 4px 0;
 }
 
-/* ── Three-column group grid ── */
+/* Narrow map: the rail becomes a scrolling row of chips above the list */
+.ld-narrow .ld-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.ld-narrow .ld-rail {
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-right: 0;
+  border-bottom: 1px solid #e9ecef;
+  gap: 4px;
+}
+.ld-narrow .ld-rail-item {
+  flex: none;
+  width: auto;
+  white-space: nowrap;
+  border: 1px solid #ced4da;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.ld-narrow .ld-rail-sep,
+.ld-narrow .ld-rail-sub {
+  display: none;
+}
+
+/* ── Layer list: one column, a cell per group ── */
 .ld-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px 10px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .ld-grid-cell {
   min-width: 0;
@@ -4305,6 +4809,202 @@ body.dark-mode .ops-log-status-details {
 .layers-drawer .ld-overlay-btn {
   font-size: 11px;
   padding: 3px 6px;
+}
+
+/* ── Layer presets (Presets section) ── */
+.ld-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ld-preset {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+}
+.layers-drawer .ld-preset-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 7px;
+  font-size: 11px;
+  padding: 4px 6px;
+}
+.ld-preset-glyph {
+  flex: none;
+  font-size: 13px;
+}
+.ld-preset-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.ld-preset-name {
+  font-weight: 600;
+}
+.ld-preset-layers {
+  font-size: 10px;
+  opacity: 0.75;
+  white-space: normal;
+}
+.ld-preset-part {
+  flex: none;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ld-preset-part:empty {
+  display: none;
+}
+/* Some of its layers on: dashed outline */
+.layers-drawer .ld-preset-main.ld-preset-partial {
+  border-style: dashed;
+}
+.ld-preset-action {
+  flex: none;
+  width: 26px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: none;
+  color: #6c757d;
+  font-size: 11px;
+  padding: 0;
+}
+.ld-preset-action:hover:not(:disabled) {
+  background: #f0f1f3;
+  color: #212529;
+}
+.ld-preset-action:disabled {
+  opacity: 0.4;
+}
+.ld-preset-pin[aria-pressed="true"] {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+.ld-preset-pin[aria-pressed="true"]:hover {
+  background: #5c636a;
+  color: #fff;
+}
+.ld-preset-edit {
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  padding: 6px;
+}
+.ld-preset-edit .ld-preset-form {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ld-preset-new {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+}
+.ld-preset-new-title {
+  font-size: 11px;
+  font-weight: 600;
+}
+.ld-preset-new-info {
+  font-size: 10.5px;
+  color: #6c757d;
+  margin: 1px 0 5px;
+}
+.ld-preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ld-preset-form .form-control {
+  font-size: 12px;
+}
+.ld-preset-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.ld-preset-icon {
+  width: 26px;
+  height: 24px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: none;
+  color: #495057;
+  font-size: 12px;
+  padding: 0;
+}
+.ld-preset-icon:hover {
+  background: #f0f1f3;
+}
+.ld-preset-icon[aria-checked="true"] {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+.ld-preset-replace {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+}
+.ld-preset-buttons {
+  display: flex;
+  gap: 4px;
+}
+.ld-preset-buttons .btn {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+.ld-preset-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+.ld-preset-footer .btn-link {
+  font-size: 11px;
+  text-align: left;
+}
+
+/* Pinned presets: buttons grouped under the Layers button, in its bar */
+.layer-preset-bar[hidden] {
+  display: none !important;
+}
+.layer-preset-bar {
+  display: flex;
+  flex-direction: column;
+}
+.layers-drawer .leaflet-bar:has(.layer-preset-bar:not([hidden])) .ld-toggle-btn {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.layer-preset-bar .lp-btn {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-top: 1px solid #ccc;
+  border-radius: 0;
+}
+.layer-preset-bar .lp-btn:last-child {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+.layer-preset-bar .lp-btn.active {
+  background: #6c757d;
+  color: #fff;
+}
+/* Some of its layers on: a dot in the corner */
+.layer-preset-bar .lp-part {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6c757d;
 }
 
 /* ── Layer load status (polling layers) ── */
@@ -4842,158 +5542,200 @@ body.dark-mode .ops-log-status-details {
   background: #f0f4f9;
 }
 
-/* ── Radar playback bar (bottom-center) ── */
-.rv-wrapper {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  pointer-events: auto;
-}
-
-.rv-legend-container {
-  pointer-events: auto;
-}
-
+/* ── RainViewer radar playback (Leaflet control, bottom-left above Legend) ──
+   Collapsed to a chip by default; the chip opens the scrubber panel. Its
+   width is set from the map's width in rainviewer.js (fitToMap). */
 .rv-control {
   background: #fff;
   color: #333;
-  padding: 8px 12px;
-  border-radius: 0 0 4px 4px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   font-size: 12px;
-  font-family: system-ui, -apple-system, sans-serif;
-  box-shadow: 0 2px 6px rgba(0,0,0,.25);
   user-select: none;
-  pointer-events: auto;
+  overflow: visible;
 }
 .rv-control button {
-  border: 1px solid #ddd;
-  background: #f9f9f9;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
   font-size: 12px;
-  padding: 4px 6px;
-  border-radius: 3px;
-  transition: all 0.15s ease;
-  min-width: 32px;
+  line-height: 1;
+  padding: 5px 7px;
+  border-radius: 4px;
 }
-.rv-control button:hover {
-  background: #fff;
-  border-color: #999;
+.rv-control button:hover:not(:disabled) {
+  background: #f0f2f5;
+  border-color: #ccd2d9;
 }
-.rv-control button:active {
-  background: #f0f0f0;
+.rv-control button:disabled {
+  cursor: default;
 }
-.rv-control input[type="range"] {
-  cursor: pointer;
-  height: 4px;
-  border-radius: 2px;
-  outline: none;
-}
-.rv-control input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #4a90e2;
-  cursor: pointer;
-  border: 1px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,.3);
-}
-.rv-control input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #4a90e2;
-  cursor: pointer;
-  border: 1px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,.3);
-}
-.rv-control select {
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-  padding: 4px 6px;
-  cursor: pointer;
-  background: #f9f9f9;
-  font-family: system-ui, -apple-system, sans-serif;
-  min-width: 58px;
-}
-.rv-control select:hover {
-  border-color: #999;
-}
-.rv-legend-panel {
+
+.rv-chip {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+}
+.rv-chip .rv-play {
+  width: 26px;
+}
+.rv-chip .rv-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.rv-chip .rv-title {
+  font-weight: 600;
+}
+/* Fixed widths so the chip doesn't change size as the frames tick over. */
+.rv-chip .rv-timestamp {
+  display: inline-block;
+  min-width: 5ch;
+  font-variant-numeric: tabular-nums;
+}
+.rv-chip .rv-chevron {
+  font-size: 10px;
+  opacity: 0.6;
+}
+.rv-control .rv-age {
+  min-width: 11ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #8a5a00;
+  background: #fff3d6;
+}
+.rv-control .rv-age.is-latest {
+  color: #1d6b35;
+  background: #e3f4e8;
+}
+
+.leaflet-bottom.rv-corner-raised {
+  z-index: 1001;
+}
+
+.rv-panel {
+  border-top: 1px solid #e5e7eb;
+  padding: 6px 8px 8px;
+}
+.rv-panel[hidden] {
+  display: none;
+}
+.rv-row {
+  display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+}
+.rv-slider {
+  flex: 1 1 auto;
+  min-width: 50px;
+  cursor: pointer;
+}
+.rv-control .rv-speed {
+  flex: 0 0 auto;
+  width: auto;
+  border: 1px solid #ccd2d9;
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 2px 4px;
   background: #fff;
-  border-radius: 4px 4px 0 0;
-  border-bottom: 1px solid #eee;
-  box-shadow: 0 -1px 3px rgba(0,0,0,.15);
+  color: inherit;
+  cursor: pointer;
+}
+.rv-control.rv-narrow .rv-speed {
+  display: none;
+}
+
+.rv-legend {
+  margin-top: 6px;
 }
 .rv-legend-title {
   font-size: 10px;
   font-weight: 600;
   color: #666;
+  margin-bottom: 2px;
 }
-.rv-divider {
-  border-left: 1px solid #ddd;
-  height: 20px;
+.rv-legend-bar {
+  display: flex;
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+.rv-swatch {
+  flex: 1;
+  position: relative;
+  cursor: help;
+}
+.rv-swatch-tip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 1001;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.rv-swatch:hover .rv-swatch-tip {
+  opacity: 1;
 }
 
-.dark-mode .rv-legend-panel {
-  background: #2b2b2b;
-  border-bottom-color: #444;
+.dark-mode .rv-control {
+  color: #ddd;
+}
+.dark-mode .rv-control button:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #555;
+}
+.dark-mode .rv-panel {
+  border-top-color: #444;
+}
+.dark-mode .rv-control .rv-speed {
+  background: #3a3a3a;
+  border-color: #555;
 }
 .dark-mode .rv-legend-title {
   color: #bbb;
 }
-.dark-mode .rv-control {
-  background: #2b2b2b;
-  color: #ddd;
+.dark-mode .rv-control .rv-age {
+  color: #ffd27a;
+  background: #4a3a14;
 }
-.dark-mode .rv-control button,
-.dark-mode .rv-control select {
-  background: #3a3a3a;
-  border-color: #555;
-  color: #ddd;
-}
-.dark-mode .rv-control button:hover,
-.dark-mode .rv-control select:hover {
-  background: #444;
-  border-color: #777;
-}
-.dark-mode .rv-control button:active {
-  background: #333;
-}
-.dark-mode .rv-control input[type="range"]::-webkit-slider-thumb {
-  border-color: #2b2b2b;
-}
-.dark-mode .rv-control input[type="range"]::-moz-range-thumb {
-  border-color: #2b2b2b;
-}
-.dark-mode .rv-divider {
-  border-left-color: #555;
+.dark-mode .rv-control .rv-age.is-latest {
+  color: #8fdca6;
+  background: #1f3d29;
 }
 
-/* ── Basemap accordion with thumbnail grid ── */
+/* ── Basemap section: thumbnail tiles ── */
 
-.ld-bases-grid {
+.ld-bases {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 6px;
+  margin-bottom: 8px;
 }
 
 .ld-base-tile {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  cursor: pointer;
+  align-items: stretch;
+  gap: 3px;
   border-radius: 6px;
   padding: 3px;
   border: 2px solid transparent;
+  background: none;
+  color: #444;
   transition: border-color 0.15s;
 }
 
@@ -5001,29 +5743,26 @@ body.dark-mode .ops-log-status-details {
   border-color: #90caf9;
 }
 
+.ld-base-tile:focus-visible {
+  outline: 2px solid #86b7fe;
+}
+
 .ld-base-tile.active {
   border-color: #1a73e8;
 }
 
 .ld-base-thumb {
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  height: 60px;
   border-radius: 4px;
-  background-size: cover;
-  background-position: center;
+  object-fit: cover;
   background-color: #e0e0e0;
 }
 
 .ld-base-name {
-  font-size: 9px;
+  font-size: 11px;
+  line-height: 1.2;
   text-align: center;
-  margin-top: 2px;
-  line-height: 1.1;
-  color: #444;
-  max-width: 54px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* header layout: bar + small hide button */
@@ -5035,6 +5774,13 @@ body.dark-mode .ops-log-status-details {
 .alerts__btn {
   flex: 1 1 auto;
   text-align: left;
+}
+
+/* Spelled out, not left to the browser's button default: that's black in
+   desktop Chrome but the system blue on iPadOS. (Dark mode sets its own.) */
+.alerts__btn,
+.alerts__hide-btn {
+  color: #000;
 }
 
 .alerts__hide-btn {
@@ -5335,8 +6081,8 @@ input[type="search"]:focus {
   box-shadow: none;
 }
 
-/* ── Job search autosuggest dropdown ── */
-.job-search-suggestions {
+/* ── Toolbar search autosuggest dropdown (incidents + teams) ── */
+.search-suggestions {
   position: fixed;
   z-index: 9999;
   background: #fff;
@@ -5349,7 +6095,7 @@ input[type="search"]:focus {
   font-size: 11.5px;
 }
 
-.job-search-suggestions li {
+.search-suggestions li {
   display: flex;
   align-items: center;
   padding: 4px 8px;
@@ -5357,19 +6103,19 @@ input[type="search"]:focus {
   gap: 6px;
 }
 
-.job-search-suggestions li:hover,
-.job-search-suggestions li.active {
+.search-suggestions li:hover,
+.search-suggestions li.active {
   background: #e9ecef;
 }
 
-.job-search-suggestions .suggestion-label {
+.search-suggestions .suggestion-label {
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.job-search-suggestions .suggestion-category {
+.search-suggestions .suggestion-category {
   flex: 0 0 auto;
   font-size: 9.5px;
   font-weight: 500;
@@ -5377,13 +6123,13 @@ input[type="search"]:focus {
 }
 
 /* Dark-mode support */
-.dark-mode .job-search-suggestions {
+.dark-mode .search-suggestions {
   background: #2b2b2b;
   border-color: #555;
 }
 
-.dark-mode .job-search-suggestions li:hover,
-.dark-mode .job-search-suggestions li.active {
+.dark-mode .search-suggestions li:hover,
+.dark-mode .search-suggestions li.active {
   background: #3a3a3a;
 }
 
@@ -5439,4 +6185,115 @@ input[type="search"]:focus {
   transform: translate(-50%, -50%);
   line-height: 1;
   color: #dc3545;
+}
+
+/* ── Restore Defaults modal ── */
+.config-reset-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.config-reset-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.config-reset-group .form-check-input {
+  flex: none;
+  margin-top: 3px;
+}
+.config-reset-label {
+  display: block;
+  font-weight: 500;
+}
+.config-reset-detail {
+  display: block;
+  font-size: 11.5px;
+  color: #6c757d;
+}
+
+/* Popups never wider than the map (--map-w, see resize.js). On a map
+   narrower than their content -- a tablet, or a squeezed desktop window --
+   the content scrolls sideways inside the popup instead of being cut off
+   at the map's edge. */
+.leaflet-popup-content {
+  max-width: calc(var(--map-w, 100vw) - 90px);
+  overflow-x: auto;
+}
+
+/* ===== Touch screens (iPad etc.) =====
+   (pointer: coarse) only matches when the main pointer is a finger, so mouse
+   and trackpad users keep the desktop sizes. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+@media (pointer: coarse) {
+  /* Splitters wide enough to grab with a finger. */
+  .vsplit {
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .hsplit {
+    height: 16px;
+  }
+  /* iOS zooms the page when focusing a field under 16px, and leaves it zoomed. */
+  input.form-control,
+  select.form-select,
+  textarea.form-control {
+    font-size: 16px;
+  }
+  /* Finger-sized hit areas for the small controls. The negative margins
+     cancel the padding, so the rows lay out exactly as before. */
+  .btn.btn-link.p-0 {
+    padding: 6px !important;
+    margin: -6px;
+  }
+  .jobstatus-dropdown-btn {
+    padding: 8px 0;
+    margin: -6px 0 -8px;
+  }
+  .alerts__hide-btn {
+    padding: 10px 8px;
+    margin: -10px -4px -10px 0;
+  }
+  .sidebar .btn-sm,
+  .team-status-button,
+  #teamMenu,
+  #jobMenu {
+    min-height: 32px;
+  }
+  .sidebar .btn-sm {
+    min-width: 32px;
+  }
+  /* The py-0 (icon) buttons are now taller than their line box, so centre
+     the icon explicitly (iOS otherwise leaves it riding high). Labelled
+     buttons keep their own padding and inline layout, so their text wraps
+     after the icon as on desktop. */
+  .sidebar .btn-sm.py-0,
+  #teamMenu,
+  #jobMenu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3em;
+  }
+  .ld-rail-item {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  /* No double-tap-to-zoom on controls, so taps register straight away. */
+  button,
+  a,
+  label,
+  input,
+  select,
+  .btn,
+  .dropdown-item,
+  th,
+  td {
+    touch-action: manipulation;
+  }
 }

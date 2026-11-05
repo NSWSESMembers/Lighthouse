@@ -7,7 +7,7 @@ nav_order: 4
 
 The Situation Map is on the right of the screen (by default, see [Layout](configuration.md#layout)). It displays all filtered incidents and matched teams, giving you a visual picture to support tasking and decision making.
 
-The different kinds of map content (incidents, collaborative layer markers, assets, overlay icons and overlay polygons) are stacked in a set order, with higher layers drawn over lower ones. The order is set under [Marker Layer Order](configuration.md#marker-layer-order); by default incident markers are always drawn on top.
+Map layers (incidents, assets, routes and each overlay) are stacked in order, with higher layers drawn over lower ones. By default incident markers are drawn on top and weather imagery at the bottom. You can change the order, and make any layer see-through, on the [Map layers](configuration.md#map-layers) tab of the Configuration screen.
 
 ## Map Control
 
@@ -43,19 +43,21 @@ Measure distances between multiple points. Several separate measurements can be 
 
 Layers control what is shown on the map. Open the Layers menu with the layer button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> in the top left of the map.
 
+The menu has a list of sections down the left: **Basemap**, **On the map** (every layer that's turned on), **Presets** (see [Layer Presets](#layer-presets)), then each group of overlays. Click a section to show its layers. A number beside a group shows how many of its layers are on. The menu fits itself to the map and stops above the Legend. On a narrow map the sections become a row of buttons along the top.
+
 ### Basemap
 
 The basemap is the underlying street or imagery map. The default is **Esri Topographic**; basemaps are available from Esri, Spatial NSW and SIX Maps, covering both street and satellite imagery.
 
 How far you can zoom in depends on the basemap. The Esri basemaps go down to street level, and the Spatial NSW and SIX Maps basemaps one level further. Esri Dark has less detail, so at the closest zoom levels it shows its most detailed map enlarged, which looks blurry.
 
-To change basemap, open the **Layers** menu, open the basemap dropdown and pick one.
+To change basemap, open the **Layers** menu, click **Basemap** at the top of the list and click a basemap's picture. The section shows the current basemap's name under **Basemap**.
 
 ![Basemap selector](images/basemap.png)
 
 ### Overlays
 
-Overlays sit on top of the basemap to add information. Toggle them on and off in the Layers menu, or use the search bar at the top to find a layer.
+Overlays sit on top of the basemap to add information. Pick a group in the Layers menu and toggle its overlays on and off, or use the search bar at the top to find a layer in any group (or a basemap). Click **On the map** to see everything that's on and turn layers off. A layer you turn off stays in that list until you pick another section, so you can turn it back on. The <img class="icon" src="images/icon-layer-order.png" alt="Layer order and transparency" height="20"> button next to the search bar opens the [Map layers](configuration.md#map-layers) settings, where you can move an overlay above or below other layers or make it see-through. Anything typed in the search bar is carried across.
 
 ![Overlay layers](images/overlays.png)
 
@@ -93,9 +95,9 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 
 ![Popup from clicking a traffic incident marker](images/overlay-marker-popup.png)
 
-Some area overlays also open a popup when you click inside an area: **BOM Land Warnings** (warning type, severity and times) and **WaterNSW Special & Controlled Areas** (area name and class). Other overlays, such as boundaries, radar and BOM observations, are pictures only and don't respond to clicks.
+**WaterNSW Special & Controlled Areas** also opens a popup when you click inside an area, with the area's name and class. Other overlays, such as boundaries, radar, BOM warnings and BOM observations, are pictures only and don't respond to clicks.
 
-Overlay markers are drawn under incidents by default. If one is hidden behind an incident, change the [Marker Layer Order](configuration.md#marker-layer-order).
+Overlay markers are drawn under incidents by default. If one is hidden behind an incident, move it up on the [Map layers](configuration.md#map-layers) tab of the Configuration screen.
 
 #### Overlay Notes
 
@@ -121,7 +123,46 @@ Most layers are described by their name. Those that need more explanation:
 
 - **HazardWatch Active Warnings**: flood, tsunami, severe weather, coastal erosion and snow warnings. Click a warning to see the published product details. Refer to the Public Information Manual for more on warnings.
 
+**BOM Warnings**
+
+- **BOM Land Warnings**: BOM's current flood warnings, flood watches, severe weather, severe thunderstorm and fire weather warnings, drawn by BOM in its own colours. It's a picture only: clicking a warning area doesn't open a popup.
+- **BOM Severe Thunderstorm Warning**: the areas under a current severe thunderstorm warning.
+- **BOM Severe Thunderstorm Cells**: the storm cells named in those warnings, with an arrow for the direction each is moving and the time of the cell's position (UTC).
+- **BOM Volcanic Ash Advisory**: advisories from the Darwin Volcanic Ash Advisory Centre: the erupting volcano, the ash cloud now, and where it's forecast to be in 6, 12 and 18 hours.
+
+**BOM Radar & Satellite**
+
+- **BOM Rain Radar Still**, **BOM Thunderstorm Tracking**, **BOM Satellite Composite True Colour** and the two **BOM Lightning** layers load as one picture of the area you're looking at, so the whole map always shows the same radar scan or satellite image. After you pan or zoom, the new picture replaces the old one once it has loaded. A big jump can show a blank edge for a moment.
+
+**BOM Observations**
+
+- **BOM Sea Surface Temperature (°C)**: the daily sea surface temperature analysis, shaded with contour lines.
+
+**RainViewer**
+
+- **RainViewer Animated Rainfall Radar**: the last two hours of rainfall radar, played on a loop. While it's on, a small **Radar** bar sits above the [Legend](#legend) with play/pause, the time of the frame showing, and how far that frame is behind the latest one. Click **Radar** to open the step buttons, a slider to drag through the frames, the playback speed and the colour scale (hover over a colour to see its rain or hail level). Click the time badge, or **Latest**, to jump back to the newest frame. New frames are added every few minutes: if you've paused on an earlier frame it stays on that frame, and if you're on the latest it moves on to the new one. The bar remembers whether you left it open. To make the radar more or less see-through, use the [Map layers](configuration.md#map-layers) tab; it starts at 60%.
+
 **Collaborative layers** you've subscribed to are also listed here. See [Collaborative Map Layers](#collaborative-map-layers).
+
+### Layer Presets
+
+A preset is a named set of overlays you can turn on or off with one click. Lighthouse comes with three:
+
+- **Weather**: BOM Severe Thunderstorm Cells and BOM Rain Radar Still.
+- **Roads**: Transport NSW Cameras and Transport NSW Incidents.
+- **Boundaries**: Unit/Zone Boundaries Hybrid.
+
+Open the **Layers** menu and click **Presets**, under **On the map**. Click a preset to turn all of its layers on. If they're all on already, clicking it turns them all off. Layers that aren't in the preset are left as they are. A preset with only some of its layers on is shown with a dashed outline and how many are on (e.g. *1/2*). The number beside **Presets** shows how many presets are fully on. Searching the Layers menu finds presets by name, too.
+
+Up to three presets can have a button on the map, grouped with the Layers button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20">. All three shipped presets have one to start with. Click the pin button beside a preset to add or remove its button. To pin a different preset when three are pinned, unpin one first. A map button is shaded while all of its preset's layers are on, and has a dot in the corner while only some are. Hover over it to see the preset's layers.
+
+![The Presets section of the Layers menu, with Roads on from its map button under the Layers button](images/layer-presets.png)
+
+To make your own preset, turn on the layers you want, then go to **Presets**. Under **Save the layers on now as a preset**, type a name, pick an icon for its map button and click **Save preset**.
+
+To change a preset, click the pencil button beside it. You can rename it or change its icon. Tick **Replace its layers with the ... on now** to make it the layers that are on now. **Delete** removes it.
+
+If you've deleted Weather, Roads or Boundaries, a **Restore** link under the presets brings it back and keeps your own presets. **Reset to defaults** puts the presets back to just Weather, Roads and Boundaries, all pinned, and deletes your own. It asks you to click a second time first. Presets are saved in this browser, separately from your [Configuration](configuration.md) settings.
 
 ## Legend
 
@@ -170,7 +211,7 @@ An incident popup can also be dragged onto a team in the Team Register to [task 
 
 ![Incident popup taskings](images/incident-popup-taskings.png)
 
-- **Team row**: click to zoom to the team's location and open it in the Team Register. A team with no tracked vehicle or radio just opens in the Team Register.
+- **Team row**: click to zoom to the team's location and open it in the Team Register. A team with no tracked vehicle or radio just opens in the Team Register. Hover over the row to draw a green dashed line from the team's asset to the incident, labelled with the straight-line distance, e.g. *524 m* or *3.2 km*.
 - **Team status**: click to [change the tasking status](tasking.md#tasking-status).
 - **Route to Asset** (left button): shows a road route from the team's current location to the incident with an approximate ETA.
 - **Fit Bounds** (right button): zooms in as far as possible while keeping both the team and incident in view.

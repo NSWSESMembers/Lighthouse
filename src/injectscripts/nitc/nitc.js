@@ -1,24 +1,31 @@
 /* global $, lighthouseUrl, urls, user, contentViewModel */
-$("#lighthouseExportButton").on('click mouseenter', function() {
-  var exports = JSON.parse(filterDataForExport());
-  var href = lighthouseUrl + "pages/nitcexport.html?host=" + urls.Base +
-      "&start=" + encodeURIComponent(exports.StartDate) + "&token="+user.accessToken + "&tokenexp="+encodeURIComponent(user.expiresAt) +"&end=" +
-      encodeURIComponent(exports.EndDate);
-  if (Object.prototype.hasOwnProperty.call(exports, "EntityIds"))
-      href += "&EntityIds=" + exports.EntityIds;
-  if (Object.prototype.hasOwnProperty.call(exports, "NonIncidentTypeIds"))
-      href += "&NonIncidentTypeIds=" + exports.NonIncidentTypeIds;
-  if (Object.prototype.hasOwnProperty.call(exports, "TagIds"))
-      href += "&TagIds=" + exports.TagIds;
-  if (Object.prototype.hasOwnProperty.call(exports, "IncludeCompleted"))
-      href += "&IncludeCompleted=" + exports.IncludeCompleted;
-  $(this).attr("href", href);
+// "Export (Filtered)" on Beacon's NITC screen: opens NITC Export
+// (src/pages/nitcexport/) with the screen's filters. The page gets its
+// Beacon sign-in from the extension (passed on here, as the Jobs screen's
+// buttons do), not the URL.
+$("#lighthouseExportButton").on('click mouseenter', function(e) {
+  if (e.type === 'click') {
+    window.postMessage({
+      type: "FROM_PAGE_UPDATE_API_TOKEN",
+      host: urls.Base,
+      token: user.accessToken,
+      tokenexp: user.expiresAt,
+    }, "*");
+  }
+  // A copy, as plain JSON: the filters as Beacon would send them.
+  var exports = JSON.parse(JSON.stringify(contentViewModel.lastReceivedFilterData));
+  var params = new URLSearchParams({
+    host: urls.Base,
+    source: location.origin,
+    userId: user.Id,
+    start: exports.StartDate,
+    end: exports.EndDate,
+  });
+  ['EntityIds', 'NonIncidentTypeIds', 'TagIds', 'IncludeCompleted'].forEach(function(key) {
+    if (Object.prototype.hasOwnProperty.call(exports, key) && exports[key] != null) {
+      params.set(key === 'EntityIds' ? 'hq' : key, String(exports[key]));
+    }
+  });
+  $(this).attr("href", lighthouseUrl + "pages/nitcexport.html?" + params.toString());
+  $(this).attr("target", "_blank");
 });
-
-function filterDataForExport() {
-  var n=contentViewModel.lastReceivedFilterData;
-  return n.PageIndex=1,n.PageSize=contentViewModel.totalNonIncidents(),
-      n.SortField=contentViewModel.sortColumn(),
-      n.SortOrder=contentViewModel.sortDirection(),
-      JSON.stringify(n)
-}

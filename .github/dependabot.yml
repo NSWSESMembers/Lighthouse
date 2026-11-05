@@ -22,6 +22,15 @@ updates:
       # TypeScript 7 is parked until typescript-eslint supports it (see #516).
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # Legacy pages still use Bootstrap 4 + FA5 (rebuilt pages use the
+      # bootstrap5 / fontawesome7 aliases), and Bootstrap 4's JS refuses
+      # jQuery 4. These move with the last legacy page rebuilds (see #606).
+      - dependency-name: "bootstrap"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@fortawesome/fontawesome-free"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jquery"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

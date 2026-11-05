@@ -22,6 +22,13 @@ export function Asset(data = {}, deps = {}) {
     self.talkgroupLastUpdated = ko.observable(data.properties.talkgroupLastUpdated ?? "");
     self.radioId = ko.observable(data.properties.radioId ?? "");
 
+    // CADence simulated exercises: the participant HQ whose copy of the
+    // exercise this asset belongs to, or null for a real radio. Each copy of
+    // a group exercise has teams with the same callsigns, so team matching
+    // only gives this asset to teams assigned to that HQ
+    // (utils/assetTeamMatching.js).
+    self.exerciseHqId = ko.observable(data.exerciseHqId ?? null);
+
     // Satellite tracker fields -- present when the location comes from a
     // satellite tracker rather than a PSN radio. satelliteLatitude/Longitude and
     // satelliteLocationLastUpdated duplicate geometry/lastSeen, so aren't kept.
@@ -119,6 +126,7 @@ export function Asset(data = {}, deps = {}) {
         }
 
         if (d.markerLabel !== undefined) this.markerLabel(d.markerLabel);
+        if (d.exerciseHqId !== undefined) this.exerciseHqId(d.exerciseHqId ?? null);
 
 
         // SET ONCE: update both lat/lng in a single observable write

@@ -62,7 +62,8 @@
         <h1><i class="fas fa-broadcast-tower"></i> Radio Operations Console</h1>
       </div>
       <div class="radio-status-bar" role="status" aria-live="polite">
-        <span class="radio-connection" data-bind="text: connectionLabel, css: { 'radio-connection-connected': connectionOk, 'radio-connection-bad': !connectionOk() }"></span>
+        <span class="radio-connection" data-bind="visible: !liveFeedNeedsPermission(), text: connectionLabel, css: { 'radio-connection-connected': connectionOk, 'radio-connection-bad': !connectionOk() }"></span>
+        <button type="button" class="radio-icon-btn" data-bind="visible: liveFeedNeedsPermission, click: allowLiveFeed" title="Live updates on this Beacon need your permission. Until then the log refreshes on its regular poll.">Allow live updates</button>
         <span class="radio-last-refresh">
           Last refresh:
           <abbr class="radio-abbr-time" data-bind="text: lastRefreshDisplay, attr: { title: lastRefreshTitle }"></abbr>

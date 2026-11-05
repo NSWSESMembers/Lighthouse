@@ -247,11 +247,33 @@ function person(i) {
 const OPERATOR = person(17);
 const fakePhone = (i) => `0491 570 ${String(100 + i).slice(-3)}`; // ACMA fictional-use range
 
-export function buildScenario(now = new Date()) {
+// Extra incidents for benchmarks (`jobCount` above JOB_SPECS.length): the
+// specs repeated, scattered up to ~15 km around the demo addresses by a fixed
+// pseudo-random sequence, so every run gets the same map.
+function benchJobSpecs(count) {
+  let seed = 12345;
+  const rand = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  return Array.from({ length: Math.max(0, count - JOB_SPECS.length) }, (_, k) => ({
+    spec: JOB_SPECS[k % JOB_SPECS.length],
+    offset: [(rand() - 0.5) * 0.27, (rand() - 0.5) * 0.32],
+  }));
+}
+
+/**
+ * `jobCount` scales the incident list up for benchmarks (default: the 14
+ * hand-written ones). Teams, taskings and the ops log stay as they are.
+ */
+export function buildScenario(now = new Date(), { jobCount = JOB_SPECS.length } = {}) {
   const t = (hoursAgo) => beaconTime(now, hoursAgo);
 
-  const jobs = JOB_SPECS.map(([status, prio, type, situation, hoursAgo, tagKeys], i) => {
-    const [num, street, locality, postcode, lat, lng] = ADDRESSES[i % ADDRESSES.length];
+  const specs = [
+    ...JOB_SPECS.map((spec) => ({ spec, offset: [0, 0] })),
+    ...benchJobSpecs(jobCount),
+  ];
+  const jobs = specs.map(({ spec: [status, prio, type, situation, hoursAgo, tagKeys], offset }, i) => {
+    const [num, street, locality, postcode, baseLat, baseLng] = ADDRESSES[i % ADDRESSES.length];
+    const lat = +(baseLat + offset[0]).toFixed(5);
+    const lng = +(baseLng + offset[1]).toFixed(5);
     const caller = person(i + 5);
     // Every other incident has a separate on-site contact, so the expanded
     // view's "Called By" line shows; the rest have the caller as the contact.

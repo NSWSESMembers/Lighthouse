@@ -97,13 +97,33 @@ export function scoreFuzzy(token, assetName) {
     return 99;
 }
 
+// The id of the HQ a team is assigned to, as a string ('' when unknown).
+export function teamHqId(team) {
+    const id = ko.unwrap(ko.unwrap(team?.assignedTo)?.id);
+    return (id == null) ? '' : String(id);
+}
+
+// A CADence simulated asset belongs to one HQ's copy of an exercise
+// (Asset.exerciseHqId), and every copy of a group exercise has teams with the
+// same callsigns. So it's only for teams assigned to that HQ: a same-named
+// team elsewhere gets no position rather than another copy's. Other assets
+// are for any team.
+export function assetIsForTeamHq(asset, hqId) {
+    const exerciseHqId = ko.unwrap(asset?.exerciseHqId);
+    if (exerciseHqId == null || exerciseHqId === '') return true;
+    return String(exerciseHqId) === hqId;
+}
+
 export function computeMatchedAssetsForTeam(team, allAssets) {
     const tokens = extractTeamTokens(team);
     if (!tokens.length) return new Set();
 
+    const hqId = teamHqId(team);
+
     // Map assetName -> list of assets (usually 1)
     const byName = new Map();
     for (const a of (allAssets || [])) {
+        if (!assetIsForTeamHq(a, hqId)) continue;
         const n = normAssetName(a?.name?.());
         if (!n) continue;
         if (!byName.has(n)) byName.set(n, []);

@@ -53,6 +53,7 @@ If you are on a device that does not have Lighthouse installed, go to [lighthous
 - [Tasking Teams](tasking.md): Instant Task, suggestions, drag & drop and tasking statuses
 - [Logs & Messages](logs-and-messages.md): radio logs, ops logs and SMS
 - [Spotlight](spotlight.md): keyboard search and the `task`, `radio`, `log` and `find` commands
+- [Simulated Exercises](simulated-exercises.md): showing a CADence training exercise's simulated teams in place of radio positions (Train and Test Beacon)
 
 **Reference**
 

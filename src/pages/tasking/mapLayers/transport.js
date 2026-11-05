@@ -149,9 +149,6 @@ async function getTransportApiKeyOpsLog(apiHost, userId, token) {
 
     var opsId = null;
     switch (apiHost) {
-        case 'https://previewbeacon.ses.nsw.gov.au':
-            opsId = '46273';
-            break
         case 'https://apibeacon.ses.nsw.gov.au':
             opsId = '515514';
             break

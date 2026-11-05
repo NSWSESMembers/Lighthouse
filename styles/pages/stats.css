@@ -1,119 +1,295 @@
-@import url("include/common.css");
-@import url("~dc/dist/style/dc.css");
-@import url("~jqcloud-npm/dist/jqcloud.css");
+@import url('include/lighthouse-page.css');
+@import url('~dc/dist/style/dc.css');
 
-body.fade-in {
-    opacity: 1;
-    transition: 1s opacity;
+/* Incident Statistics page (src/pages/stats/). Beacon colour, header,
+   Guide button and the loading ring: include/lighthouse-page.css. */
+
+/* ---- toolbar --------------------------------------------------------- */
+
+.stats-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: var(--bs-body-bg);
+  border-bottom: 1px solid var(--bs-border-color);
 }
 
-.highcharts-container {
-  margin: 0 auto;
+.events-list {
+  max-height: 3.6em;
+  overflow-y: auto;
 }
 
-.pie-slice path {
-		stroke:#fff;
-}
-.dc-chart .selected path {
-		stroke-width: 1;
-		stroke:#fff;
-}
+/* ---- cards ----------------------------------------------------------- */
 
-.dc-chart .pie-slice {
-	fill: black;
-	font-size: 10px;
-	cursor: pointer;
+.chart-card,
+.duration-tile {
+  border-top: 3px solid var(--lh-env-color);
 }
 
-#dc-jobtype-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.chart-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 600;
+  font-size: .9rem;
 }
 
-#dc-local-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.chart-card .card-header .filter-text {
+  font-weight: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
-#dc-jobstatus-chart> svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.chart-card .card-header .btn-reset {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
-#dc-agency-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.chart-body {
+  min-height: 120px;
 }
 
-#dc-event-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+/* ---- breakdown groups / grid (charts/breakdownLayout.js) -------------- */
+
+.breakdown-group + .breakdown-group {
+  margin-top: .75rem;
 }
 
-#dc-priority-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.breakdown-group-title {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--bs-secondary-color);
+  margin: .5rem 0 0 .4rem;
 }
 
-#dc-tasktype-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+/* gridstack positions the item; the card fills it. */
+.grid-stack-item-content.card {
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-#dc-hazardtags-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.grid-stack-item-content .card-header {
+  cursor: grab;
+  user-select: none;
 }
 
-#dc-propertytags-chart > svg > g:nth-child(1) {
-transform: translate(260px,130px)
+.grid-stack-item.ui-draggable-dragging .card-header {
+  cursor: grabbing;
 }
 
-#loadinginline {
-	position: fixed;
-	visibility: hidden;
-	top: 0;
-	left: 0;
-	right: 0;
-	width: 100%;
-	background: red;
+.grid-stack-item.ui-draggable-dragging .card,
+.grid-stack-item.ui-resizable-resizing .card {
+  box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .2) !important;
 }
 
-
-#loadmiddleinline
-{
-	margin: 0 auto;
-	display: table;
-	font-size: 20px;
+.grid-stack-placeholder > .placeholder-content {
+  border: 2px dashed var(--lh-env-color);
+  border-radius: var(--bs-card-border-radius);
+  background: transparent;
 }
 
-#loadinnerinline > p
-{
-	font-size: 20px;
+.drag-grip {
+  color: var(--bs-secondary-color);
+  font-size: .75rem;
 }
 
-.marquee {
-	width: 50%;
-	margin: 0 auto;
-	white-space: nowrap;
-	overflow: hidden;
-	box-sizing: border-box;
-	height: 25px;
+.grid-stack-item-content .card-header .btn-reset {
+  cursor: pointer;
 }
 
-.marquee p {
-	line-height: 15px;
+/* ---- breakdown pies (charts/pieStyle.js) ------------------------------ */
+
+.pie-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .75rem;
+  container-type: inline-size;
 }
 
-.marquee span {
-	display: inline-block;
-	padding-left: 100%;  /* show the marquee just outside the paragraph */
-	animation: marquee 60s linear infinite;
+/* The donut fills the card's height, up to 45% of its width. */
+.pie-chart {
+  flex: 0 0 auto;
+  height: 100%;
+  max-width: 45%;
+  aspect-ratio: 1;
 }
 
-#events {
-	font-size: 15px;
-	line-height: 25px
+.pie-chart svg {
+  width: 100%;
+  height: 100%;
 }
 
-.marquee span:hover {
-	animation-play-state: paused
+.pie-legend {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: .8rem;
 }
 
-/* Make it move */
-@keyframes marquee {
-	0%   { transform: translate(0, 0); }
-	100% { transform: translate(-100%, 0); }
+/* A narrow card: legend only gets the count, not the %. */
+@container (max-width: 300px) {
+  .pie-legend-row {
+    grid-template-columns: .75rem minmax(0, 1fr) auto;
+  }
+
+  .pie-legend-pct {
+    display: none;
+  }
+}
+
+.pie-legend-row {
+  display: grid;
+  grid-template-columns: .75rem minmax(0, 1fr) auto 2.6rem;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  padding: .05rem .4rem; /* 9 slices + Others fit a default-height card */
+  line-height: 1.35;
+  border: 0;
+  border-radius: .35rem;
+  background: transparent;
+  color: var(--bs-body-color);
+  text-align: left;
+  cursor: pointer;
+  transition: opacity .15s, background-color .15s;
+}
+
+.pie-legend-row:hover,
+.pie-legend-row.is-hover {
+  background: var(--bs-secondary-bg);
+}
+
+.pie-legend.has-hover .pie-legend-row:not(.is-hover),
+.pie-legend-row.is-deselected {
+  opacity: .45;
+}
+
+.pie-legend-row.is-selected {
+  font-weight: 600;
+}
+
+.pie-legend-swatch {
+  width: .75rem;
+  height: .75rem;
+  border-radius: 50%;
+}
+
+.pie-legend-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pie-legend-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.pie-legend-pct {
+  color: var(--bs-secondary-color);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.pie-legend-empty {
+  color: var(--bs-secondary-color);
+}
+
+.dc-chart .pie-slice path {
+  stroke: var(--bs-body-bg);
+  stroke-width: 2px;
+  transition: opacity .15s;
+}
+
+.dc-chart.has-hover .pie-slice:not(.is-hover) path {
+  opacity: .35;
+}
+
+.dc-chart g.pie-slice.is-hover path {
+  filter: brightness(1.05);
+}
+
+.pie-centre-value {
+  font-size: 26px;
+  font-weight: 600;
+  fill: var(--bs-body-color);
+}
+
+.pie-centre-label {
+  font-size: 12px;
+  fill: var(--bs-secondary-color);
+}
+
+.duration-tile .value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* ---- dc.js in Bootstrap colour modes ---------------------------------- */
+
+.dc-chart svg {
+  width: 100%;
+  height: auto;
+}
+
+.dc-chart g.axis text,
+.dc-chart .dc-legend-item text,
+.dc-chart .x-axis-label,
+.dc-chart .y-axis-label {
+  fill: var(--bs-body-color);
+}
+
+.dc-chart g.axis path,
+.dc-chart g.axis line {
+  stroke: var(--bs-secondary-color);
+}
+
+.dc-chart .grid-line line,
+.dc-chart .grid-line.horizontal line {
+  stroke: var(--bs-border-color);
+}
+
+.dc-chart .pie-slice,
+.dc-chart .dc-legend-item {
+  cursor: pointer;
+}
+
+.dc-chart rect.bar {
+  fill: var(--bs-primary);
+}
+
+.dc-chart rect.bar.deselected {
+  fill: var(--bs-secondary-bg);
+}
+
+.dc-chart .brush rect.selection {
+  fill: var(--bs-primary);
+  fill-opacity: .15;
+}
+
+/* ---- table / cloud ---------------------------------------------------- */
+
+.latest-jobs td {
+  vertical-align: top;
+}
+
+.latest-jobs .situation {
+  max-width: 28rem;
+}
+
+.word-cloud {
+  width: 100%;
+  height: auto;
+  display: block;
 }

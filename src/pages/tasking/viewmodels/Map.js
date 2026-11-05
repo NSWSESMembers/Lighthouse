@@ -10,6 +10,7 @@ import { AssetPinLayout } from '../markers/assetPinLayout.js';
 import { AssetTrails } from '../markers/assetTrails.js';
 import { setCapabilityCodesShown } from '../components/asset_icon.js';
 import { deriveLayerStatus, describeLayerError } from '../utils/layerStatus.js';
+import { STACK_PANES, clampOpacityPct, installStackPaneRemap, overlayPaneName, overlayStackId, stackZIndexes } from '../utils/layerStack.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -251,23 +252,15 @@ export function MapVM(Lmap, root) {
   // Track whether clustering is currently active
   self.clusteringEnabled = true;
 
-  // Separate plain layers for the pulse ring (New) and the marching ring
-  // (Active) – not clustered, follow their marker, visibility kept in sync
-  // by _syncPulseRings.
-  self.jobPulseLayer = L.layerGroup().addTo(self.map);
-  self.jobStatusRingLayer = L.layerGroup().addTo(self.map);
-
   /**
    * Show/hide every incident layer together: the active marker layer
-   * (cluster group or unclustered), the standalone rescue layer, and the
-   * pulse/status rings that sit on their own layers outside the cluster.
+   * (cluster group or unclustered) and the standalone rescue layer.
    */
   self.setIncidentsVisible = function (visible) {
     const markerLayer = self.clusteringEnabled ? self.jobClusterGroup : self.unclusteredJobLayer;
-    const layers = [markerLayer, self.rescueJobLayer, self.jobPulseLayer, self.jobStatusRingLayer];
+    const layers = [markerLayer, self.rescueJobLayer];
     if (visible) {
       layers.forEach(l => { if (!self.map.hasLayer(l)) l.addTo(self.map); });
-      self._syncPulseRings();
     } else {
       self.map.removeLayer(self.jobClusterGroup);
       self.map.removeLayer(self.unclusteredJobLayer);
@@ -313,7 +306,6 @@ export function MapVM(Lmap, root) {
         }
       }
     });
-    self._syncPulseRings();
   };
 
   /** "Spread out overlapping asset markers" config option. */
@@ -388,7 +380,6 @@ export function MapVM(Lmap, root) {
     // Re-add — clearLayers rebuilt grid structures with the new radius so
     // addLayers will cluster correctly.
     if (markers.length) self.jobClusterGroup.addLayers(markers);
-    self._syncPulseRings();
   };
 
   /**
@@ -434,8 +425,6 @@ export function MapVM(Lmap, root) {
         self.unclusteredJobLayer.addTo(self.map);
       }
     }
-
-    self._syncPulseRings();
   };
 
   /**
@@ -490,23 +479,47 @@ export function MapVM(Lmap, root) {
   // Reconcile cluster grids whenever any layer changes map min/max zooms.
   self.map.on('zoomlevelschange', self.ensureClusterGridCompatibility);
 
-  self.applyPaneOrder = function (paneOrderTopToBottom) {
-    if (!Array.isArray(paneOrderTopToBottom) || paneOrderTopToBottom.length === 0) return;
+  // Each polling overlay draws into its own pane container, so it can be
+  // ordered and faded on its own (Configuration > Map > Layer order).
+  const attachOverlayGroup = installStackPaneRemap(L, self.map);
 
-    // Keep big gaps so you can still place other UI panes/overlays between if needed
-    const base = 300;
-    const step = 100;
+  /**
+   * Registered overlays, for the Configuration layer list:
+   * { key, id, label, menuGroup, stack, visible: ko.observable(bool) }
+   */
+  self.stackOverlays = ko.observableArray([]);
+  const stackOverlayFor = (layerGroup) => self.stackOverlays().find(o => o.layerGroup === layerGroup);
 
-    paneOrderTopToBottom.forEach((paneName, idx) => {
-      const pane = self.map.getPane(paneName);
-      const panePlus = self.map.getPane(`${paneName}-plus`);
+  /** Show or hide a polling overlay, as its Layers drawer toggle would. */
+  self.setOverlayVisible = function (key, on) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return;
+    if (on) self.map.addLayer(entry.layerGroup);
+    else self.map.removeLayer(entry.layerGroup);
+    localStorage.setItem(`ov.online-${key}`, on ? '1' : '0');
+    self.layersDrawer?.refresh();
+  };
 
-      if (!pane || !panePlus) return;
-      // topmost gets highest zIndex
-      const z = base + (step * (paneOrderTopToBottom.length - 1 - idx));
-      pane.style.zIndex = String(z);
-      panePlus.style.zIndex = String(z + 1);
-
+  /**
+   * Apply the layer stack, top -> bottom. Pane rows set each of their
+   * Leaflet panes (STACK_PANES); overlay rows set the overlay's container.
+   * @param {{ id: string, opacityPct: number }[]} rows
+   */
+  self.applyLayerStack = function (rows) {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    const zs = stackZIndexes(rows.length);
+    rows.forEach((row, idx) => {
+      const opacity = String((Number(row.opacityPct) || 100) / 100);
+      const z = zs[idx];
+      const names = row.id.startsWith('ov:')
+        ? [overlayPaneName(row.id.slice(3))]
+        : STACK_PANES.find(p => p.id === row.id)?.panes || [];
+      names.forEach((name, i) => {
+        const pane = self.map.getPane(name);
+        if (!pane) return;
+        pane.style.zIndex = String(z + i);
+        pane.style.opacity = opacity === '1' ? '' : opacity;
+      });
     });
     self.assetTrails?.syncPaneZ();
   };
@@ -517,38 +530,7 @@ export function MapVM(Lmap, root) {
     self.layersDrawer._baseKey = basemapKey;
     localStorage.setItem("map.base", basemapKey);
 
-    // Basemap definitions
-    const basemapNames = [
-      { name: "Esri Topographic", key: "Topographic" },
-      { name: "Esri Streets", key: "Streets" },
-      { name: "Esri Imagery", key: "Imagery" },
-      { name: "Esri Dark", key: "DarkGray" },
-      { name: "Spatial NSW", key: "nsw-vector" },
-      { name: "SIX Maps Base Map", key: "nsw-base" },
-      { name: "SIX Maps Imagery", key: "nsw-imagery" }
-    ];
-
-    // Update the UI label if the drawer is rendered
-    const label = document.querySelector(".ld-basemap-label");
-    if (label) {
-      const basemapName = basemapNames.find(b => b.key === basemapKey)?.name || "Basemap";
-      label.textContent = basemapName;
-    }
-
-    // Update active state in dropdown menu
-    const menu = document.querySelector(".ld-basemap-menu");
-    if (menu) {
-      menu.querySelectorAll(".dropdown-item").forEach(item => {
-        item.classList.remove("active");
-      });
-      // Find and activate the matching button
-      const buttons = menu.querySelectorAll(".dropdown-item");
-      basemapNames.forEach(({ key }, index) => {
-        if (key === basemapKey && buttons[index]) {
-          buttons[index].classList.add("active");
-        }
-      });
-    }
+    self.layersDrawer._markBasemap?.(basemapKey);
   };
 
 
@@ -598,10 +580,14 @@ export function MapVM(Lmap, root) {
   // esri-leaflet FeatureLayer (duck-typed so Map.js doesn't import esri)
   const isFeatureChild = (layer) =>
     typeof layer._requestFeatures === 'function' && typeof layer.eachFeature === 'function';
+  // WmsViewImageLayer (mapLayers/weather.js): a LayerGroup that swaps one WMS
+  // image per view and fires the same load cycle as a tile layer, so it's
+  // tracked as 'tiles'.
+  const isViewImageChild = (layer) => layer._viewImage === true;
 
   /** Follow an async child layer's own load events (tiles / Esri features). */
   function watchLayerChild(entry, layer) {
-    const kind = isTileChild(layer) ? 'tiles' : isFeatureChild(layer) ? 'features' : null;
+    const kind = isTileChild(layer) || isViewImageChild(layer) ? 'tiles' : isFeatureChild(layer) ? 'features' : null;
     if (!kind) return;
     const id = L.stamp(layer);
     if (entry.track.children.has(id)) return;
@@ -681,7 +667,7 @@ export function MapVM(Lmap, root) {
       return false;
     };
     const walk = (layer) => {
-      if (isTileChild(layer)) return;
+      if (isTileChild(layer) || isViewImageChild(layer)) return;
       if (isFeatureChild(layer)) { layer.eachFeature(walk); return; }
       if (typeof layer.eachLayer === 'function') { layer.eachLayer(walk); return; }
       if (!inBounds(layer)) return;
@@ -724,6 +710,8 @@ export function MapVM(Lmap, root) {
    *   label: string,
    *   refreshMs?: number,
    *   visibleByDefault?: boolean,
+   *   stack?: 'vector'|'tiles'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
+   *   defaultOpacity?: number,  // default opacity in the layer order, percent (100 if unset)
    *   fetchFn: () => Promise<any>,
    *   drawFn: (layerGroup: L.LayerGroup, data: any) => void
    * }} opts
@@ -744,6 +732,7 @@ export function MapVM(Lmap, root) {
     }
 
     const layerGroup = L.layerGroup();
+    attachOverlayGroup(layerGroup, key);
     const entry = {
       key,
       label: opts.label || key,
@@ -800,6 +789,17 @@ export function MapVM(Lmap, root) {
     entry.refresh = refreshIfVisible;
 
     self.onlineLayers.set(key, entry);
+    self.stackOverlays.remove(o => o.key === key);
+    self.stackOverlays.push({
+      key,
+      id: overlayStackId(key),
+      label: entry.label,
+      menuGroup: entry.menuGroup,
+      stack: opts.stack || 'vector',
+      defaultOpacity: clampOpacityPct(opts.defaultOpacity ?? 100),
+      layerGroup,
+      visible: ko.observable(!!entry.visibleByDefault),
+    });
 
     // Add to map first if visibleByDefault, then do the initial fetch
     if (entry.visibleByDefault) {
@@ -824,6 +824,7 @@ export function MapVM(Lmap, root) {
     if (entry.layerGroup && self.map.hasLayer(entry.layerGroup)) self.map.removeLayer(entry.layerGroup);
     unwatchLayerChildren(entry);
     self.onlineLayers.delete(key);
+    self.stackOverlays.remove(o => o.key === key);
     emitLayerStatus(key);
   };
 
@@ -923,11 +924,16 @@ export function MapVM(Lmap, root) {
     return vm;
   };
 
-  self.destroyJobPopupVM = (job) => {
-    const vm = self.jobPopups.get(job.id());
+  // Called when a job's marker is removed, so the cached VM (which holds the
+  // Job) doesn't outlive it. Only releases the VM's own subscriptions: the
+  // drawn route / crow-flies line are shared map state, cleared when the
+  // popup that drew them closes (removing the marker closes it).
+  self.destroyJobPopupVM = (jobOrId) => {
+    const id = typeof jobOrId === 'number' ? jobOrId : jobOrId?.id?.();
+    const vm = self.jobPopups.get(id);
     if (vm) {
-      vm.dispose();
-      self.jobPopups.delete(job.id());
+      vm.releaseRouteSubs();
+      self.jobPopups.delete(id);
     }
   };
 
@@ -970,6 +976,33 @@ export function MapVM(Lmap, root) {
     }).addTo(self.map);
   };
 
+  // Green dashed asset -> incident line with its straight-line length on a
+  // label at the midpoint, turned to run along the line. A straight line keeps
+  // the same on-screen angle at every zoom, so it's worked out once.
+  const crowFliesLayer = (fromLat, fromLng, toLat, toLng) => {
+    const from = L.latLng(fromLat, fromLng);
+    const to = L.latLng(toLat, toLng);
+    const line = L.polyline([from, to], { weight: 4, color: 'green', dashArray: '6' });
+
+    const metres = self.map.distance(from, to);
+    const text = metres < 1000 ? `${Math.round(metres)} m` : `${(metres / 1000).toFixed(1)} km`;
+    const p1 = self.map.latLngToLayerPoint(from);
+    const p2 = self.map.latLngToLayerPoint(to);
+    let angleDeg = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+    if (angleDeg > 90 || angleDeg < -90) angleDeg += 180; // keep the text upright
+
+    const label = L.marker(L.latLng((fromLat + toLat) / 2, (fromLng + toLng) / 2), {
+      icon: L.divIcon({
+        className: 'bullseye-distance-wrapper',
+        html: `<div class="bullseye-distance-label crow-flies-distance-label" style="transform: translate(-50%, -50%) rotate(${angleDeg}deg);">${text}</div>`,
+        iconSize: null,
+      }),
+      interactive: false,
+      keyboard: false,
+    });
+    return L.featureGroup([line, label]);
+  };
+
   self.drawCrowsFliesToAssetPassedTeam = (team, job) => {
     self.clearCrowFliesLine();
     if (!team || !job) return;
@@ -988,14 +1021,7 @@ export function MapVM(Lmap, root) {
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
 
-    this._polyline = L.polyline(
-      [
-        [fromLat, fromLng],
-        [toLat, toLng],
-      ],
-      { weight: 4, color: 'green', dashArray: '6' }
-    )
-    self.registerCrowFliesLine(this._polyline);
+    self.registerCrowFliesLine(crowFliesLayer(fromLat, fromLng, toLat, toLng));
   }
 
   self.drawCrowsFliesToAssetFromTasking = (tasking, asset) => {
@@ -1024,14 +1050,7 @@ export function MapVM(Lmap, root) {
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
 
-    this._polyline = L.polyline(
-      [
-        [fromLat, fromLng],
-        [toLat, toLng],
-      ],
-      { weight: 4, color: 'green', dashArray: '6' }
-    )
-    self.registerCrowFliesLine(this._polyline);
+    self.registerCrowFliesLine(crowFliesLayer(fromLat, fromLng, toLat, toLng));
   }
 
   // --- distance rings state ---
@@ -1238,48 +1257,11 @@ export function MapVM(Lmap, root) {
     self.clearJobAssetBullseye();
   };
 
-  // Ring visibility management for clustering.  The pulse ring (New) and the
-  // marching ring (Active) are only shown while their marker is individually
-  // visible — hidden while it's inside a cluster, shown again on spiderfy /
-  // unclustered / zoom-in.  Both rings follow the same rule.
-  self._syncPulseRings = function () {
-    const setVisible = (ring, layer, visible) => {
-      if (!ring) return;
-      const has = layer.hasLayer(ring);
-      if (visible && !has) layer.addLayer(ring);
-      else if (!visible && has) layer.removeLayer(ring);
-    };
-
-    self.jobMarkerIndex.forEach((marker) => {
-      if (!marker._pulseRing && !marker._statusRing) return;
-
-      let visible;
-      if (self.rescueJobLayer.hasLayer(marker)) {
-        visible = true;
-      } else if (!self.clusteringEnabled || self.unclusteredJobLayer.hasLayer(marker)) {
-        visible = true;
-      } else {
-        try {
-          visible = self.jobClusterGroup.getVisibleParent(marker) === marker;
-        } catch (err) {
-          visible = false; // on error, hide to be safe
-        }
-      }
-
-      setVisible(marker._pulseRing, self.jobPulseLayer, visible);
-      setVisible(marker._statusRing, self.jobStatusRingLayer, visible);
-    });
-  };
-
-  self.jobClusterGroup.on('animationend', self._syncPulseRings);
-  self.jobClusterGroup.on('spiderfied', self._syncPulseRings);
-  self.jobClusterGroup.on('unspiderfied', self._syncPulseRings);
-  self.map.on('zoomend', self._syncPulseRings);
-
   self.map.on('layeradd', (ev) => {
     const layer = ev.layer;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup === layer) {
+        stackOverlayFor(layer)?.visible(true);
         // trigger immediate fetch now that it's visible
         if (typeof entry.refresh === 'function') {
           entry.refresh();
@@ -1290,7 +1272,7 @@ export function MapVM(Lmap, root) {
     // A tile or Esri layer drawn into a polling layer's group (in drawFn, or
     // later, like RainViewer's frames): follow its load events for status.
     // A child can opt out with `skipLoadStatus` (RainViewer's older frames).
-    if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    if (!isTileChild(layer) && !isFeatureChild(layer) && !isViewImageChild(layer)) return;
     if (layer.options?.skipLoadStatus) return;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup.hasLayer(layer)) {
@@ -1304,12 +1286,13 @@ export function MapVM(Lmap, root) {
     const layer = ev.layer;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup === layer) {
+        stackOverlayFor(layer)?.visible(false);
         setLayerOff(entry);
         return;
       }
     }
     // A child removed by clearLayers() before a redraw -- stop following it.
-    if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    if (!isTileChild(layer) && !isFeatureChild(layer) && !isViewImageChild(layer)) return;
     const id = L.stamp(layer);
     for (const entry of self.onlineLayers.values()) {
       const rec = entry.track.children.get(id);

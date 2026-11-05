@@ -678,6 +678,21 @@ body.dark-mode .tsm-eu-new .v,
 body.dark-mode .tsm-eu-new .r { color: #93c5fd; }
 body.dark-mode .tsm-eu-label { color: #ced4da; }
 body.dark-mode .tsm-eu-reset { color: #adb5bd; }
+body.dark-mode .tsm-drive { background: transparent; border-color: #495057; color: #f8f9fa; }
+body.dark-mode .tsm-drive:hover:not(:disabled) { border-color: #3b82f6; }
+body.dark-mode .tsm-drive-icon,
+body.dark-mode .tsm-drive-action { color: #93c5fd; }
+body.dark-mode .tsm-drive-sub { color: #adb5bd; }
+body.dark-mode .tsm-drive--aging .tsm-drive-sub { color: #fbbf24; }
+body.dark-mode .tsm-drive--stale .tsm-drive-sub,
+body.dark-mode .tsm-drive--unknown .tsm-drive-sub,
+body.dark-mode .tsm-drive--error .tsm-drive-sub { color: #fca5a5; }
+body.dark-mode .tsm-drive--done { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; }
+body.dark-mode .tsm-drive--done .tsm-drive-main { color: #93c5fd; }
+body.dark-mode .tsm-drive--outdated .tsm-drive-sub { color: #fbbf24; }
+body.dark-mode .tsm-drive--outdated .tsm-drive-action { background: #3b82f6; color: #fff; }
+body.dark-mode .tsm-drive--blocked .tsm-drive-icon,
+body.dark-mode .tsm-drive--blocked .tsm-drive-main { color: #6c757d; }
 body.dark-mode .eta-chip {
   background: rgba(59, 130, 246, 0.18);
   border-color: rgba(96, 165, 250, 0.45);
@@ -754,6 +769,12 @@ body.dark-mode .leaflet-control-attribution,
 body.dark-mode .leaflet-control-scale {
   background-color: #2d2d2d !important;
   border-color: #444 !important;
+}
+
+/* RainViewer radar playback control (mapLayers/rainviewer.js) */
+body.dark-mode .leaflet-control.rv-control {
+  background-color: #2d2d2d !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* Map alerts control (custom .alerts UI) */
@@ -871,6 +892,19 @@ body.dark-mode .layers-drawer .ld-overlay-btn:hover {
   background: #373737 !important;
 }
 
+body.dark-mode .ld-rail,
+body.dark-mode .ld-narrow .ld-rail { border-color: #444 !important; }
+body.dark-mode .ld-rail-sep { background: #444; }
+body.dark-mode .ld-rail-item { color: #e0e0e0; }
+body.dark-mode .ld-rail-item:hover { background: #373737; }
+body.dark-mode .ld-rail-item[aria-current="true"] { background: #5a6068; color: #fff; }
+body.dark-mode .ld-rail-count { background: #444a52; color: #e0e0e0; }
+body.dark-mode .ld-narrow .ld-rail-item { border-color: #555; }
+body.dark-mode .ld-pane-title { color: #cfd5de; }
+body.dark-mode .ld-empty { color: #9aa3ae; }
+body.dark-mode .ld-base-tile { color: #e0e0e0; }
+body.dark-mode .ld-base-tile.active { border-color: #7aa7ff; }
+
 /* Layer load status */
 body.dark-mode .layers-drawer .ld-status-ok { background: #173325; color: #6fd29a; }
 body.dark-mode .layers-drawer .ld-status-zero { background: #33373d; color: #aab2bd; }
@@ -889,6 +923,26 @@ body.dark-mode .layers-drawer .ld-overlay-btn.ld-status-failed {
 }
 body.dark-mode .layers-drawer .ld-load-ring { border-color: #2a3a55; border-top-color: #7aa7ff; background: #2d2d2d; box-shadow: 0 0 0 1px #2d2d2d; }
 body.dark-mode .layers-drawer .ld-load-badge { color: #fff; border-color: #2d2d2d; }
+
+/* Layer presets */
+body.dark-mode .ld-preset-action,
+body.dark-mode .ld-preset-icon,
+body.dark-mode .ld-preset-edit { border-color: #555; color: #cfd5de; }
+body.dark-mode .ld-preset-action:hover:not(:disabled),
+body.dark-mode .ld-preset-icon:hover { background: #373737; color: #fff; }
+body.dark-mode .ld-preset-pin[aria-pressed="true"],
+body.dark-mode .ld-preset-icon[aria-checked="true"] { background: #5a6068; border-color: #5a6068; color: #fff; }
+body.dark-mode .ld-preset-new { border-color: #444; }
+body.dark-mode .ld-preset-new-info { color: #9aa3ae; }
+body.dark-mode .ld-preset-form .form-control { background: #333; color: #e0e0e0; border-color: #555; }
+body.dark-mode .layer-preset-bar .lp-btn {
+  background: #2d2d2d !important;
+  color: #e0e0e0 !important;
+  border-top-color: #444 !important;
+}
+body.dark-mode .layer-preset-bar .lp-btn:hover { background: #373737 !important; color: #fff !important; }
+body.dark-mode .layer-preset-bar .lp-btn.active { background: #5a6068 !important; color: #fff !important; }
+body.dark-mode .layer-preset-bar .lp-part { background: #cfd5de; }
 
 /* Sidebar collapse control button */
 body.dark-mode .sidebar-toggle .btn,
@@ -1434,23 +1488,22 @@ body.dark-mode .border-info-subtle {
   border-color: #087990 !important;
 }
 
-/* Section Layout Preset picker (config modal -> Layout).
-   .layout-preset-card / -preview / .preview-block are styled off
+/* Layout picker preview (config modal -> Layout). The mock-up is styled off
    --bs-body-bg / --bs-secondary-bg / --bs-border-color / --bs-emphasis-color,
-   which stay light without [data-bs-theme="dark"] -- so every card and its
-   mini mock-up rendered as a white block on the dark modal. */
-body.dark-mode .layout-preset-card {
-  background: #2d2d2d;
-  border-color: #444;
+   which stay light without [data-bs-theme="dark"]. */
+body.dark-mode .layout-tile.active {
+  background: rgba(13, 110, 253, 0.18);
 }
 
-body.dark-mode .layout-preset-card.is-active {
-  border-color: #0d6efd;
-  box-shadow: inset 0 0 0 1px #0d6efd;
+body.dark-mode .layout-tile .layout-preset-preview .preview-block--teams,
+body.dark-mode .layout-tile .layout-preset-preview .preview-block--tasking {
+  background:
+    linear-gradient(#383838, #383838) top / 100% 1.6em no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 0.75em, rgba(255, 255, 255, 0.08) 0.75em 1.05em) #383838;
 }
 
-body.dark-mode .layout-preset-name {
-  color: #f0f0f0;
+body.dark-mode .layout-tile .layout-preset-preview .preview-block--map {
+  background: #2f3a2c;
 }
 
 body.dark-mode .layout-preset-preview {
@@ -1463,3 +1516,6 @@ body.dark-mode .layout-preset-preview .preview-block {
   border-color: #555;
   color: #cfcfcf;
 }
+
+/* Restore Defaults modal */
+body.dark-mode .config-reset-detail { color: #9aa3ae; }

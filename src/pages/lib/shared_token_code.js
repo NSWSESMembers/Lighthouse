@@ -1,37 +1,101 @@
-var $ = require('jquery');
-var moment = require('moment');
+import $ from 'jquery';
+import moment from 'moment';
+import { pageParamsAllowed } from '../../shared/beaconEnvironments.js';
 var periodicCheck = null;
 
-// wait for token to have loaded
-export function fetchBeaconToken(apiHost, source, cb) {
+// The token this page last handed its callback, and that callback. A Beacon
+// tab, or another Lighthouse page, can store a newer token for the same
+// environment at any time (each page renews on its own timer), so every check
+// hands over a newer stored token rather than keeping the first one until
+// this page renews it itself.
+var latest = null; // { token, tokenexp }
+var latestCb = null;
+var renewing = null; // the renewal in flight, if any
+var renewalFailed = false;
+
+function readStored(data, apiHost) {
+  try {
+    const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
+    if (tokenJSON?.token && tokenJSON?.expdate) return { token: tokenJSON.token, tokenexp: tokenJSON.expdate };
+  } catch (_) {
+    /* nothing stored yet */
+  }
+  return null;
+}
+
+function nearExpiry(tokenexp) {
+  return moment().isAfter(moment(tokenexp).subtract(5, "minutes"));
+}
+
+// The token is only ever handed over, or sent for renewal to `source`, for a
+// known Beacon environment (beaconEnvironments.js).
+function knownEnvironment(apiHost, source) {
+  if (pageParamsAllowed({ host: apiHost, source })) return true;
+  console.error('Lighthouse: not a known Beacon environment, not using the Beacon token', apiHost, source);
+  return false;
+}
+
+// Hand `candidate` to the callback if it's a different token that expires no
+// earlier than the one handed over last.
+function deliverIfNewer(candidate, cb) {
+  if (!candidate || (latest && candidate.token === latest.token)) return;
+  if (latest && moment(candidate.tokenexp).isBefore(moment(latest.tokenexp))) return;
+  latest = candidate;
+  renewalFailed = false; // a new token: renewing it later is worth a try
+  if (cb) cb({ token: candidate.token, tokenexp: candidate.tokenexp });
+}
+
+// Wait for a token to be stored (a Beacon tab stores it), hand it to `cb`,
+// then keep handing over newer ones: renewed by this page before expiry, or
+// stored by a Beacon tab or another Lighthouse page.
+export function fetchBeaconTokenAndKeepReturningValidTokens(apiHost, source, cb) {
+  if (!knownEnvironment(apiHost, source)) return;
+  let found = false; // a slow read can still be in flight when the token turns up
   const waiting = setInterval(function () {
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
-      const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
-      if (tokenJSON?.token && tokenJSON?.expdate) {
-        const { token, expdate: tokenexp } = tokenJSON;
-        clearInterval(waiting); // stop timer
-
-        startTokenValidation(apiHost, source, cb); // Start periodic validation
-        cb({ token, tokenexp }); // callback with token
-      }
+      const stored = readStored(data, apiHost);
+      if (found || !stored) return; // already handed over, or nothing stored yet
+      found = true;
+      clearInterval(waiting);
+      latestCb = cb;
+      latest = stored;
+      startTokenValidation(apiHost, source, cb);
+      cb({ token: stored.token, tokenexp: stored.tokenexp });
     });
   }, 200);
 }
 
-// wait for token to have loaded and keep returning valid tokens
-export function fetchBeaconTokenAndKeepReturningValidTokens(apiHost, source, cb) {
-  const waiting = setInterval(function () {
+/**
+ * The newest token Lighthouse has for this Beacon environment, for a caller
+ * whose request was refused (401/403): reads the stored token again, and
+ * renews it first if it's expired or within 5 minutes of expiring. A newer
+ * token also goes to the page's token callback. Resolves null if there's no
+ * token at all; if renewal fails it resolves the newest token it has, so the
+ * caller can tell a refusal of that token from one of a stale copy.
+ *
+ * @param {string} apiHost  Beacon API host (params.host)
+ * @param {string} source  Beacon site origin (params.source), for renewal
+ * @returns {Promise<string|null>}
+ */
+export function freshBeaconToken(apiHost, source) {
+  return new Promise(function (resolve) {
+    if (!knownEnvironment(apiHost, source)) return resolve(null);
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
-      const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
-      if (tokenJSON?.token && tokenJSON?.expdate) {
-        const { token, expdate: tokenexp } = tokenJSON;
-        clearInterval(waiting); // stop timer
-
-        startTokenValidation(apiHost, source, cb); // Start periodic validation
-        cb({ token, tokenexp }); // callback with token
+      const stored = readStored(data, apiHost);
+      // The later-expiring of the stored token and the one this page holds.
+      const current =
+        stored && latest && moment(stored.tokenexp).isBefore(moment(latest.tokenexp)) ? latest : stored || latest;
+      if (!current) return resolve(null);
+      if (nearExpiry(current.tokenexp)) {
+        renewToken(apiHost, source, current.token, latestCb).then(function (renewed) {
+          resolve(renewed ? renewed.token : current.token);
+        });
+        return;
       }
+      deliverIfNewer(current, latestCb);
+      resolve(current.token);
     });
-  }, 200);
+  });
 }
 
 // Start a single periodic token validation timer
@@ -40,13 +104,13 @@ function startTokenValidation(apiHost, source, cb) {
 
   periodicCheck = setInterval(function () {
     chrome.storage.local.get('beaconAPIToken-' + apiHost, function (data) {
-      const tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost]);
-      if (tokenJSON?.token && tokenJSON?.expdate) {
-        const { token, expdate: tokenexp } = tokenJSON;
-
-        if (moment().isAfter(moment(tokenexp).subtract(5, "minutes"))) {
-          renewToken(apiHost, source, token, cb);
+      const stored = readStored(data, apiHost);
+      if (stored) {
+        if (nearExpiry(stored.tokenexp)) {
+          if (!renewalFailed) renewToken(apiHost, source, stored.token, cb);
         } else {
+          // Renewed elsewhere (a Beacon tab or another Lighthouse page).
+          deliverIfNewer(stored, cb);
           console.log('API token still valid');
         }
       }
@@ -54,9 +118,13 @@ function startTokenValidation(apiHost, source, cb) {
   }, 1 * 60 * 1000); // Check every 1 minute
 }
 
-// Renew the token
+// Renew the token. Resolves the new { token, tokenexp }, or null if renewal
+// failed; a renewal already running is shared rather than sent twice.
 function renewToken(apiHost, source, token, cb) {
+  if (renewing) return renewing;
+  if (!knownEnvironment(apiHost, source)) return Promise.resolve(null);
   console.log("Token expiry triggered. Attempting to renew.");
+  renewing = new Promise(function (resolve) {
   $.ajax({
     type: 'GET',
     url: source + "/Authorization/RefreshToken",
@@ -66,9 +134,9 @@ function renewToken(apiHost, source, token, cb) {
     cache: false,
     dataType: 'json',
     complete: function (response, _textStatus) {
-      if (response.status === 200 && response.responseJSON) {
-        const newToken = response.responseJSON.access_token;
-        const newTokenExp = response.responseJSON.expires_at;
+      const newToken = response.responseJSON?.access_token;
+      const newTokenExp = response.responseJSON?.expires_at;
+      if (response.status === 200 && typeof newToken === 'string' && newToken && newTokenExp && moment(newTokenExp).isValid()) {
         chrome.storage.local.set({
           ['beaconAPIToken-' + apiHost]: JSON.stringify({
             token: newToken,
@@ -76,14 +144,23 @@ function renewToken(apiHost, source, token, cb) {
           })
         }, function () {
           console.log('Local data set - beaconAPIToken');
-          cb({ token: newToken, tokenexp: newTokenExp }); // callback with new token
+          latest = { token: newToken, tokenexp: newTokenExp };
+          if (cb) cb({ token: newToken, tokenexp: newTokenExp }); // callback with new token
+          resolve(latest);
         });
+        renewalFailed = false;
         console.log("Successful token renewal.");
       } else {
+        // Stop renewing on the timer, but keep picking up tokens a Beacon tab
+        // or another Lighthouse page stores (see startTokenValidation).
         console.error("Token renewal failed. Stopping further attempts.");
-        clearInterval(periodicCheck); // Stop further attempts
-        periodicCheck = null;
+        renewalFailed = true;
+        resolve(null);
       }
     }
   });
+  }).finally(function () {
+    renewing = null;
+  });
+  return renewing;
 }

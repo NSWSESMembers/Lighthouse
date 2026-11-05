@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lighthouse - LAD</title>
 </head>
 
@@ -10,12 +11,26 @@
     <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected">
         <span class="signalr-status-banner__icon">⚠</span>
         <span data-bind="text: signalrStatusText"></span>
+        <button type="button" class="btn btn-sm btn-warning py-0" data-bind="visible: signalrNeedsPermission, click: allowLiveUpdatesHost">Allow</button>
     </div>
     <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
         style="z-index:2000; width:600px; max-width:90%;"></div>
 
-    <div class="app"><!-- make .app a flex row in tasking.css -->
+    <div class="app" data-bind="css: { 'tabbed-incidents': layoutTab() === 'incidents' }"><!-- make .app a flex row in tasking.css -->
         <aside class="sidebar"><!-- fixed-width column in tasking.css -->
+            <!-- Tabbed layouts only: which list the drawer shows -->
+            <div class="drawer-tabs" role="tablist" aria-label="Side drawer list">
+                <button type="button" class="drawer-tab" role="tab"
+                    data-bind="click: showTeamsTab, css: { active: layoutTab() === 'teams' }, attr: { 'aria-selected': teamsTabSelected }">
+                    <i class="fa fa-users" aria-hidden="true"></i>
+                    <span>Teams (<!-- ko if: showInViewTeamsOnly --><span data-bind="text: listedTeams().length"></span>/<!-- /ko --><span data-bind="text: filteredTeams().length"></span>)</span>
+                </button>
+                <button type="button" class="drawer-tab" role="tab"
+                    data-bind="click: showIncidentsTab, css: { active: layoutTab() === 'incidents' }, attr: { 'aria-selected': incidentsTabSelected }">
+                    <i class="fa fa-list-ul" aria-hidden="true"></i>
+                    <span>Incidents (<!-- ko if: showInViewIncidentsOnly --><span data-bind="text: listedJobs().length"></span>/<!-- /ko --><span data-bind="text: filteredJobs().length"></span>)</span>
+                </button>
+            </div>
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 pane-toolbar">
@@ -27,12 +42,24 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm toolbar-search">
-                            <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
-                            <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
-                                placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
-                            <button class="btn btn-outline-secondary py-0 px-1" type="button" title="Clear"
-                                data-bind="click: clearTeamSearch, visible: teamSearch">&times;</button>
+                        <div class="position-relative toolbar-search">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
+                                <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
+                                    placeholder="Search teams…" autocomplete="off"
+                                    data-bind="value: teamSearch, valueUpdate: 'input', event: { keydown: teamSearchKeyDown, blur: teamSearchBlur, focus: teamSearchFocus }">
+                                <button class="btn btn-outline-secondary py-0 px-1" type="button" title="Clear"
+                                    data-bind="click: clearTeamSearch, visible: teamSearch">&times;</button>
+                            </div>
+                            <!-- ko if: teamSearchShowSuggestions() && teamSearchSuggestions().length > 0 -->
+                            <ul class="search-suggestions list-unstyled mb-0" data-bind="foreach: teamSearchSuggestions">
+                                <li data-bind="click: $root.pickTeamSuggestion,
+                                               css: { 'active': $index() === $root.teamSearchActiveIndex() }">
+                                    <span class="suggestion-label" data-bind="html: highlightedLabel"></span>
+                                    <span class="suggestion-category badge bg-secondary ms-auto" data-bind="text: category"></span>
+                                </li>
+                            </ul>
+                            <!-- /ko -->
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only teams"
@@ -282,13 +309,6 @@
                                             <!-- 2. Callsign -->
                                             <div class="team-cell">
                                                 <span data-bind="text: t.callsign"></span>
-
-                                                <span class="fa-stack" data-bind="visible: !t.trackableAssets().length"
-                                                    title="No matching asset found">
-                                                    <i class="fas fa-car fa-stack-1x"></i>
-                                                    <i class="fa fa-ban fa-stack-2x text-danger"
-                                                        style="color:Tomato"></i>
-                                                </span>
                                             </div>
 
                                             <!-- 3. Status -->
@@ -332,9 +352,18 @@
                                                         data-bind="click: t.openBeaconEditTeam, clickBubble: false">
                                                         <i class="fas fa-external-link-alt"></i>
                                                     </button>
+                                                    <!-- No matching asset: the Zoom to slot says so instead -->
+                                                    <span class="btn btn-outline-secondary team-no-asset"
+                                                        title="No matching asset found" aria-label="No matching asset found"
+                                                        data-bind="visible: !t.trackableAssets().length, clickBubble: false">
+                                                        <span class="team-no-asset__icon" aria-hidden="true">
+                                                            <i class="fas fa-car"></i>
+                                                            <i class="fa fa-ban team-no-asset__ban"></i>
+                                                        </span>
+                                                    </span>
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Zoom to"
-                                                        data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false, event: { mouseover: t.mouseEnterButton, mouseleave: t.mouseLeaveButton }">
+                                                        data-bind="visible: t.trackableAssets().length, click: t.markerFocus, clickBubble: false, event: { mouseover: t.mouseEnterButton, mouseleave: t.mouseLeaveButton }">
                                                         <i class="fa fa-solid fa-crosshairs"></i>
                                                         <span
                                                             class="position-absolute top-0 start-100 badge rounded-pill bg-info"
@@ -368,7 +397,7 @@
                                                                 <fieldset>
                                                                     <div
                                                                         class="team-members-header d-flex justify-content-between align-items-center mb-2">
-                                                                        <legend class="job-details-legend text-nowrap me-2">Team Members
+                                                                        <legend class="job-details-legend text-nowrap me-2" title="Team members">Members
                                                                             (<span
                                                                                 data-bind="text: membersSorted().length"></span>)
                                                                         </legend>
@@ -648,7 +677,7 @@
                                     data-bind="click: clearJobSearch, visible: jobSearch">&times;</button>
                             </div>
                             <!-- ko if: jobSearchShowSuggestions() && jobSearchSuggestions().length > 0 -->
-                            <ul class="job-search-suggestions list-unstyled mb-0" data-bind="foreach: jobSearchSuggestions">
+                            <ul class="search-suggestions list-unstyled mb-0" data-bind="foreach: jobSearchSuggestions">
                                 <li data-bind="click: $root.pickJobSuggestion,
                                                css: { 'active': $index() === $root.jobSearchActiveIndex() }">
                                     <span class="suggestion-label" data-bind="html: highlightedLabel"></span>
@@ -1578,6 +1607,19 @@
 
         <main class="map-wrap"><!-- flexible area fills remaining width-->
             <div id="map"></div><!-- set to fill parent-->
+            <!-- A simulated exercise ended (or its sign-in was refused) and LAD went back
+                 to live positions. main.js moves this onto the map, above the map alerts,
+                 and it stays up until closed (SimulatedExerciseVM.notice). -->
+            <div id="simexNotice" class="alert alert-dismissible simex-notice" role="status" style="display:none"
+                data-bind="visible: simulatedExercise.noticeVisible,
+                    css: { 'alert-info': !simulatedExercise.noticeIsWarning(), 'alert-warning': simulatedExercise.noticeIsWarning }">
+                <strong data-bind="visible: simulatedExercise.noticeName, text: simulatedExercise.noticeName"></strong>
+                <span data-bind="text: simulatedExercise.noticeText"></span>
+                <a href="#" class="alert-link text-nowrap"
+                    data-bind="click: simulatedExercise.chooseAnotherExercise, text: simulatedExercise.noticeLinkText"></a>
+                <button type="button" class="btn-close" aria-label="Dismiss"
+                    data-bind="click: simulatedExercise.dismissNotice"></button>
+            </div>
         </main>
     </div>
 
@@ -1717,6 +1759,11 @@
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-layers" data-bs-toggle="pill" data-bs-target="#cfgPane-layers" type="button" role="tab" aria-controls="cfgPane-layers" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-sliders-h"></i></span><span>Map layers</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="cfgTab-collab" data-bs-toggle="pill" data-bs-target="#cfgPane-collab" type="button" role="tab" aria-controls="cfgPane-collab" aria-selected="false">
                                             <span class="cfg-rail-ico"><i class="fa fa-layer-group"></i></span><span>Collaborative layers</span>
                                         </button>
@@ -1766,7 +1813,7 @@
                                             <label class="form-label">Filter by Headquarters</label>
                                             <div class="input-group position-relative">
                                                 <input id="locationSearch" type="search" class="form-control" placeholder="Search…"
-                                                    autocomplete="off" data-bind="value: config.query, valueUpdate: 'afterkeydown', hasFocus: config.inputHasFocus,
+                                                    autocomplete="off" data-bind="textInput: config.query, hasFocus: config.inputHasFocus,
                                                     event: { blur: config.closeDropdown }">
                                                 <button id="clearSearch" class="btn btn-outline-secondary" type="button" title="Clear"
                                                     data-bind="click: config.clearSearch">&times;</button>
@@ -2710,39 +2757,40 @@
                                                                 </div>
                                                             </fieldset>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-mapAll" aria-expanded="false" aria-controls="cfgSub-mapAll">
-                                                    <span class="cfg-sub-ico"><i class="fa fa-map-marker-alt"></i></span><span>All markers</span>
-                                                </button>
-                                            </h2>
-                                            <div id="cfgSub-mapAll" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
-                                                <div class="accordion-body">
-                                                    <div class="row g-3">
-                                                        <!-- Layer order -->
+
+                                                        <!-- Arrived, not marked Onsite alert (utils/onsiteGeofence.js) -->
                                                         <div class="col-md-6">
                                                             <fieldset>
                                                                 <legend class="form-label fw-semibold mb-2">
-                                                                    <i class="fa fa-sort me-1"></i>Marker Layer Order
-                                                                    <small class="text-muted fw-normal">(top → bottom)</small>
+                                                                    <i class="fa fa-crosshairs me-1"></i>Arrival Alert
                                                                 </legend>
-                                                                <div class="form-text mb-3">
-                                                                    Controls the draw order of marker layers on the map. Drag and drop to reorder.
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="onsiteGeofenceAlertToggle"
+                                                                        data-bind="checked: config.onsiteGeofenceAlert">
+                                                                    <label class="form-check-label"
+                                                                        for="onsiteGeofenceAlertToggle">
+                                                                        Alert when a team has arrived but isn't marked Onsite
+                                                                    </label>
                                                                 </div>
-                                                                <div class="border rounded p-2">
-                                                                    <ul class="list-group"
-                                                                        data-bind="foreach: { data: config.paneOrder, as: 'p' }">
-                                                                        <li class="list-group-item d-flex align-items-center gap-2 py-1"
-                                                                            data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
-                                                                            <i class="fa fa-grip-vertical text-muted pane-drag-handle"
-                                                                                style="cursor:grab"></i>
-                                                                            <span data-bind="text: p.name"></span>
-                                                                        </li>
-                                                                    </ul>
+                                                                <div class="form-text mb-3">
+                                                                    A low-priority alert lists Tasked or Enroute teams
+                                                                    whose asset has reported a location (in the last
+                                                                    15 minutes) close to their incident.
+                                                                </div>
+
+                                                                <div class="ms-3" data-bind="visible: config.onsiteGeofenceAlert">
+                                                                    <label for="onsiteGeofenceMetresRange" class="form-label mb-1">
+                                                                        Distance from the incident marker:
+                                                                        <strong><span data-bind="text: config.onsiteGeofenceMetres"></span> m</strong>
+                                                                    </label>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <small class="text-muted text-nowrap">Closer</small>
+                                                                        <input type="range" class="form-range flex-grow-1"
+                                                                            id="onsiteGeofenceMetresRange" min="50" max="1000" step="50"
+                                                                            data-bind="value: config.onsiteGeofenceMetres, valueUpdate: 'input'">
+                                                                        <small class="text-muted text-nowrap">Further</small>
+                                                                    </div>
                                                                 </div>
                                                             </fieldset>
                                                         </div>
@@ -2751,6 +2799,85 @@
                                             </div>
                                         </div>
                                         </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="cfgPane-layers" role="tabpanel" aria-labelledby="cfgTab-layers" tabindex="0">
+                                                <h6 class="fw-semibold mb-2">
+                                                    <i class="fa fa-sliders-h me-1"></i>Map Layer Order &amp; Transparency
+                                                </h6>
+                                                <!-- Layer order & transparency (Config.js layerStackRows) -->
+                                                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                                    <div class="form-text mt-0">
+                                                        Every map layer, top to bottom. Layers higher in the list are drawn
+                                                        over lower ones. Drag <i class="fa fa-grip-vertical"></i> or use the arrows to reorder,
+                                                        and use the slider to make a layer see-through. The switch turns a
+                                                        layer on or off, the same as the <i class="fas fa-layer-group"></i> Layers
+                                                        button; layers showing now are marked <span class="badge text-bg-success">On map</span>.
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap"
+                                                        data-bind="click: config.resetLayerStack">
+                                                        <i class="fa fa-undo me-1"></i>Reset
+                                                    </button>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-3 mb-2">
+                                                    <div class="input-group input-group-sm layer-stack-search">
+                                                        <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                                        <input type="search" class="form-control" placeholder="Search layers, e.g. radar or BOM"
+                                                            aria-label="Search layers" data-bind="textInput: config.layerStackQuery">
+                                                    </div>
+                                                    <div class="form-check form-switch mb-0 text-nowrap">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="layerStackOnlyOn"
+                                                            data-bind="checked: config.layerStackOnlyOn">
+                                                        <label class="form-check-label small" for="layerStackOnlyOn">On map only</label>
+                                                    </div>
+                                                </div>
+                                                <div class="small text-muted mb-1">
+                                                    <span data-bind="text: config.layerStackVisibleCount"></span> of
+                                                    <span data-bind="text: config.layerStackCount"></span> layers on the map
+                                                    <!-- ko if: config.layerStackFiltered -->
+                                                    &middot; showing <span data-bind="text: config.layerStackShownCount"></span>
+                                                    <button type="button" class="btn btn-link p-0 align-baseline layer-stack-showall"
+                                                        data-bind="click: config.clearLayerStackSearch">Show all</button>
+                                                    <!-- /ko -->
+                                                </div>
+                                                <div class="text-muted small border rounded p-3 text-center" data-bind="visible: config.layerStackNoMatches">
+                                                    No layers match.
+                                                </div>
+                                                <ul class="list-group layer-stack-list"
+                                                    data-bind="foreach: { data: config.layerStackRows, as: 'r' }, fitInPane: true">
+                                                    <li class="list-group-item d-flex align-items-center gap-2 py-1 layer-stack-row"
+                                                        data-bind="sortableRow: { array: $root.config.layerStackRows, handle: '.pane-drag-handle' }, css: { 'layer-stack-off': !r.visible(), 'layer-stack-hidden': !r.matches() }">
+                                                        <i class="fa fa-grip-vertical text-muted pane-drag-handle" style="cursor:grab"
+                                                            title="Drag to reorder"></i>
+                                                        <div class="form-check form-switch mb-0 layer-stack-switch">
+                                                            <!-- ko if: r.isPane -->
+                                                            <i class="fa fa-lock text-muted" title="Always on the map"></i>
+                                                            <!-- /ko -->
+                                                            <!-- ko ifnot: r.isPane -->
+                                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                                data-bind="checked: r.visible, click: $root.config.toggleLayerVisible, attr: { title: r.visibleLabel, 'aria-label': r.visibleLabel }">
+                                                            <!-- /ko -->
+                                                        </div>
+                                                        <div class="flex-grow-1 text-truncate">
+                                                            <span class="layer-stack-name" data-bind="text: r.name"></span>
+                                                            <span class="badge ms-1" data-bind="text: r.stateLabel, css: { 'text-bg-success': r.visible(), 'text-bg-light border text-muted': !r.visible() }"></span>
+                                                            <div class="small text-muted text-truncate" data-bind="text: r.group"></div>
+                                                        </div>
+                                                        <input type="range" class="form-range layer-stack-opacity" min="10" max="100" step="5"
+                                                            aria-label="Layer opacity"
+                                                            data-bind="value: r.opacityPct, valueUpdate: 'input', attr: { title: r.opacityLabel }">
+                                                        <span class="small text-muted text-end layer-stack-pct" data-bind="text: r.opacityLabel"></span>
+                                                        <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Move layer">
+                                                            <button type="button" class="btn btn-outline-secondary py-0 px-1" title="Move up" aria-label="Move up"
+                                                                data-bind="click: $root.config.moveLayerUp, disable: r.isFirst">
+                                                                <i class="fa fa-chevron-up"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary py-0 px-1" title="Move down" aria-label="Move down"
+                                                                data-bind="click: $root.config.moveLayerDown, disable: r.isLast">
+                                                                <i class="fa fa-chevron-down"></i>
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                </ul>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-collab" role="tabpanel" aria-labelledby="cfgTab-collab" tabindex="0">
                                                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -2793,8 +2920,7 @@
                                                     <!-- ko if: !selected() -->
                                                     <div class="input-group input-group-sm position-relative">
                                                         <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
-                                                            value: searchQuery,
-                                                            valueUpdate: 'afterkeydown',
+                                                            textInput: searchQuery,
                                                             hasFocus: hasFocus,
                                                             event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                         <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -2845,8 +2971,7 @@
                                                         <!-- ko if: !selected() -->
                                                         <div class="input-group input-group-sm position-relative">
                                                             <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
-                                                                value: searchQuery,
-                                                                valueUpdate: 'afterkeydown',
+                                                                textInput: searchQuery,
                                                                 hasFocus: hasFocus,
                                                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                             <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -2949,8 +3074,7 @@
                                                         <div class="small text-muted mb-1">Moderators</div>
                                                         <div class="input-group input-group-sm position-relative">
                                                             <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
-                                                                value: searchQuery,
-                                                                valueUpdate: 'afterkeydown',
+                                                                textInput: searchQuery,
                                                                 hasFocus: hasFocus,
                                                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                             <button class="btn btn-outline-secondary" type="button" title="Clear"
@@ -3030,8 +3154,7 @@
                                                     <!-- ko if: !selected() -->
                                                     <div class="input-group input-group-sm position-relative">
                                                         <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
-                                                            value: searchQuery,
-                                                            valueUpdate: 'afterkeydown',
+                                                            textInput: searchQuery,
                                                             hasFocus: hasFocus,
                                                             event: { blur: closeDropdown, keydown: onSearchKeydown }">
                                                         <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3170,28 +3293,25 @@
 
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-sidebar" role="tabpanel" aria-labelledby="cfgTab-sidebar" tabindex="0">
-                                                <label class="form-label">
-                                                    <i class="fa fa-columns me-1"></i>Section Layout Preset
-                                                </label>
-                                                <div class="layout-preset-grid"
-                                                    data-bind="foreach: { data: config.layoutPresetDefs, as: 'preset' }">
-                                                    <label class="layout-preset-card"
-                                                        data-bind="css: { 'is-active': $root.config.layoutPreset() === preset.id }">
-                                                        <input class="form-check-input layout-preset-radio"
-                                                            type="radio" name="layoutPreset"
-                                                            data-bind="checked: $root.config.layoutPreset, checkedValue: preset.id">
-                                                        <div class="layout-preset-preview"
-                                                            data-bind="css: preset.previewClass">
-                                                            <div class="preview-block preview-block--teams">Teams</div>
-                                                            <div class="preview-block preview-block--tasking">Tasking</div>
-                                                            <div class="preview-block preview-block--map">Map</div>
+                                                <!-- Layout = a tile (Config.layoutLists) + the map side (Config.layoutMapLeft) -->
+                                                <div class="layout-tiles" role="radiogroup" aria-label="Layout"
+                                                    data-bind="foreach: { data: config.layoutListChoices, as: 'choice' }">
+                                                    <label class="layout-tile" data-bind="css: { active: $root.config.layoutLists() === choice.id }">
+                                                        <input type="radio" class="visually-hidden" name="layoutLists"
+                                                            data-bind="checked: $root.config.layoutLists, checkedValue: choice.id">
+                                                        <div class="layout-preset-preview" data-bind="css: choice.previewClass" aria-hidden="true">
+                                                            <div class="preview-block preview-block--teams"><i class="fa fa-users"></i></div>
+                                                            <div class="preview-block preview-block--tasking"><i class="fa fa-list-ul"></i></div>
+                                                            <div class="preview-block preview-block--map"><i class="fa fa-map"></i></div>
                                                         </div>
-                                                        <div class="layout-preset-name" data-bind="text: preset.name"></div>
-                                                        <div class="layout-preset-description small text-muted"
-                                                            data-bind="text: preset.description"></div>
+                                                        <span class="layout-tile-name" data-bind="text: choice.name"></span>
                                                     </label>
                                                 </div>
-                                                <div class="form-text">Pick a layout to instantly preview and apply section placement.</div>
+                                                <div class="form-check form-switch mt-3">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="layoutMapLeft"
+                                                        data-bind="checked: config.layoutMapLeft, enable: config.layoutSideEnabled">
+                                                    <label class="form-check-label" for="layoutMapLeft">Map on the left</label>
+                                                </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-starred" role="tabpanel" aria-labelledby="cfgTab-starred" tabindex="0">
                                                 <div
@@ -3557,8 +3677,7 @@
                         <!-- ko if: !selected() -->
                         <div class="input-group input-group-sm position-relative">
                             <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
-                                value: searchQuery,
-                                valueUpdate: 'afterkeydown',
+                                textInput: searchQuery,
                                 hasFocus: hasFocus,
                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                             <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3602,8 +3721,7 @@
                         <!-- ko if: !selected() -->
                         <div class="input-group input-group-sm position-relative">
                             <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
-                                value: searchQuery,
-                                valueUpdate: 'afterkeydown',
+                                textInput: searchQuery,
                                 hasFocus: hasFocus,
                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                             <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
@@ -3647,8 +3765,7 @@
                         <div class="small text-muted mb-1">Moderators</div>
                         <div class="input-group input-group-sm position-relative">
                             <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
-                                value: searchQuery,
-                                valueUpdate: 'afterkeydown',
+                                textInput: searchQuery,
                                 hasFocus: hasFocus,
                                 event: { blur: closeDropdown, keydown: onSearchKeydown }">
                             <button class="btn btn-outline-secondary" type="button" title="Clear"
@@ -4127,8 +4244,7 @@
                         <div class="input-group position-relative">
                             <input id="smsRecipientSearch" type="search" class="form-control"
                                 placeholder="Search contacts…" autocomplete="off" data-bind="
-        value: recipientSearchQuery,
-        valueUpdate: 'afterkeydown',
+        textInput: recipientSearchQuery,
         hasFocus: recipientSearchHasFocus,
         event: { blur: closeRecipientSearchDropdown, keydown: onRecipientSearchKeydown }
       " />
@@ -4466,6 +4582,39 @@
     </div>
 
     <!-- Trackable Assets Modal -->
+    <!-- Restore Defaults: choose what to clear (utils/resetGroups.js). Opened from Configuration, which reopens on Cancel. -->
+    <div class="modal fade" id="restoreDefaultsModal" tabindex="-1" aria-labelledby="restoreDefaultsModalLabel"
+        aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2 px-3">
+                    <h5 class="modal-title" id="restoreDefaultsModalLabel">Restore Defaults</h5>
+                    <button type="button" class="btn-close" aria-label="Cancel" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">Pick what to put back to its defaults. LAD then reloads. Settings for other Lighthouse pages (Radio Console, Statistics, Summary and the exports) aren't touched.</p>
+                    <div class="config-reset-groups" data-bind="foreach: config.resetGroups">
+                        <label class="config-reset-group">
+                            <input type="checkbox" class="form-check-input" data-bind="checked: checked">
+                            <span>
+                                <span class="config-reset-label" data-bind="text: label"></span>
+                                <span class="config-reset-detail" data-bind="text: detail"></span>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">Downloaded data (cached asset positions and collaborative layers) is cleared too and fetched again.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger"
+                        data-bind="click: config.confirmReset, enable: config.resetAnyChecked">
+                        <i class="fa fa-undo me-1"></i>Reset and reload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="trackableAssetsModal" tabindex="-1" aria-labelledby="trackableAssetsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -4715,8 +4864,7 @@
                     <div class="input-group input-group-lg">
                         <input id="spotlightSearchInput" type="search" class="form-control form-control-lg"
                             placeholder="Search teams, incidents, or enter a command" autocomplete="off" data-bind="
-                value: query,
-                valueUpdate: 'afterkeydown',
+                textInput: query,
                 event: { keydown: onInputKeyDown }
               " />
                         <button class="btn btn-outline-secondary" type="button" title="Clear"
@@ -4981,6 +5129,7 @@
                 <div class="tsm-eu-quick" data-bind="foreach: estimateQuickButtons">
                     <button type="button" data-bind="text: label, click: $parent.onEstimateQuickClick, clickBubble: false"></button>
                 </div>
+                <!-- ko if: showDriveTime --><!-- ko template: { name: 'tsm-drive-time-template' } --><!-- /ko --><!-- /ko -->
                 <div class="tsm-eu-label">Or an exact time</div>
                 <div class="mb-2" data-bind="dateTime24: estimateDraft"></div>
             </div>
@@ -5026,6 +5175,7 @@
             <div class="tsm-eu-quick" data-bind="foreach: etaQuickButtons">
                 <button type="button" data-bind="text: label, click: $parent.onEtaQuickButtonClick, clickBubble: false"></button>
             </div>
+            <!-- ko if: showDriveTime --><!-- ko template: { name: 'tsm-drive-time-template' } --><!-- /ko --><!-- /ko -->
             <div class="tsm-eu-label">Or an exact time</div>
             <div class="mb-2" data-bind="dateTime24: eta"></div>
             <!-- /ko -->
@@ -5063,6 +5213,25 @@
         </div>
         <!-- /ko -->
         </div>
+    </script>
+
+    <!-- "Or the drive time": an ETA option between the quick buttons and an
+         exact time. Routes from the team's asset to the incident; the
+         asset's location age is always on the second line so the operator
+         can judge whether the route starts where the team really is. -->
+    <script type="text/html" id="tsm-drive-time-template">
+        <div class="tsm-eu-label">Or the drive time</div>
+        <button type="button" class="tsm-drive" data-bind="css: driveRowCss, click: calculateDriveTime, clickBubble: false, enable: !driveTimeBlocked() && !driveTimeLoading()">
+            <i class="fa tsm-drive-icon" data-bind="css: { 'fa-route': !driveTimeLoading(), 'fa-spinner fa-spin': driveTimeLoading }"></i>
+            <span class="tsm-drive-text">
+                <span class="tsm-drive-main" data-bind="text: driveRowTitle"></span>
+                <span class="tsm-drive-sub">
+                    <!-- ko if: driveRowWarn --><i class="fa fa-exclamation-triangle"></i><!-- /ko -->
+                    <span data-bind="text: driveRowDetail"></span>
+                </span>
+            </span>
+            <span class="tsm-drive-action" data-bind="text: driveRowAction"></span>
+        </button>
     </script>
 
     <script src="tasking/main.js" type="text/javascript"></script>

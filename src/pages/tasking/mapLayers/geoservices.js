@@ -230,7 +230,11 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
         }
       }
 
-      map.on('zoomend', () => updateLabelVisibility(LABEL_ZOOM_THRESHOLD));
+      // drawFn runs again each time the layer is switched on: drop the
+      // previous draw's handler, which still holds that draw's label layers.
+      if (layerGroup._labelZoomHandler) map.off('zoomend', layerGroup._labelZoomHandler);
+      layerGroup._labelZoomHandler = () => updateLabelVisibility(LABEL_ZOOM_THRESHOLD);
+      map.on('zoomend', layerGroup._labelZoomHandler);
 
     },
   });

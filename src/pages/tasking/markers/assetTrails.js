@@ -82,6 +82,37 @@ export function fixTime(lastSeen, now = Date.now()) {
     return Number.isFinite(t) && t <= now ? t : now;
 }
 
+// Segments shorter than this on screen get no direction arrow: there's no
+// room for one, and zoomed out a short trail would be all arrows.
+const ARROW_MIN_PX = 36;
+
+/**
+ * Screen angle (degrees, clockwise from east) of travel from a to b, given
+ * as layer points. Web Mercator keeps angles, so it's the same at any zoom.
+ */
+export function travelAngle(a, b) {
+    return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+}
+
+/**
+ * A small chevron pointing along a segment, so the trail reads as a
+ * direction, not a line. Centred on the icon's anchor: the svg is a block
+ * (inline, it sits on the text baseline, a few px off the line) and the
+ * chevron's tip and arms are balanced about its middle.
+ */
+function arrowIcon(color, angle, opacity) {
+    const d = 'M-2,-4.5 L2,0 L-2,4.5';
+    return L.divIcon({
+        className: 'asset-trail-arrow',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+        html: `<svg viewBox="-6 -6 12 12" width="12" height="12" style="display:block;transform:rotate(${angle.toFixed(1)}deg);opacity:${opacity.toFixed(2)}">`
+            + `<path d="${d}" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.6"/>`
+            + `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
+            + '</svg>',
+    });
+}
+
 /** Opacity for something `age` ms old on a trail `windowMs` long. */
 export function trailOpacity(age, windowMs) {
     const fresh = Math.min(1, Math.max(0, 1 - age / windowMs));
@@ -111,6 +142,8 @@ export class AssetTrails {
         // cheaper there than as SVG paths.
         this.renderer = L.canvas({ pane: PANE, padding: 0.5 });
         this.layer = L.layerGroup();
+        // Which segments have room for an arrow depends on the zoom.
+        map.on('zoomend', () => { if (this.group) this._draw(); });
 
         this._load();
         window.addEventListener('pagehide', () => {
@@ -124,10 +157,13 @@ export class AssetTrails {
 
     get windowMs() { return this.minutes * 60 * 1000; }
 
-    /** Keep the trails just under the asset pins (pane-top), wherever the pane order puts them. */
+    /** Keep the trails just under the asset pins (pane-top), wherever the layer order puts them, at the same opacity. */
     syncPaneZ() {
-        const z = Number(this.map.getPane('pane-top')?.style.zIndex) || 600;
-        this.map.getPane(PANE).style.zIndex = String(z - 1);
+        const assets = this.map.getPane('pane-top');
+        const z = Number(assets?.style.zIndex) || 600;
+        const pane = this.map.getPane(PANE);
+        pane.style.zIndex = String(z - 1);
+        pane.style.opacity = assets?.style.opacity || '';
     }
 
     setEnabled(on) {
@@ -219,6 +255,20 @@ export class AssetTrails {
             L.polyline(pts, { ...opts, color: '#fff', weight: 6, opacity: opacity * 0.5, lineCap: 'round' }).addTo(group);
             L.polyline(pts, { ...opts, color, weight: 3, opacity, lineCap: 'round' }).addTo(group);
         }
+        // A small arrow midway along each segment long enough to fit one,
+        // pointing the way the vehicle went, so a one-segment trail coming
+        // out of the pin doesn't read as a spread-out pin's line. Placed at
+        // the on-screen midpoint so it sits exactly on the drawn line.
+        for (let i = 1; i < trail.length; i++) {
+            const a = trail[i - 1], b = trail[i];
+            const pa = this.map.latLngToLayerPoint([a.lat, a.lng]);
+            const pb = this.map.latLngToLayerPoint([b.lat, b.lng]);
+            if (pa.distanceTo(pb) < ARROW_MIN_PX) continue;
+            L.marker(this.map.layerPointToLatLng(pa.add(pb).divideBy(2)), {
+                icon: arrowIcon(color, travelAngle(pa, pb), trailOpacity(now - b.t, windowMs)),
+                pane: PANE, interactive: false, keyboard: false,
+            }).addTo(group);
+        }
         // A dot at each past fix (the newest is under the pin).
         for (let i = 0; i < trail.length - 1; i++) {
             const f = trail[i];
@@ -252,6 +302,12 @@ export class AssetTrails {
             this._saveTimer = null;
             this._save();
         }, SAVE_DELAY);
+    }
+
+    /** Drop an unsaved change, so it isn't written back after a reset clears the trails. */
+    discardPendingSave() {
+        clearTimeout(this._saveTimer);
+        this._saveTimer = null;
     }
 
     _save() {

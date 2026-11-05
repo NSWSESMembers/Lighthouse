@@ -38,4 +38,11 @@ describe('search', () => {
     expect(url).toContain('TagIds%5B%5D=3');
     expect(url).toContain('IncludeCompleted=true');
   });
+
+  it('pages 100 at a time by default, or stops after a page of a given size', async () => {
+    await search({}, start, end, ctx);
+    expect(vi.mocked(requestPaginated).mock.calls[0][1]).toMatchObject({ token: 'tok', pageSize: 100, pageLimit: 0 });
+    await search({}, start, end, { ...ctx, pageSize: 10, pageLimit: 1 });
+    expect(vi.mocked(requestPaginated).mock.calls[1][1]).toMatchObject({ pageSize: 10, pageLimit: 1 });
+  });
 });

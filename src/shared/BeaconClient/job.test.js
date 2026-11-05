@@ -40,7 +40,13 @@ describe('search', () => {
     const onPage = vi.fn();
     await search(null, start, end, { ...ctx, onProgress, onPage });
     const [, opts] = vi.mocked(requestPaginated).mock.calls[0];
-    expect(opts).toMatchObject({ token: 'tok', pageSize: 100, onProgress, onPage });
+    expect(opts).toMatchObject({ token: 'tok', pageSize: 100, pageLimit: 0, onProgress, onPage });
+  });
+
+  it('can stop after a page of a given size (a quick look with the total)', async () => {
+    await search(null, start, end, { ...ctx, pageSize: 10, pageLimit: 1 });
+    const [, opts] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(opts).toMatchObject({ pageSize: 10, pageLimit: 1 });
   });
 });
 

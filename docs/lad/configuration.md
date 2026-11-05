@@ -9,7 +9,7 @@ When you first launch LAD you are taken to the **Configuration** screen, where y
 
 This page is a reference for every setting, tab by tab. Each section links to the part of the guide that explains the feature it controls.
 
-The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
+The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Map layers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
 
 ![LAD Configuration screen, Data tab](images/config-data.png)
 
@@ -97,7 +97,7 @@ Control which incidents and teams appear based on their sector.
 
 ## Map Markers
 
-The **Map markers** tab controls how incident and asset markers are displayed and the order layers are drawn on the map. Its settings are grouped into three sections, **Incident markers**, **Asset markers** and **All markers**. Click a section to open it; opening one closes the others.
+The **Map markers** tab controls how incident and asset markers are displayed. Its settings are grouped into two sections, **Incident markers** and **Asset markers**. The order and transparency of map layers are on the [Map layers](#map-layers) tab. Click a section to open it; opening one closes the others.
 
 ![Map marker settings](images/config-map-markers.png)
 
@@ -137,17 +137,33 @@ These options only show while **Spread out overlapping asset markers** is on.
 
 - **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability. See [Capability Codes](assets.md#capability-codes) for the full list.
 
-### All Markers
+#### Arrival Alert
 
-#### Marker Layer Order
+- **Alert when a team has arrived but isn't marked Onsite** (on by default). The [Arrived, not marked Onsite](interface.md#alerts) alert lists *Tasked* or *Enroute* teams whose asset has reported a location in the last 15 minutes close to their incident.
+- **Distance from the incident marker** sets how close the asset must be, from **50 m** to **1 km**. The default is **200 m**. Make it larger for big properties or rural incidents where assets stop well away from the marker.
 
-Controls the order map elements are drawn. Items at the top of the list are drawn over items lower down. Drag to rearrange. The default order (top to bottom) is:
+## Map Layers
+
+The **Map layers** tab sets the order map layers are drawn in and how see-through each one is.
+
+![Layer order and transparency settings](images/config-layer-order.png)
+
+It lists every map layer: incident markers, asset markers, routes and measuring, and each overlay from the **Layers** menu, including your collaborative layers. Layers at the top of the list are drawn over layers lower down. To find a layer quickly, type in the search box (for example `radar` or `bom warn`; it matches layer names and their **Layers** menu group), or turn on **On map only** to list just the layers showing now. **Show all** clears both. To get here straight from the map, click <img class="icon" src="images/icon-layer-order.png" alt="Layer order and transparency" height="20"> next to the search bar in the **Layers** menu. For each layer you can:
+
+- **Turn it on or off** with the switch. This is the same as its toggle in the **Layers** menu. Layers on the map are marked **On map**; the rest are marked **Off** and greyed out. Incident and asset markers, and routes and measuring, are always listed as on; hide incidents and assets from the **Layers** menu as before.
+- **Move it** by dragging the grip on the left, or with the up and down arrows (easier in a long list).
+- **Make it see-through** with the slider, from 100% (solid) down to 10%. Layers start at 100%, except **BOM Rain Radar Still** and **BOM Severe Thunderstorm Cells**, which start at 50%, and **RainViewer Animated Rainfall Radar**, **BOM Severe Thunderstorm Warning** and **BOM Sea Surface Temperature (°C)**, which start at 60%, so roads and boundaries show through them.
+
+Order and transparency are remembered for layers that are off, and apply when you turn them on. **Reset** puts every layer back in its default position and transparency. By default, from top to bottom:
 
 1. Incident markers
-2. Collaborative layer markers
+2. Collaborative layers
 3. Asset markers
-4. Map overlay markers & labels
-5. Map overlay polygons & drawings
+4. Routes, measuring & HQ coverage
+5. Other overlays (boundaries, warnings, Transport NSW, HazardWatch and so on)
+6. Weather imagery (radar, satellite and BOM forecast and observation maps), with **BOM Thunderstorm Tracking** above **BOM Rain Radar Still** so storm cells show over the rain
+
+Moving a filled overlay above incidents or assets can stop you clicking the markers under it. Lower its transparency or move it back down if that happens.
 
 ## Collaborative Layers
 
@@ -157,9 +173,11 @@ The **Collaborative layers** tab is where you subscribe to existing collaborativ
 
 ## Layout
 
-Choose a preset layout for LAD — which side the map is on, whether teams or taskings are on top, single-pane layouts, or map only.
+Pick a layout by its picture, and use **Map on the left** to move the map to the other side. The page changes as you pick.
 
-![Section layout presets](images/config-layout.png)
+**Tabs** shows one list at a time at full height, which suits tablets such as an iPad, and is the default there. Switch between the lists with the **Teams** and **Incidents** tabs at the top of the side drawer; LAD remembers which one was showing. When the window is taller than it is wide (an iPad in portrait), the side drawer runs across the full width with the map below it (map on the right) or above it (map on the left); drag the divider between them to share the height.
+
+![Layout settings](images/config-layout.png)
 
 ## Starred Teams & Incidents
 
@@ -198,6 +216,17 @@ Set separate weights for **Rescue** and **Standard** (non-rescue) incidents, bal
 
 ## Restoring Default Settings
 
-**Restore Defaults** resets all filters and configuration settings to their defaults, and removes any starred incidents and teams.
+**Restore Defaults** lets you pick what to put back to its defaults, then reloads LAD. Click it to open the **Restore Defaults** window, untick anything you want to keep, and click **Reset and reload**. **Cancel** takes you back to the Configuration screen with nothing changed.
 
-![Restore Defaults button](images/config-restore-defaults.png)
+| Option | What it resets | Ticked to start |
+| --- | --- | --- |
+| **Configuration settings** | Everything on this screen: filters, refresh, map markers, layer order and transparency. Removes starred incidents and teams. | Yes |
+| **Layout** | The page layout and pane sizes, the collapsed side drawer and Legend, the radar bar, the in-view filters on the registers and capability icons. | Yes |
+| **Map layers** | Which overlays are on, the basemap, whether incidents are shown, and the Layers menu. | Yes |
+| **Layer presets** | Your [layer presets](situation-map.md#layer-presets), back to Weather, Roads and Boundaries. | No |
+| **Collaborative layer subscriptions** | Which [collaborative layers](situation-map.md#collaborative-map-layers) you've subscribed to. | No |
+| **Asset trails** | Recorded [asset trails](assets.md#asset-breadcrumb-trails). | No |
+
+Downloaded data that LAD fetches again by itself (cached asset positions and collaborative layers) is always cleared. Settings for other Lighthouse pages, such as the Radio Console, Incident Statistics, Incident Summary and the export pages, are never touched.
+
+![Restore Defaults options](images/config-restore-defaults.png)

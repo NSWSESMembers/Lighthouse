@@ -21,9 +21,7 @@
     "https://beacon-train-comms.azurewebsites.net/*",
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
-    "https://previewbeacon.ses.nsw.gov.au/*",
     "https://testbeacon.ses.nsw.gov.au/*",
-    "https://testbeaconau.ses.nsw.gov.au/*",
     "https://devbeacon.ses.nsw.gov.au/*",
     "https://www.rfs.nsw.gov.au/*",
     "https://api.transport.nsw.gov.au/*",
@@ -40,9 +38,12 @@
     "https://s3.ap-southeast-2.amazonaws.com/csv-download.ses-mams.net/*",
     "https://api.adsb.lol/v2/*",
     "https://nula.waternsw.com.au/*",
-    "https://services1.arcgis.com/*",
     "https://api.rainviewer.com/*",
     "https://portal.spatial.nsw.gov.au/*"
+  ],
+  "optional_host_permissions": [
+    "https://beacon-test-comms.azurewebsites.net/*",
+    "https://beacon-dev-comms.azurewebsites.net/*"
   ],
   "permissions": [
     "storage",
@@ -210,7 +211,8 @@
         "manifest.json"
       ],
       "matches": [
-        "*://*/*"
+        "https://*.ses.nsw.gov.au/*",
+        "https://app.ses-mams-uat.net/*"
       ]
     }
   ],

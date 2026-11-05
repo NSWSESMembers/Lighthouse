@@ -2,6 +2,7 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1) {
   var inject = require('../lib/inject.js');
   var $ = require('jquery');
   require('../pages/lib/shared_chrome_code.js');
+  var { knownBeaconEnvironment } = require('../shared/beaconEnvironments.js');
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   var DOM = require('jsx-dom-factory').default;
@@ -17,6 +18,12 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1) {
 
   // inject all.css - browserify-css takes care of this
   require('../styles/all.css');
+
+  // Train and Test Beacon: tell Lighthouse's scripts in the page which CADence
+  // exercise is chosen, for the Simulated locations pill beside the Lighthouse
+  // menu (injectscripts/all.js) and the job page's Nearest Asset Locations map.
+  var { serveSimulationToPage } = require('../shared/cadenceSimulationPage.js');
+  serveSimulationToPage();
 
   //set the extension code var into the head
   // var s = document.createElement('script');
@@ -74,6 +81,8 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1) {
         // do nothing
       });
     } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
+      // Only under this Beacon site's own API host.
+      if (!knownBeaconEnvironment(event.data.host, location.origin)) return;
       chrome.storage.local.set({ ['beaconAPIToken-' + event.data.host]: JSON.stringify({ token: event.data.token, expdate: event.data.tokenexp }) }, function () {
         console.log('local data set - beaconAPIToken');
       })

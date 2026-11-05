@@ -8,11 +8,14 @@ import { requestPaginated } from './core/request.js';
  * @param {Date} startDate
  * @param {Date} endDate
  * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
- *          onProgress?: Function, onPage?: Function}} ctx
+ *          onProgress?: Function, onPage?: Function, pageSize?: number, pageLimit?: number}} ctx
+ *        pageSize / pageLimit: rows per request (100) and stop after this many
+ *        requests (0 = all); `{ pageSize: 10, pageLimit: 1 }` is a quick look
+ *        at the newest 10 with Beacon's total.
  * @returns {Promise<{results: object[], totalItems: number}>}
  */
 export function search(filters, startDate, endDate, ctx = {}) {
-  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage, pageSize = 100, pageLimit = 0 } = ctx;
 
   let url = host + '/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString();
 
@@ -36,5 +39,5 @@ export function search(filters, startDate, endDate, ctx = {}) {
   }
   url += '&ViewModelType=6&SortField=Start&SortOrder=desc';
 
-  return requestPaginated(url, { token, signal, pageSize: 100, onProgress, onPage });
+  return requestPaginated(url, { token, signal, pageSize, pageLimit, onProgress, onPage });
 }

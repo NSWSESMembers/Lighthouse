@@ -72,7 +72,7 @@ export function buildJobPopupKO() {
                       data-bind="click: refreshDataAndTasking, clickBubble: false">
                       <i class="fa fa-sync"></i>
                   </button>                 
-           <ul class="dropdown-menu dropdown-menu-end p-2  job-taskteam-dropdown"
+           <ul class="dropdown-menu p-2  job-taskteam-dropdown"
        data-bind="attr: { id: 'tmAssignTeamMenu-' + $root.job.id, 'aria-labelledby': 'tmAssignTeamBtn-' + $root.job.id }"
        style="min-width: 260px;"
        data-bs-popper="static">

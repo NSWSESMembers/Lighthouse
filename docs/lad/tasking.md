@@ -78,12 +78,25 @@ After choosing a status, the menu shows what's changing, e.g. *Tasked → En rou
 
 ![Setting a team En route](images/tasking-status-enroute.png)
 
+### Drive time
+
+When setting an ETA, the **Or the drive time** row works out how long the team will take to drive to the incident by road, starting from its asset's last known location. Click it to set the ETA to now plus that time. The row shows which asset it starts from and, underneath, how long ago that asset last reported its location, e.g. *Drive time from DEM01* / *Location updated 3 min ago*. Check this before trusting the ETA: a team that has moved since its last update may be much closer or further away.
+
+- Up to 5 minutes old, the location age shows in grey.
+- 6 to 15 minutes old, it turns amber with a warning sign.
+- Over 15 minutes old, or if the update time isn't known, it turns red.
+
+Once the ETA is set, the row shows the drive time and road distance, e.g. *18m drive · 12.3 km by road*. Underneath, it says roughly where the team was, from the nearest street address to that location, and how old the location is, e.g. *Near 12 Smith St, Parramatta · updated 22 min ago*. If the address can't be found, it just shows the age. If the asset reports a new location while the menu is open, the ETA isn't changed: the row says *New location since: Redo to update*. Click **Redo** to work it out again from the new location, or adjust the ETA with the quick buttons or an exact time. The row is greyed out if the team has no asset with a location, or the incident has no location. It's in both the status menu (going **En route**) and **Change ETA**.
+
+![Drive time with an old asset location](images/tasking-status-drive-time.png)
+
 ### Changing the ETA or ETC
 
 While a team is En route or On site, the **Now** box in the status menu shows its current ETA or ETC. Click **Change** (or **Set ETA** / **Set ETC** if there isn't one) to give a new time without changing the status:
 
 - The current and new times show side by side, with how far away each is.
 - Each click of a quick button (+5 to +60) adds to the time picked so far, starting from the current ETA or ETC, or from now if that has already passed. The label above the buttons shows how far the new time is after that, e.g. *From 10:35: +20m*. **Reset** goes back to the current time, or type an exact time instead (24-hour).
+- For an ETA, **Or the drive time** sets the new time from a road route; see [Drive time](#drive-time).
 - Click **Save ETA** / **Save ETC**. The time the team went En route or On site stays the same.
 
 ![Status menu for an On site team](images/tasking-status-onsite.png)
@@ -132,7 +145,7 @@ In the Team and Incident Registers, the countdown is shortened to fit: overdue t
 - **Asset map popup**: beside each of the team's taskings.
 - **Incident hover tooltip** on the map: one badge per team, e.g. *DEM04 · ETA 9m*.
 
-A team that is 5 minutes or more past its ETA or ETC is also listed in the *Teams overdue on ETA/ETC* [alert](interface.md#alerts).
+A team that is 5 minutes or more past its ETA or ETC is also listed in the *Teams overdue on ETA/ETC* [alert](interface.md#alerts). A *Tasked* or *Enroute* team whose asset is already near the incident is listed in the *Arrived, not marked Onsite* alert, as a reminder to set it to *Onsite*.
 
 You can also change a tasking's status while logging a radio message: click the tasking's **Radio Log** button and pick the new status at the bottom of the dialog. See [Changing the Team's Status](logs-and-messages.md#changing-the-teams-status).
 

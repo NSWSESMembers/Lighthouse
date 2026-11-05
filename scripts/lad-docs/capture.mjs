@@ -234,6 +234,15 @@ const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
   'config-map-markers': configTab('map'),
+  // Restore Defaults clicked: its own modal, with the groups to clear.
+  'config-restore-defaults': {
+    run: async (page) => {
+      await page.locator('#configModal button:has-text("Restore Defaults")').click();
+      await page.locator('#restoreDefaultsModal').waitFor({ state: 'visible' });
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#restoreDefaultsModal .modal-content'),
+  },
   // Map markers tab with the Asset markers section open (overlapping
   // markers setting and its options).
   'config-asset-markers': {
@@ -242,6 +251,22 @@ const SHOTS = {
       await settle(page, 400);
       await page.locator('button[data-bs-target="#cfgSub-mapAssets"]').click();
       await settle(page, 600);
+    },
+    target: (page) => page.locator('#configModal .modal-content'),
+  },
+  // Map layers tab: a few overlays on, rain radar faded to 40%.
+  'config-layer-order': {
+    run: async (page) => {
+      await page.evaluate(() => {
+        const vm = window.ko.dataFor(document.body);
+        ['sesUnitLocations', 'unit-boundary', 'bomRadar'].forEach((k) => vm.mapVM.setOverlayVisible(k, true));
+      });
+      await page.locator('#cfgTab-layers').click();
+      await settle(page, 600);
+      const radar = page.locator('#cfgPane-layers .layer-stack-row').filter({ hasText: 'BOM Rain Radar Still' });
+      await radar.locator('input[type=range]').fill('40');
+      await page.locator('#cfgPane-layers .layer-stack-list').evaluate((el) => { el.scrollTop = 0; });
+      await settle(page, 300);
     },
     target: (page) => page.locator('#configModal .modal-content'),
   },
@@ -448,6 +473,17 @@ const SHOTS = {
     target: (page) => page.locator('.leaflet-popup-content-wrapper'),
   },
 
+  // The Layers drawer's button to the Map layers settings, for inline use.
+  'icon-layer-order': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      const open = await page.locator('.ld-panel').evaluate((el) => !el.classList.contains('d-none'));
+      if (!open) await page.locator('.ld-toggle-btn').click();
+      await settle(page, 300);
+    },
+    target: (page) => unionOf(page, '.ld-stack-btn', 1),
+  },
+
   // Inline satellite icons (active / crossed out) for the guide text.
   'icon-satellite': {
     launch: { scale: 3 },
@@ -576,15 +612,52 @@ const SHOTS = {
     target: (page) => page.locator('#CreateOpsLogModal .modal-footer'),
   },
 
-  // The Layers panel: search, basemap picker and every overlay group.
+  // The Layers panel: search, the section rail and one overlay group.
   overlays: {
     launch: { viewport: { width: 1800, height: 1200 } },
     run: async (page) => {
       await closeConfigAndLoad(page);
       await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'NSW SES Geoservices' }).click();
+      await page.mouse.move(0, 0);
       await settle(page, 600);
     },
     target: (page) => page.locator('.ld-panel'),
+  },
+
+  // The Layers panel's Basemap section: a picture per basemap.
+  basemap: {
+    launch: { viewport: { width: 1800, height: 1200 } },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'Basemap' }).click();
+      await page.mouse.move(0, 0);
+      await settle(page, 1500);
+    },
+    target: (page) => page.locator('.ld-panel'),
+  },
+
+  // The Layers panel's Presets section with Roads on from its map button.
+  // The crop runs from the Layers button down past the pinned preset buttons.
+  'layer-presets': {
+    launch: { viewport: { width: 1800, height: 1200 }, scale: 2 },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('.lp-btn[data-id="roads"]').click();
+      await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'Presets' }).click();
+      await page.mouse.move(0, 0);
+      await settle(page, 1500);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const btn = await page.locator('.ld-toggle-btn').boundingBox();
+        const panel = await page.locator('.ld-panel').boundingBox();
+        const x = btn.x - 8; const y = btn.y - 10;
+        return page.screenshot({ ...opts, clip: { x, y, width: panel.x + panel.width + 8 - x, height: panel.y + panel.height + 8 - y } });
+      },
+    }),
   },
 
   // Overlay load status in the Layers panel: counts for loaded overlays and a
@@ -603,6 +676,7 @@ const SHOTS = {
       }, keys);
       const open = await page.locator('.ld-panel').evaluate((el) => !el.classList.contains('d-none'));
       if (!open) await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'On the map' }).click();
       await page.mouse.move(0, 0);
       await settle(page, 2000);
     },
@@ -728,6 +802,23 @@ const SHOTS = {
     },
     target: (page) => page.locator('.tasking-dropdown-menu.show'),
   },
+  'tasking-status-drive-time': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 1);
+      await menu.locator('.tsm-next').click();
+      await settle(page, 300);
+      // An old fix, to show the warning.
+      await page.evaluate(() => {
+        const t = ko.dataFor(document.querySelector('.tasking-dropdown-menu.show .tsm-drive'));
+        (t.team.defaultAsset() || t.team.trackableAssets()[0]).lastSeen(new Date(Date.now() - 22 * 60000).toISOString());
+      });
+      await menu.locator('.tsm-drive').click();
+      await settle(page, 800);
+      await page.mouse.move(0, 0); // no hover highlight on the buttons
+      await settle(page, 200);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
   'tasking-status-onsite': {
     run: (page) => openTaskingStatusMenu(page, 0),
     target: (page) => page.locator('.tasking-dropdown-menu.show'),
@@ -775,6 +866,31 @@ const SHOTS = {
       await settle(page, 600);
     },
     target: (page) => page.locator('[data-rule-id="overdue-eta-teams"]'),
+  },
+
+  // Park a Tasked/Enroute team's asset 120 m from its incident, with a
+  // fresh fix, so the arrived-but-not-Onsite geofence alert shows.
+  'alert-unmarked-arrival-bar': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const vm = ko.dataFor(document.body);
+        for (const team of vm.teams()) {
+          const asset = team.trackableAssets()[0];
+          const t = asset && team.taskings().find((x) => ['Enroute', 'Tasked'].includes(x.currentStatus())
+            && !x.isComplete() && Number.isFinite(x.job.address.latitude()));
+          if (!t) continue;
+          asset.latLng({ lat: t.job.address.latitude() + 120 / 111320, lng: t.job.address.longitude() });
+          asset.lastSeen(new Date().toISOString());
+          return;
+        }
+      });
+      const rule = page.locator('[data-rule-id="unmarked-arrival-teams"]');
+      await rule.waitFor();
+      await rule.locator('.alerts__btn').click();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('[data-rule-id="unmarked-arrival-teams"]'),
   },
 };
 

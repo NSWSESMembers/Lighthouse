@@ -62,6 +62,9 @@ window.addEventListener('message', function (event) {
         showSesTeamsLocations(mapLayer, event.data.response);
       } else if (event.data.layer === 'ses-assets-filtered') {
         showSesFilteredAssets(mapLayer, event.data.response);
+      } else if (event.data.layer === 'ses-assets-simulated') {
+        // CADence exercise positions (Train/Test Beacon), drawn like live assets.
+        showSesFilteredAssets(mapLayer, event.data.response, { simulated: true });
       } else if (event.data.layer === 'lhqs') {
         showLhqs(mapLayer, event.data.response);
       } else if (['power-outages','power-outages-ausgrid','power-outages-endeavour','power-outages-essential'].includes(event.data.layer)) {
@@ -89,9 +92,6 @@ window.addEventListener('message', function (event) {
     } else if (event.data.type === 'LH_GET_TRANSPORT_KEY') {
       var transportApiKeyOpsLog = '';
       switch (location.origin) {
-        case 'https://previewbeacon.ses.nsw.gov.au':
-          transportApiKeyOpsLog = '46273';
-          break;
         case 'https://beacon.ses.nsw.gov.au':
           transportApiKeyOpsLog = '515514';
           break;
@@ -679,9 +679,11 @@ function showSesTeamsLocations(mapLayer, data) {
  *
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
+ * @param options.simulated true for a CADence exercise's simulated assets: their
+ *   popups say so, and give the resource type (vehicle or vessel).
  */
-function showSesFilteredAssets(mapLayer, data) {
-  console.info('showing SES Filtered Assets');
+function showSesFilteredAssets(mapLayer, data, { simulated = false } = {}) {
+  console.info(`showing SES ${simulated ? 'Simulated' : 'Filtered'} Assets`);
 
   let count = 0;
   if (data && data.length > 0) {
@@ -692,7 +694,9 @@ function showSesFilteredAssets(mapLayer, data) {
       let lon = asset.geometry.coordinates[0];
       let details = `<span class="label tag tag-disabled">${
         asset.capability
-      }</span><span class="label tag tag-disabled">Vehicle</span>
+      }</span><span class="label tag tag-disabled">${
+        simulated && asset.resourceType ? asset.resourceType : 'Vehicle'
+      }</span>
                 <br><br>
                 <p><b>${lat}</b>, <b>${lon}</b></p>
                 <p ${
@@ -776,7 +780,9 @@ function showSesFilteredAssets(mapLayer, data) {
         lat,
         lon,
         marker,
-        `${asset.name.replace('Tele', 'Telematics').replace('PSN', 'PSN Radio')} ${asset.entity != "N/A" ? '('+asset.entity+')' : ''}`,
+        simulated
+          ? `${asset.properties.name} (Simulated) ${asset.entity ? '(' + asset.entity + ')' : ''}`
+          : `${asset.name.replace('Tele', 'Telematics').replace('PSN', 'PSN Radio')} ${asset.entity != "N/A" ? '('+asset.entity+')' : ''}`,
         details,
       );
       mapLayer.addTextSymbol(lat, lon, `${asset.unitCode.trim()}`, 0, 23, 'white'); //8 offset normally
@@ -2040,6 +2046,11 @@ export default class InjectScriptMapManager {
     }
     sendToken();
     setInterval(sendToken, 3e5);
+    // And straight away when the content script asks: the CADence exercise
+    // backend refused the copy it had, which may be up to 5 minutes old.
+    window.addEventListener('message', function (event) {
+      if (event.source === window && event.data && event.data.type === 'LH_REQUEST_USER_ACCESS_TOKEN') sendToken();
+    });
 
     console.debug('Sending base: ' + urls.Base);
     window.postMessage({ type: 'LH_USER_API', base: urls.Base }, '*');
@@ -2077,6 +2088,7 @@ export default class InjectScriptMapManager {
     // Layers to show under beacon jobs
     lighthouseMap.createLayer('lhqs', 3);
     lighthouseMap.createLayer('ses-assets-filtered', 3);
+    lighthouseMap.createLayer('ses-assets-simulated', 3);
     lighthouseMap.createLayer('hazard-watch', 3);
 
     lighthouseMap.createLayer('rfs', 2);

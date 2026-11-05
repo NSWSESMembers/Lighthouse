@@ -1,7 +1,14 @@
 # Lighthouse — notes for Claude
 
 Chrome extension for NSW SES Beacon. Most active work is the LAD (tasking)
-page in `src/pages/tasking/`; shared Beacon API code is in
+page in `src/pages/tasking/`; the Incident Statistics page (`stats.html`) is
+`src/pages/stats/`, the Incident Summary page (`summary.html`) is
+`src/pages/summary/`, the Incident Export page (`advexport.html`) is
+`src/pages/advexport/` and the NITC Export page (`nitcexport.html`) is
+`src/pages/nitcexport/`, all built the same way (Bootstrap 5,
+knockout-secure-binding, BeaconClient), with code shared between them in
+`src/pages/shared/` (params, page setup, load ring, CSV, dates) and
+`styles/pages/include/lighthouse-page.css`; shared Beacon API code is in
 `src/shared/BeaconClient/`; AWS Lambda backends are in `lambda/`.
 
 ## Branches and PRs
@@ -29,6 +36,7 @@ Full details in `scripts/lad-docs/README.md`.
 npm run dev                                         # required first: serves dist/pages/tasking.html
 npm run lad:demo                                    # headed Chrome window
 npm run lad:shots -- --only main --out <dir>        # headless screenshots (shot list in capture.mjs)
+npm run lad:serve                                   # serve it on the LAN for a real iPad/phone (?trace=1 logs taps)
 ```
 
 For ad-hoc scripted checks, write a throwaway `.mjs` that imports from
@@ -44,7 +52,68 @@ await browser.close();
 ```
 
 `launchLad` options: `headless`, `viewport`, `now`, `config` (pre-seeded
-`lh-taskingConfig`), `remoteTab`, `verbose`, `scale`.
+`lh-taskingConfig`), `remoteTab`, `verbose`, `scale`, `jobCount` (scale the
+fake incidents up, for benchmarks).
+
+Benchmark code changes against their base with `npm run lad:bench` (details
+and the base-worktree recipe in `scripts/lad-docs/README.md`).
+
+## Running Incident Statistics without Beacon: `scripts/stats-docs`
+
+Same idea for `stats.html` (fake data in `scripts/stats-docs/scenario.mjs`).
+`stats:check` is an end-to-end check run in Chrome (filtering, ranges,
+refresh, errors); run it after changing the page. Details in
+`scripts/stats-docs/README.md`.
+
+```sh
+npm run dev && npm run stats:check                 # end-to-end checks
+npm run stats:demo                                 # headed Chrome window
+npm run stats:shots -- --out docs/stats/images     # guide screenshots
+```
+
+The stats page imports dc.js from `dc/src/index.js` with its own d3 7
+compat layer (`charts/dcD3Compat.js`): dc's dist bundle crashes on d3 7.
+
+## Running Incident Summary without Beacon: `scripts/summary-docs`
+
+Same idea for `summary.html` (fake data in `scripts/summary-docs/scenario.mjs`).
+These harnesses are built on the shared page harness in `scripts/page-docs/`.
+`summary:check` is an end-to-end check in Chrome; run it after changing the
+page. Details in `scripts/summary-docs/README.md`.
+
+```sh
+npm run dev && npm run summary:check                    # end-to-end checks
+npm run summary:demo                                    # headed Chrome window
+npm run summary:shots -- --out docs/summary/images      # guide screenshots
+```
+
+## Running Incident Export without Beacon: `scripts/advexport-docs`
+
+Same idea for `advexport.html` (incidents reuse `scripts/stats-docs/scenario.mjs`,
+plus fake callers and ICEMS Ops Logs in `scripts/advexport-docs/scenario.mjs`).
+`advexport:check` is an end-to-end check in Chrome, including the downloaded
+CSV; run it after changing the page. Details in `scripts/advexport-docs/README.md`.
+
+```sh
+npm run dev && npm run advexport:check                  # end-to-end checks
+npm run advexport:demo                                  # headed Chrome window
+npm run advexport:shots -- --out docs/export/images     # guide screenshots
+```
+
+## Running NITC Export without Beacon: `scripts/nitcexport-docs`
+
+Same idea for `nitcexport.html` (fake Non-Incident Task Cards in
+`scripts/nitcexport-docs/scenario.mjs`). Opened from Beacon's NITC screen
+"Export (Filtered)" button (`src/injectscripts/nitc/nitc.js`) with that
+screen's filters. `nitcexport:check` is an end-to-end check in Chrome,
+including both downloaded CSVs; run it after changing the page. Details in
+`scripts/nitcexport-docs/README.md`.
+
+```sh
+npm run dev && npm run nitcexport:check                 # end-to-end checks
+npm run nitcexport:demo                                 # headed Chrome window
+npm run nitcexport:shots -- --out docs/nitc/images      # guide screenshots
+```
 
 ### Fixture data rules
 
@@ -71,8 +140,11 @@ copy values from `build/lad-samples/` (real payloads from
 
 ## User-facing docs
 
-The LAD user guide (`docs/lad/`) and What's New (`docs/whats-new/index.md`)
-are synced to the website: `master` publishes the stable copy, `master-dev`
+The LAD user guide (`docs/lad/`), the Incident Statistics guide
+(`docs/stats/`), the Incident Summary guide (`docs/summary/`), the Incident
+Export guide (`docs/export/`), the NITC Export guide (`docs/nitc/`) and What's New
+(`docs/whats-new/index.md`) are synced to the website: `master` publishes the stable copy, `master-dev`
 the Development Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
-`npm run lad:shots` for guide screenshots.
+`npm run lad:shots` / `npm run stats:shots` / `npm run summary:shots` /
+`npm run advexport:shots` / `npm run nitcexport:shots` for guide screenshots.

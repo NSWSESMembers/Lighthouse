@@ -157,7 +157,17 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
     // Shared default assets, collab map layers, share/load config, geocode,
     // routing: nothing shared in the demo.
     log(`[mock] lambda ${method} ${url.pathname} (empty)`);
-    if (/geocode/.test(url.pathname)) return json(route, { results: [] });
+    if (/geocode/.test(url.pathname)) {
+      // Reverse lookups (?lat=&lon=, e.g. Drive time's "Near ...") get an
+      // invented street address; address searches find nothing.
+      if (!url.searchParams.has('lat')) return json(route, { results: [] });
+      return json(route, { results: [{
+        Title: '14 Example St, Demoville NSW 2999, Australia',
+        Address: { Label: '14 Example St, Demoville NSW 2999, Australia', AddressNumber: '14', Street: 'Example St', District: 'Demoville', Locality: 'Demo City', PostalCode: '2999' },
+        Position: [Number(url.searchParams.get('lon')), Number(url.searchParams.get('lat'))],
+      }] });
+    }
+    if (/\/route$/.test(url.pathname) && method === 'POST') return json(route, fakeRoute(route.request().postDataJSON()));
     return json(route, method === 'GET' ? [] : {});
   }
 
@@ -169,4 +179,15 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
     if ((type === 'xhr' || type === 'fetch') && hostPermitted(url.href)) return fulfillWithCors(route);
     return route.continue();
   };
+}
+
+// A made-up road route for the Drive time button: the straight line x 1.3
+// at 50 km/h, in the Amazon Routes shape the route Lambda passes through.
+function fakeRoute(body) {
+  const [[lng1, lat1], [lng2, lat2]] = body?.coordinates || [[0, 0], [0, 0]];
+  const rad = Math.PI / 180;
+  const a = Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+  const distance = 2 * 6371000 * Math.asin(Math.sqrt(a)) * 1.3;
+  return { Routes: [{ Summary: { Overview: { Distance: distance, Duration: distance / (50000 / 3600) } } }] };
 }
