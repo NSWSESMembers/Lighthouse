@@ -26,6 +26,12 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Clearer wording with Live Updates off.** The Configuration screen now says what happens: LAD reloads every minute, and expanding an incident or team refreshes it.
 - **Tasking keeps up with the full refresh.** It could skip every second refresh, and with Live Updates off it followed the Full Refresh setting instead of reloading every minute.
 
+## Deleted teams leave LAD
+
+*6 November 2026*
+
+- **A team deleted in Beacon now disappears from LAD** without a page reload, including from the map and its assets. Taskings it had on an incident still show its callsign.
+
 ## New Statistics, Summary and Export pages
 
 *5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*
