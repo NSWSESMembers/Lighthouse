@@ -6,7 +6,7 @@ import {
   transportHazardRows,
   transportHazardShapes,
 } from "../utils/transportHazard.js";
-import { escapeHtml, sanitizeFeedHtml } from "../utils/feedHtml.js";
+import { escapeHtml, httpUrl, sanitizeFeedHtml } from "../../../shared/feedHtml.js";
 
 
 export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params) {
@@ -28,12 +28,13 @@ export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params
         if (!f.geometry || f.geometry.type !== "Point") return;
 
         const iconUrl = `https://www.livetraffic.com/assets/icons/map/others/camera-${f.properties.direction}.svg`;
+        const cameraUrl = escapeHtml(httpUrl(f.properties.href));
         const details = `
-          ${f.properties.view}
+          ${escapeHtml(f.properties.view)}
           <br><br>
           <div style="height:190px;width:240px;display:block">
-              <a target="_blank" href="${f.properties.href}">
-                  <img width="100%" src="${f.properties.href}"></img>
+              <a target="_blank" href="${cameraUrl}">
+                  <img width="100%" src="${cameraUrl}"></img>
               </a>
           </div>
           <sub>Click image to enlarge</sub>

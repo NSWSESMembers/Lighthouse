@@ -5,6 +5,7 @@ const DOM = require('jsx-dom-factory').default;
 const moment = require('moment');
 const LighthouseMap = require('./LighthouseMap.js').default;
 const MapLayer = require('./MapLayer.js').default;
+import { escapeHtml, httpUrl, sanitizeFeedHtml } from '../../shared/feedHtml.js';
 
 /**
  * Sends the selected HQs & start/end date range to the content script.
@@ -196,7 +197,7 @@ function addTransportPoint(mapLayer, point, icon) {
   let lon = point.geometry.coordinates[0];
   let reportedBy = point.properties.OrgName ? point.properties.OrgName : "Transport Management Centre";
   let incidentId = point.id;
-  let incidentUrl = `https://www.livetraffic.com/incident-details/${incidentId}`;
+  let incidentUrl = `https://www.livetraffic.com/incident-details/${encodeURIComponent(incidentId)}`;
   let name = point.properties.displayName;
   let roadDetail = point.properties.roads[0];
   let crossStreet = roadDetail.crossStreet ? `${roadDetail.mainStreet} ${roadDetail.locationQualifier} ${roadDetail.crossStreet}` : `${roadDetail.mainStreet}`;
@@ -209,7 +210,7 @@ function addTransportPoint(mapLayer, point, icon) {
 
   let dateDetails = `<hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
     <div class="dateDetails" style="font-size: x-small">\
-    <div><span class="dateDetailsLabel">Reported By: </span> ${reportedBy}</div>\
+    <div><span class="dateDetailsLabel">Reported By: </span> ${escapeHtml(reportedBy)}</div>\
     <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
     <div><span class="dateDetailsLabel">Created: </span> ${createddiff}</div>\
     <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
@@ -219,7 +220,7 @@ function addTransportPoint(mapLayer, point, icon) {
   let footerDetails =`
     <span style="text-style:italic;font-size:smaller;display:block;text-align:center">\
     <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-    Live Traffic Incident ID: <a href="${incidentUrl}" target="_blank">#${incidentId}</a>
+    Live Traffic Incident ID: <a href="${incidentUrl}" target="_blank">#${escapeHtml(incidentId)}</a>
     </span>`;
 
   let adviceList = [
@@ -228,17 +229,17 @@ function addTransportPoint(mapLayer, point, icon) {
       point.properties.adviceC
   ].map(v => typeof v === "string" ? v.trim() : "")
    .filter(v => v)
-   .map(v => `<li>${v}</li>`)
+   .map(v => `<li>${escapeHtml(v)}</li>`)
    .join("");
 
-  let details = `<div><strong>${point.properties.headline}</strong></div>\
-  <div style="margin-top:0.5em"><b>${secondLocation}, ${roadDetail.suburb}</b></div>\
+  let details = `<div><strong>${escapeHtml(point.properties.headline)}</strong></div>\
+  <div style="margin-top:0.5em"><b>${escapeHtml(secondLocation)}, ${escapeHtml(roadDetail.suburb)}</b></div>\
     <div style="margin-top:0.5em">\
     <ul>\
     ${adviceList}\
     </ul>\
     </div>\
-    <div>${point.properties.otherAdvice}</div>\
+    <div>${sanitizeFeedHtml(point.properties.otherAdvice)}</div>\
     ${dateDetails}\
     ${footerDetails}
     `;
@@ -259,12 +260,12 @@ function addTransportPoint(mapLayer, point, icon) {
           polylineColour = '#941309';
           break;   
       }
-      mapLayer.addPolyline(transportPolyline,polylineColour,2,SimpleLineSymbol.STYLE_SOLID,name,details);
+      mapLayer.addPolyline(transportPolyline,polylineColour,2,SimpleLineSymbol.STYLE_SOLID,escapeHtml(name),details);
     });
   }
 
   console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
-  mapLayer.addImageMarker(lat, lon, icon, name, details);
+  mapLayer.addImageMarker(lat, lon, icon, escapeHtml(name), details);
 }
 
 /**
@@ -330,16 +331,17 @@ function showTransportCameras(mapLayer, data) {
 
         let name = feature.properties.title;
 
+        let cameraUrl = escapeHtml(httpUrl(feature.properties.href));
         let details =
-          feature.properties.view +
+          escapeHtml(feature.properties.view) +
           "<br><br><div style='height:190px;width:240px;display:block'><a target='_blank' href='" +
-          feature.properties.href +
-          "'><img width='100%' src=" +
-          feature.properties.href +
-          '></img></a></div><sub>Click image to enlarge</sub>';
+          cameraUrl +
+          "'><img width='100%' src='" +
+          cameraUrl +
+          "'></img></a></div><sub>Click image to enlarge</sub>";
 
         console.debug(`Camera at [${lat},${lon}]: ${name}`);
-        mapLayer.addImageMarker(lat, lon, icon, name, details);
+        mapLayer.addImageMarker(lat, lon, icon, escapeHtml(name), details);
 
         count++;
       }
@@ -490,11 +492,11 @@ function showLhqs(mapLayer, data) {
 
       let name = hq.properties.HQNAME;
 
-      let unitCode = hq.properties.UNIT_CODE;
+      let unitCode = escapeHtml(hq.properties.UNIT_CODE);
 
       let details = `<div id='lhqPopUp'>\
             <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${unitCode}</div>\
-            <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.properties.HQNAME}</span></div>\
+            <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${escapeHtml(hq.properties.HQNAME)}</span></div>\
             <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
             <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
@@ -538,7 +540,7 @@ function showLhqs(mapLayer, data) {
       let icon = lighthouseUrl + 'icons/ses.png';
 
       console.debug(`SES LHQ at [${lat},${lon}]: ${name}`);
-      mapLayer.addImageMarker(lat, lon, icon, name, details);
+      mapLayer.addImageMarker(lat, lon, icon, escapeHtml(name), details);
       count++;
     }
   }
@@ -560,8 +562,8 @@ function showRuralFires(mapLayer, data) {
       let fire = data.features[i];
 
       if (fire.geometry.type.toLowerCase() === 'geometrycollection') {
-        let name = fire.properties.title;
-        let details = fire.properties.description;
+        let name = escapeHtml(fire.properties.title);
+        let details = sanitizeFeedHtml(fire.properties.description);
         let category = fire.properties.category;
 
         let relativeIcon = rfsIcons[category] || rfsIcons['unknown'];
@@ -605,8 +607,8 @@ function showRuralFires(mapLayer, data) {
         let lat = fire.geometry.coordinates[1];
         let lon = fire.geometry.coordinates[0];
 
-        let name = fire.properties.title;
-        let details = fire.properties.description;
+        let name = escapeHtml(fire.properties.title);
+        let details = sanitizeFeedHtml(fire.properties.description);
         let category = fire.properties.category;
 
         let relativeIcon = rfsIcons[category] || rfsIcons['unknown'];
@@ -655,8 +657,8 @@ function showSesTeamsLocations(mapLayer, data) {
         }
 
         let details = `<div>\
-                <div><a target='_blank' href="${location.origin}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
-                <div>Job ID: ${team.properties.jobId} <a href=${location.origin}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
+                <div><a target='_blank' href="${location.origin}/Teams/${encodeURIComponent(team.properties.teamId)}/Edit">${escapeHtml(team.properties.teamCallsign)}</a> - ${status}</div>\
+                <div>Job ID: ${escapeHtml(team.properties.jobId)} <a href="${location.origin}/Jobs/${encodeURIComponent(team.properties.jobId)}" target='_blank'>View Job Details</a></div>\
                 </div>`;
 
         let jobOffset = jobOffsets[jobId] || 0;
@@ -665,7 +667,7 @@ function showSesTeamsLocations(mapLayer, data) {
         console.debug(`SES team at [${lat},${lon}]: ${name}`);
         let marker = MapLayer.createImageMarker(teamIcon);
         marker.setOffset(16, -16 * jobOffset);
-        mapLayer.addMarker(lat, lon, marker, name, details);
+        mapLayer.addMarker(lat, lon, marker, escapeHtml(name), details);
         mapLayer.addTextSymbol(lat, lon, name, 50, -16 * jobOffset - 4);
         count++;
       }
@@ -693,12 +695,12 @@ function showSesFilteredAssets(mapLayer, data, { simulated = false } = {}) {
       let lat = asset.geometry.coordinates[1];
       let lon = asset.geometry.coordinates[0];
       let details = `<span class="label tag tag-disabled">${
-        asset.capability
+        escapeHtml(asset.capability)
       }</span><span class="label tag tag-disabled">${
-        simulated && asset.resourceType ? asset.resourceType : 'Vehicle'
+        simulated && asset.resourceType ? escapeHtml(asset.resourceType) : 'Vehicle'
       }</span>
                 <br><br>
-                <p><b>${lat}</b>, <b>${lon}</b></p>
+                <p><b>${escapeHtml(lat)}</b>, <b>${escapeHtml(lon)}</b></p>
                 <p ${
                   moment().diff(asset.lastSeen, 'days') > 1
                     ? 'style=color:red'
@@ -708,13 +710,13 @@ function showSesFilteredAssets(mapLayer, data, { simulated = false } = {}) {
                 (last seen: ${moment(asset.lastSeen).fromNow()})
                 </p>
                 <p>Talkgroup: <b>${
-                  asset.talkGroup
+                  escapeHtml(asset.talkGroup)
                 }</b><br>(last activity: ${
-        asset.talkGroupLastUpdated
+        escapeHtml(asset.talkGroupLastUpdated)
       })<br>
                 <hr>
                 <div>License Plate: <b>${
-                  asset.licensePlate
+                  escapeHtml(asset.licensePlate)
                 }</b></div>
                 <p></p>`;
 
@@ -780,9 +782,9 @@ function showSesFilteredAssets(mapLayer, data, { simulated = false } = {}) {
         lat,
         lon,
         marker,
-        simulated
+        escapeHtml(simulated
           ? `${asset.properties.name} (Simulated) ${asset.entity ? '(' + asset.entity + ')' : ''}`
-          : `${asset.name.replace('Tele', 'Telematics').replace('PSN', 'PSN Radio')} ${asset.entity != "N/A" ? '('+asset.entity+')' : ''}`,
+          : `${asset.name.replace('Tele', 'Telematics').replace('PSN', 'PSN Radio')} ${asset.entity != "N/A" ? '('+asset.entity+')' : ''}`),
         details,
       );
       mapLayer.addTextSymbol(lat, lon, `${asset.unitCode.trim()}`, 0, 23, 'white'); //8 offset normally
@@ -840,7 +842,7 @@ function showElectricityDistributionBoundary(mapLayer, data) {
 
       console.info('showing elec distribution boundary: ' + area.properties.name);
       let layerName = data.name;
-      let provider = area.properties.name;
+      let provider = escapeHtml(area.properties.name);
       let icon = '';
       let fill = [255, 0, 0, 0.05];
       let line = '#555555';
@@ -1254,8 +1256,8 @@ function addAircraftMarker(
 
   let details = `<div>Model: ${heli.model}</div>\
     <div style="margin-top:0.5em">\
-    <strong>Lat/Lon:</strong> ${lat}, ${lon}<br>\
-    <strong>Alt:</strong> ${altPretty}</div>\
+    <strong>Lat/Lon:</strong> ${escapeHtml(lat)}, ${escapeHtml(lon)}<br>\
+    <strong>Alt:</strong> ${escapeHtml(altPretty)}</div>\
     <strong>Source:</strong> ${sourcePretty}</div>\
     <div class="dateDetails">\
     <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
@@ -1385,20 +1387,20 @@ function showPowerOutages(mapLayer, data) {
         }
 
         let dateDetails = `<div class="dateDetails">\
-                <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-                <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+                <div><span class="dateDetailsLabel">Start Time: </span> ${sanitizeFeedHtml(start)}</div>\
+                <div><span class="dateDetailsLabel">End Time: </span> ${sanitizeFeedHtml(end)}</div>\
                 </div>`;
-        let details = `<div>Affected Customers: ${CustomerAffected}</div>\
-                <div>Outage Type: ${type}</div>\
-                <div>Reason: ${reason}</div>\
-                <div>Status: ${status}</div>\
+        let details = `<div>Affected Customers: ${sanitizeFeedHtml(CustomerAffected)}</div>\
+                <div>Outage Type: ${sanitizeFeedHtml(type)}</div>\
+                <div>Reason: ${sanitizeFeedHtml(reason)}</div>\
+                <div>Status: ${sanitizeFeedHtml(status)}</div>\
                 ${dateDetails}\
                 <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
                 <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
                 ${contact}\
                 </span>`;
 
-        return { name: name, details: details, markerIcon: featureIcon};
+        return { name: escapeHtml(name), details: details, markerIcon: featureIcon};
       };
 
       if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
@@ -2136,6 +2138,9 @@ export default class InjectScriptMapManager {
             if (members == '') {
               members = 'Empty team';
             }
+            members = escapeHtml(members);
+            var callsign = escapeHtml(v.Team.Callsign);
+            var currentStatus = escapeHtml(v.CurrentStatus);
             c++;
             if (c % 2 || c == 0) {
               //every other row
@@ -2143,11 +2148,11 @@ export default class InjectScriptMapManager {
                 '<tr style="text-transform:uppercase"><td><abbr title="' +
                   members +
                   '">' +
-                  v.Team.Callsign +
+                  callsign +
                   '</abbr></td><td><abbr title="' +
                   timeDiff +
                   '">' +
-                  v.CurrentStatus +
+                  currentStatus +
                   '</abbr></td></tr>',
               );
             } else {
@@ -2155,9 +2160,9 @@ export default class InjectScriptMapManager {
                 '<tr style="background-color:#f0f0f0;text-transform:uppercase"><td><abbr title="' +
                   members +
                   '">' +
-                  v.Team.Callsign +
+                  callsign +
                   '</abbr></td><td>' +
-                  v.CurrentStatus +
+                  currentStatus +
                   '</td></tr>',
               );
             }
@@ -2185,7 +2190,7 @@ ${rows.join('\r')}
           // Job Tags
           var tagArray = [];
           $.each(data.Tags, function (tagIdx, tagObj) {
-            tagArray.push(tagObj.Name);
+            tagArray.push(escapeHtml(tagObj.Name));
           });
           var tagString = tagArray.length ? tagArray.join(', ') : 'No Tags';
 
@@ -2208,25 +2213,25 @@ ${rows.join('\r')}
           }
 
           details = `<div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${
-            data.JobType.Name
-          } - ${data.JobStatusType.Name}</div>\
+            escapeHtml(data.JobType.Name)
+          } - ${escapeHtml(data.JobStatusType.Name)}</div>\
                     <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${
-            data.JobPriorityType.Description
+            escapeHtml(data.JobPriorityType.Description)
           }</span></div>\
                     <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${
-                      data.Address.PrettyAddress
+                      escapeHtml(data.Address.PrettyAddress)
                     }</div>\
                     <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
                     <div id='JobSoS' style="display:block;text-align:center">${
                       data.SituationOnScene != null
-                        ? data.SituationOnScene
+                        ? escapeHtml(data.SituationOnScene)
                         : '<i>No situation on scene available.</i>'
                     }</div>
                     <div id='JobTags' style="display:block;text-align:center;padding-top:10px">${tagString}</div>
                     ${taskingTable}
-                    <div style="display:block;text-align:center;padding-top:10px"><a href=${
+                    <div style="display:block;text-align:center;padding-top:10px"><a href="${
                       location.origin
-                    }/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
+                    }/Jobs/${encodeURIComponent(data.Id)}" target='_blank'>View Job Details</a></div>
                     <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
                     <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
                     Job recieved at ${moment(data.JobReceived).format(
@@ -2234,10 +2239,10 @@ ${rows.join('\r')}
                     )}<br>
                     ${
                       data.EntityAssignedTo.ParentEntity
-                        ? data.EntityAssignedTo.Code +
+                        ? escapeHtml(data.EntityAssignedTo.Code) +
                           ' - ' +
-                          data.EntityAssignedTo.ParentEntity.Code
-                        : data.EntityAssignedTo.Code
+                          escapeHtml(data.EntityAssignedTo.ParentEntity.Code)
+                        : escapeHtml(data.EntityAssignedTo.Code)
                     }
                     </span>`;
 
@@ -2258,17 +2263,17 @@ ${rows.join('\r')}
                 //every other row
                 $('#lhqContacts').append(
                   '<tr><td>' +
-                    v.Description.replace('Phone', '').replace('Number', '') +
+                    escapeHtml(v.Description.replace('Phone', '').replace('Number', '')) +
                     '</td><td>' +
-                    v.Detail +
+                    escapeHtml(v.Detail) +
                     '</td></tr>',
                 );
               } else {
                 $('#lhqContacts').append(
                   '<tr style="background-color:#e8e8e8"><td>' +
-                    v.Description.replace('Phone', '').replace('Number', '') +
+                    escapeHtml(v.Description.replace('Phone', '').replace('Number', '')) +
                     '</td><td>' +
-                    v.Detail +
+                    escapeHtml(v.Detail) +
                     '</td></tr>',
                 );
               }
@@ -2277,7 +2282,7 @@ ${rows.join('\r')}
           if (hqdeets.acred.length > 0) {
             //fill otherwise placeholder
             $.each(hqdeets.acred, function (k, v) {
-              $('#lhqacred').append('<tr><td>' + v + '</td></tr>');
+              $('#lhqacred').append('<tr><td>' + escapeHtml(v) + '</td></tr>');
             });
           } else {
             $('#lhqacred').append(

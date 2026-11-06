@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { escapeHtml, sanitizeFeedHtml } from './feedHtml.js';
+import { escapeHtml, httpUrl, sanitizeFeedHtml } from './feedHtml.js';
 
 describe('sanitizeFeedHtml', () => {
   it('keeps simple formatting from council reports', () => {
@@ -25,6 +25,19 @@ describe('sanitizeFeedHtml', () => {
       '<a href="https://example.org/x?a=1&amp;b=2" target="_blank" rel="noopener noreferrer">Detour</a>',
     );
     expect(sanitizeFeedHtml('<a href="javascript:alert(1)">Bad</a>')).toBe('Bad');
+  });
+});
+
+describe('httpUrl', () => {
+  it('keeps http(s) URLs', () => {
+    expect(httpUrl('https://example.org/cam.jpg')).toBe('https://example.org/cam.jpg');
+    expect(httpUrl(' HTTP://example.org ')).toBe('HTTP://example.org');
+  });
+
+  it('rejects everything else', () => {
+    for (const bad of ['javascript:alert(1)', ' javascript:alert(1)', 'data:text/html,x', '//example.org', 'x', '', null, undefined]) {
+      expect(httpUrl(bad)).toBe('');
+    }
   });
 });
 

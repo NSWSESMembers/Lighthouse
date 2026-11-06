@@ -1,5 +1,6 @@
 /* global urls, user, $, contentViewModel, map */
 import BeaconClient from '../../shared/BeaconClient.js';
+import { escapeHtml } from '../../shared/feedHtml.js';
 
 
 window.addEventListener('load', pageFullyLoaded, false);
@@ -43,7 +44,7 @@ window.addEventListener("message", function(event) {
   $('#teamFilterListAddSelected').unbind().click(function() {
     $("#assetFilterListAll").val().forEach(function(s) {
 
-      let option = $(`<option value="${s}">${s}</option>`)
+      let option = $(`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
 
       //click handler for unselecting
       option.dblclick(function(x) {
@@ -126,7 +127,7 @@ window.addEventListener("message", function(event) {
           $("#assetFilterListSelected").empty()
           let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
           loadIn.forEach(function(i){
-            $("#assetFilterListSelected").append(`<option value="${i}">${i}</option>`);
+            $("#assetFilterListSelected").append(`<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`);
           })
 
           $("#assetFilterListAll").empty()
@@ -144,7 +145,7 @@ window.addEventListener("message", function(event) {
 
     sorted.forEach(function(v){
 
-        $("#assetFilterListAll").append(`<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value="${v}">${v}</option>`);
+        $("#assetFilterListAll").append(`<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value="${escapeHtml(v)}">${escapeHtml(v)}</option>`);
 
     })
 
@@ -153,7 +154,7 @@ window.addEventListener("message", function(event) {
 
     $('#assetFilterListAll option').unbind().dblclick(function(x) {
 
-      let option = $(`<option value="${x.target.value}">${x.target.value}</option>`)
+      let option = $(`<option value="${escapeHtml(x.target.value)}">${escapeHtml(x.target.value)}</option>`)
       //click handler for unselecting
       option.dblclick(function(x) {
         if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)

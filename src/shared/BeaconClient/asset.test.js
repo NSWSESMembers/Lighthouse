@@ -43,6 +43,16 @@ describe('filter', () => {
     expect(result.find((r) => r.type === 'telematics').name).toContain('(Tele)');
   });
 
+  it('escapes the marker label, which is rendered as HTML', async () => {
+    vi.mocked(request)
+      .mockResolvedValueOnce([radioAsset('RES1A'), radioAsset('<b>radio</b>')])
+      .mockResolvedValueOnce({ features: [teleFeature('<b>tele</b>')] });
+
+    const result = await filter(null, ctx);
+
+    expect(result.map((r) => r.markerLabel)).toEqual(['RES<br>1A', '&lt;b&gt;radio&lt;/b&gt;', '&lt;b&gt;tele&lt;/b&gt;']);
+  });
+
   it('filters the merged result down to the given asset names', async () => {
     vi.mocked(request)
       .mockResolvedValueOnce([radioAsset('RES1A'), radioAsset('RES2A')])
