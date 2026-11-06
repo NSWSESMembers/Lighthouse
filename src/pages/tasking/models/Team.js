@@ -141,6 +141,7 @@ export function Team(data = {}, deps = {}) {
     self.callsign = ko.observable(data.Callsign ?? "");
     self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt)); //safety code for beacon bug
     self.teamStatusType = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
+    self.isDeleted = ko.observable(data.IsDeleted === true);
     self.teamType = ko.observable(data.TeamType || null); // {Id,Name} -- Field / Operations / Aviation
     self.sector = ko.observable(new Sector(data.Sector || {}));
     self.members = ko.observableArray(data.Members);
@@ -665,6 +666,7 @@ export function Team(data = {}, deps = {}) {
         if (d.Id !== undefined && d.Id !== this.id()) this.id(d.Id);
         if (d.TaskedJobCount !== undefined && d.TaskedJobCount !== this.taskedJobCount()) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined && d.Callsign !== this.callsign()) this.callsign(d.Callsign);
+        if (d.IsDeleted !== undefined) this.isDeleted(d.IsDeleted === true);
         if (d.TeamStatusType !== undefined) {
             let status = d.TeamStatusType;
             if (status && status.Name === undefined && status.Id != null) {
