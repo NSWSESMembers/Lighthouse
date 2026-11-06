@@ -1541,18 +1541,8 @@ $(function () {
             if (urls.Base in thisEvent.banner) {
               console.log('setting banner to', thisEvent.title, thisEvent.banner[urls.Base]);
               $('.navbar-brand').css(`background-image`, `url(${thisEvent.banner[urls.Base]})`);
-              if (thisEvent.popover) {
-                $('.navbar-brand').each(function () {
-                  var $elem = $(this);
-                  $elem.popover({
-                    placement: 'auto',
-                    trigger: 'hover',
-                    html: true,
-                    title: thisEvent.title,
-                    content: thisEvent.content,
-                    container: $elem,
-                  });
-                });
+              if (thisEvent.title) {
+                $('.navbar-brand').attr('title', thisEvent.title);
               }
             }
           }
