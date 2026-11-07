@@ -512,6 +512,10 @@ export function Job(data = {}, deps = {}) {
     };
 
 
+    self.clearIcemsAgencies = function () {
+        self._icemsAgenciesRaw([]);
+    };
+
     self.toggleAndLoad = function () {
         if (!self.expanded()) {
             self.fetchTasking();

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 var ko = require('knockout');
 var L = require('leaflet');
+import { tabDormancy } from '../utils/tabDormancy.js';
 import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
@@ -809,12 +810,22 @@ export function MapVM(Lmap, root) {
 
     // Periodic refreshes – but still only fetch if visible
     if (entry.refreshMs > 0) {
-      entry.timerId = setInterval(refreshIfVisible, entry.refreshMs);
+      entry.timerId = setInterval(() => {
+        if (!tabDormancy.isDormant()) refreshIfVisible();
+      }, entry.refreshMs);
     }
 
     return entry;
   };
 
+
+  /** Bring layers up to date after the tab was dormant: those on the map and past their own refresh interval. */
+  self.refreshStalePollingLayers = function () {
+    const now = Date.now();
+    self.onlineLayers.forEach((entry) => {
+      if (entry.refreshMs > 0 && now - (entry.track.updatedAt?.getTime() ?? 0) >= entry.refreshMs) entry.refresh?.();
+    });
+  };
 
   /** Tear down a polling overlay layer registered via registerPollingLayer -- stops its timer, removes it from the map, and drops it from the registry entirely (unlike toggling visibility, which just removes/re-adds the same layerGroup). */
   self.unregisterPollingLayer = function (key) {
