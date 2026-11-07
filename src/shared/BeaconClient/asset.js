@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { request } from './core/request.js';
 import { fetchResourceLocations as fetchSimulatedRadioAssets } from '../cadenceSimulation.js';
+import { escapeHtml } from '../feedHtml.js';
 
 const CACHE_SECONDS = 20;
 
@@ -74,7 +75,7 @@ function normaliseRadioAssets(features, exerciseHqId = null) {
       i.name = `${i.properties.name} (PSN)`;
       i.unitCode = i.properties.name.match(/([a-z]+)/i) ? i.properties.name.match(/([a-z]+)/i)[1] : i.properties.name;
       i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
-      i.markerLabel = i.properties.name;
+      i.markerLabel = escapeHtml(i.properties.name);
       if (i.unitCode && i.vehCode) {
         i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
       }
@@ -120,7 +121,7 @@ async function returnAssetLocations(host, userId, token, signal, simulation, ref
         i.name = `${i.properties.displayName.match(/(^\w*)/g)} (Tele)`;
         i.unitCode = i.properties.displayName.match(/([a-z]+)/i) ? i.properties.displayName.match(/([a-z]+)/i)[1] : i.properties.displayName;
         i.vehCode = i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i) ? i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
-        i.markerLabel = i.properties.displayName;
+        i.markerLabel = escapeHtml(i.properties.displayName);
         if (i.unitCode && i.vehCode) {
           i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
         }
