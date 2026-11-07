@@ -14,7 +14,7 @@ describe('createTabDormancy', () => {
         doc.visibilityState = 'visible';
         dormancy = createTabDormancy({ doc, afterMs: 1000 });
         dormancy.onDormant = vi.fn();
-        dormancy.onWake = vi.fn();
+        dormancy.onReturn = vi.fn();
     });
     afterEach(() => vi.useRealTimers());
 
@@ -34,26 +34,36 @@ describe('createTabDormancy', () => {
         setVisibility('visible');
         vi.advanceTimersByTime(5000);
         expect(dormancy.onDormant).not.toHaveBeenCalled();
-        expect(dormancy.onWake).not.toHaveBeenCalled();
+        expect(dormancy.onReturn).not.toHaveBeenCalled();
         expect(dormancy.isDormant()).toBe(false);
     });
 
-    it('wakes with the time away when shown again', () => {
+    it('stays dormant when shown again', () => {
         setVisibility('hidden');
         vi.advanceTimersByTime(5000);
         setVisibility('visible');
-        expect(dormancy.onWake).toHaveBeenCalledWith(5000);
+        expect(dormancy.onReturn).toHaveBeenCalledTimes(1);
+        vi.advanceTimersByTime(5000);
+        expect(dormancy.isDormant()).toBe(true);
+    });
+
+    it('stops being dormant when reset', () => {
+        setVisibility('hidden');
+        vi.advanceTimersByTime(5000);
+        setVisibility('visible');
+        dormancy.reset();
         expect(dormancy.isDormant()).toBe(false);
     });
 
-    it('still wakes if the dormant timer never got to run', () => {
+    it('still notices if the dormant timer never got to run', () => {
         // A frozen tab: time passes but its timers don't fire.
         const now = vi.fn(() => 0);
         const frozen = createTabDormancy({ doc, now, afterMs: 1000 });
-        frozen.onWake = vi.fn();
+        frozen.onReturn = vi.fn();
         setVisibility('hidden');
         now.mockReturnValue(5000);
         setVisibility('visible');
-        expect(frozen.onWake).toHaveBeenCalledWith(5000);
+        expect(frozen.onReturn).toHaveBeenCalledTimes(1);
+        expect(frozen.isDormant()).toBe(true);
     });
 });

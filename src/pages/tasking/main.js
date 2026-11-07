@@ -2961,37 +2961,30 @@ function VM() {
 
 
     // ---------------- DORMANT WHILE FORGOTTEN IN THE BACKGROUND -----------------
-    // See utils/tabDormancy.js. Pushes are missed while dormant, so waking
-    // does a full fetch. ICEMS agencies aren't part of that: they go back to
-    // how a fresh page has them, unloaded until the incident is opened, and
-    // only an incident that's open now fetches them.
+    // See utils/tabDormancy.js. A dormant tab has missed too much to patch up,
+    // so it stays stopped and the user reloads it.
 
     self.tabDormancy = tabDormancy;
+    self.tabPaused = ko.observable(false);
     let dataLoadStarted = false;
-    self.catchingUp = ko.observable(false);
 
-    self.wakeFromDormant = async function () {
-        if (!dataLoadStarted || self.catchingUp()) return;
-        self.catchingUp(true);
-        try {
-            // A frozen tab can come back holding a token that has expired.
-            await refreshCadenceToken();
-            self.reconcileSignalRToConfig?.();
-            self.mapVM?.refreshStalePollingLayers();
-            self.jobs().forEach(job => {
-                if (job.expanded() || job.popUpIsOpen()) job.refreshIcemsIncident({ force: true });
-                else job.clearIcemsAgencies();
-            });
-            await Promise.all([self.fetchAllJobsData(), self.fetchAllTeamData(), self.fetchAllTrackableAssets()]);
-            await self.fetchBatchJobTasking();
-        } finally {
-            self.catchingUp(false);
-        }
+    self.reloadPage = function () {
+        window.location.reload();
     };
     tabDormancy.onDormant = () => {
-        if (dataLoadStarted) stopBeaconSignalRConnection();
+        stopBeaconSignalRConnection();
     };
-    tabDormancy.onWake = () => self.wakeFromDormant();
+    tabDormancy.onReturn = () => {
+        // Nothing has loaded behind the config modal yet, so nothing is stale.
+        if (!dataLoadStarted) {
+            tabDormancy.reset();
+            return;
+        }
+        // Also here: a frozen tab's dormant timer may never have run.
+        stopBeaconSignalRConnection();
+        document.querySelector('.app')?.setAttribute('inert', '');
+        self.tabPaused(true);
+    };
 
     self.UserPressedSaveOnTheConfigModal = function () {
         dataLoadStarted = true;
@@ -4616,6 +4609,7 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel.signalrNeedsPermission(false);
             await getToken();
             if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
+            if (tabDormancy.isDormant()) return; // went dormant while waiting for the token
             // Closure over the module-level `token` var (kept current by
             // setToken() on every renewal), so each reconnect/negotiate
             // re-authenticates with whatever token is live at that moment.
@@ -4623,7 +4617,6 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel.signalrConnectionAttempted(true);
             window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
         };
-        myViewModel.reconcileSignalRToConfig = reconcileSignalRToConfig;
         // The banner's Allow button. No await before the request, or Chrome
         // drops the click's user gesture and refuses.
         myViewModel.allowLiveUpdatesHost = () => {
