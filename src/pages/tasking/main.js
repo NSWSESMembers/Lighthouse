@@ -2621,6 +2621,7 @@ function VM() {
     }
 
     self.fetchAllTrackableAssets = async function () {
+        if (tabDormancy.isDormant()) return;
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
             // With a simulated exercise chosen the radio half of the feed
@@ -2980,10 +2981,21 @@ function VM() {
             tabDormancy.reset();
             return;
         }
+        if (self.tabPaused()) return;
         // Also here: a frozen tab's dormant timer may never have run.
         stopBeaconSignalRConnection();
-        document.querySelector('.app')?.setAttribute('inert', '');
+        // Dialogs sit outside .app, and their hotkeys would still submit them
+        // from stale data. The browser's own handling of a key (Enter on
+        // Reload, Tab, reload shortcuts) isn't affected by stopping listeners.
+        Array.from(document.body.children).forEach((el) => {
+            if (el.id !== 'tab-paused') el.inert = true;
+        });
+        ['keydown', 'keyup'].forEach((type) => {
+            window.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
+        });
         self.tabPaused(true);
+        ko.tasks.runEarly(); // it has to be showing to take focus
+        document.querySelector('#tab-paused button')?.focus();
     };
 
     self.UserPressedSaveOnTheConfigModal = function () {
