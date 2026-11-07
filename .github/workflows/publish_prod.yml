@@ -19,9 +19,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install modules
-        run: npm install
+        run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Test
+        run: npm test
       - name: Build Package
         run: npm run prod
       - name: Chrome extension upload action

@@ -11,6 +11,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install modules
-        run: npm install
+        run: npm ci
       - name: Test
         run: npm test
