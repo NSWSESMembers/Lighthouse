@@ -45,7 +45,9 @@ To remove a headquarters from a filter, click the cross next to it. To remove al
 
 ### Full Refresh Interval
 
-How often a full reload of data from Beacon occurs. The default is **3 minutes**. With Live Updates on, you shouldn't need to sync more often than that.
+How often a full reload of data from Beacon occurs. The default is **10 minutes**. With Live Updates on, you shouldn't need to sync more often than that.
+
+With Live Updates off, LAD reloads every minute, whatever this is set to. Expanding an incident or team also refreshes it.
 
 ### History
 
@@ -59,7 +61,7 @@ Whether incidents or teams created in the future are synced into LAD. The defaul
 
 When information is updated in Beacon, it is pushed directly into LAD, giving near real-time updates to incidents, teams and tasking statuses. Each register's **Refresh Data** button flashes when an update for it arrives (see [Register Controls](interface.md#register-controls)).
 
-> **Note:** When using Live Updates, keep the Full Refresh Interval between 3 and 5 minutes. The full refresh picks up anything Live Updates missed.
+> **Note:** The full refresh picks up anything Live Updates missed, so it only needs to run occasionally while Live Updates is on.
 
 ## Filter Settings
 
