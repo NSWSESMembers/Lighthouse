@@ -32,6 +32,12 @@ The home page shows the first three `##` entries, so keep the title short.
 
 - **LAD catches up when Live Updates reconnect.** Changes made in Beacon while the connection was down used to be missing until the next full refresh. LAD now reloads incidents, teams and tasking as soon as it reconnects. See [Live Updates](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#live-updates).
 
+## Forgotten LAD tabs pause
+
+*7 November 2026*
+
+- **LAD pauses after 30 minutes in the background.** A forgotten tab stops calling Beacon. Going back to it resumes it by itself, with a **Catching up** banner until the data has reloaded. See [Background Tabs](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration/#background-tabs).
+
 ## Deleted teams hidden in LAD
 
 *6 November 2026*

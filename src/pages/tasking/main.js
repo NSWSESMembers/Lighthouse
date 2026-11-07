@@ -8,6 +8,7 @@ const BeaconToken = require('../lib/shared_token_code.js');
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, connectionRecovered, getConnectionStatus, messageReceived } from './signalr/connection.js';
 import { createCatchUpScheduler } from './signalr/catchUp.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
+import { tabDormancy } from './utils/tabDormancy.js';
 import { getSubject } from './signalr/subjects.js';
 
 require('../lib/shared_chrome_code.js'); // side-effect
@@ -2596,6 +2597,7 @@ function VM() {
         if (batchTaskingTimer) clearInterval(batchTaskingTimer);
         const interval = effectiveRefreshIntervalMs();
         batchTaskingTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchBatchJobTasking();
         }, interval);
         console.log('[batch-tasking] Timer started:', interval, 'ms');
@@ -2847,6 +2849,7 @@ function VM() {
     function startAssetDataRefreshTimer() {
         if (assetDataRefreshTimer) clearInterval(assetDataRefreshTimer);
         assetDataRefreshTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllTrackableAssets()
         }, 30000);
     };
@@ -2873,6 +2876,7 @@ function VM() {
         const interval = effectiveRefreshIntervalMs();
 
         jobsTeamsTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
             self.fetchAllTeamData();
         }, interval);
@@ -2986,7 +2990,41 @@ function VM() {
 
 
 
+    // ---------------- DORMANT WHILE FORGOTTEN IN THE BACKGROUND -----------------
+    // See utils/tabDormancy.js. Pushes are missed while dormant, so waking
+    // does a full fetch. ICEMS agencies aren't part of that: they go back to
+    // how a fresh page has them, unloaded until the incident is opened, and
+    // only an incident that's open now fetches them.
+
+    self.tabDormancy = tabDormancy;
+    let dataLoadStarted = false;
+    self.catchingUp = ko.observable(false);
+
+    self.wakeFromDormant = async function () {
+        if (!dataLoadStarted || self.catchingUp()) return;
+        self.catchingUp(true);
+        try {
+            // A frozen tab can come back holding a token that has expired.
+            await refreshCadenceToken();
+            self.reconcileSignalRToConfig?.();
+            self.mapVM?.refreshStalePollingLayers();
+            self.jobs().forEach(job => {
+                if (job.expanded() || job.popUpIsOpen()) job.refreshIcemsIncident({ force: true });
+                else job.clearIcemsAgencies();
+            });
+            await Promise.all([self.fetchAllJobsData(), self.fetchAllTeamData(), self.fetchAllTrackableAssets()]);
+            await self.fetchBatchJobTasking();
+        } finally {
+            self.catchingUp(false);
+        }
+    };
+    tabDormancy.onDormant = () => {
+        if (dataLoadStarted) stopBeaconSignalRConnection();
+    };
+    tabDormancy.onWake = () => self.wakeFromDormant();
+
     self.UserPressedSaveOnTheConfigModal = function () {
+        dataLoadStarted = true;
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
@@ -4616,6 +4654,7 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel.signalrConnectionAttempted(true);
             window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
         };
+        myViewModel.reconcileSignalRToConfig = reconcileSignalRToConfig;
         // The banner's Allow button. No await before the request, or Chrome
         // drops the click's user gesture and refuses.
         myViewModel.allowLiveUpdatesHost = () => {

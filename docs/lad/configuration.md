@@ -65,6 +65,12 @@ If the connection drops, a banner says so and LAD keeps trying to reconnect. Onc
 
 > **Note:** The full refresh picks up anything Live Updates missed, so it only needs to run occasionally while Live Updates is on.
 
+### Background Tabs
+
+A LAD tab that has been in the background for 30 minutes pauses: it stops loading data and disconnects Live Updates, so a forgotten tab doesn't keep calling Beacon. Going back to the tab resumes it by itself, with a **Catching up** banner at the top of the page until the data has reloaded. Each tab pauses on its own, and a shorter time in the background changes nothing.
+
+While a tab is paused, [asset trails](assets.md) aren't recorded, so they have a gap for that time. ICEMS agencies reload when you next open the incident.
+
 ## Filter Settings
 
 The **Filters** tab gives more granular control over which incidents and teams are synced into LAD.
