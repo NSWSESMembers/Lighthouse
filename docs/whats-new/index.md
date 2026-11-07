@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Live Updates catch up after a dropout
+
+*7 November 2026*
+
+- **LAD catches up when Live Updates reconnect.** Changes made in Beacon while the connection was down used to be missing until the next full refresh, up to 3 minutes later by default. LAD now reloads incidents, teams and tasking as soon as it reconnects. See [Live Updates](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#live-updates).
+
 ## New Statistics, Summary and Export pages
 
 *5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*
