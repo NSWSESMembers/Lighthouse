@@ -26,11 +26,11 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Clearer wording with Live Updates off.** The Configuration screen now says what happens: LAD reloads every minute, and expanding an incident or team refreshes it.
 - **Tasking keeps up with the full refresh.** It could skip every second refresh, and with Live Updates off it followed the Full Refresh setting instead of reloading every minute.
 
-## Deleted teams leave LAD
+## Deleted teams hidden in LAD
 
 *6 November 2026*
 
-- **A team deleted in Beacon now disappears from LAD** without a page reload, including from the map and its assets. Taskings it had on an incident still show its callsign.
+- **A team deleted in Beacon now disappears from LAD** without a page reload, whatever your team filters are set to. Taskings it had on an incident still show its callsign, and it comes back if the team is restored.
 
 ## New Statistics, Summary and Export pages
 

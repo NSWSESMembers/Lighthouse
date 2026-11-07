@@ -542,6 +542,8 @@ describe('updateFromJson', () => {
     t.updateFromJson({ Callsign: 'RESCUE2' });
     expect(t.isDeleted()).toBe(true);
     expect(new Team({ IsDeleted: true }).isDeleted()).toBe(true);
+    t.updateFromJson({ IsDeleted: false });
+    expect(t.isDeleted()).toBe(false);
   });
 
   it('resolves a reduced {Id}-only TeamStatusType via the enum', () => {
