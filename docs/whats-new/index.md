@@ -18,6 +18,14 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Lighter LAD refreshes
+
+*7 November 2026*
+
+- **The full refresh now defaults to 10 minutes.** With Live Updates on, changes already arrive as they happen, so LAD doesn't need to reload as often. If you were on the old 3-minute default you move to 10 minutes, and any other value you picked stays as it was. See [Full Refresh Interval](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#full-refresh-interval).
+- **Clearer wording with Live Updates off.** The Configuration screen now says what happens: LAD reloads every minute, and expanding an incident or team refreshes it.
+- **Tasking keeps up with the full refresh.** It could skip every second refresh, and with Live Updates off it followed the Full Refresh setting instead of reloading every minute.
+
 ## New Statistics, Summary and Export pages
 
 *5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*

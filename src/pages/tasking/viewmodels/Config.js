@@ -548,7 +548,7 @@ export function ConfigVM(root, deps) {
 
     // Other settings
     self.signalrEnabled = ko.observable(true);
-    self.refreshInterval = ko.observable(180);
+    self.refreshInterval = ko.observable(600);
     // Guard for an aggressively short full-refresh interval. Slower is always
     // safe, so only prompt when the new value drops below this many seconds --
     // that's where every open copy of LAD starts hammering Beacon.
@@ -1252,12 +1252,12 @@ export function ConfigVM(root, deps) {
     // The full refresh means different things depending on whether live updates
     // are carrying the load -- spell it out so nobody sets it wrong.
     self.fullRefreshHint = ko.pureComputed(() => (self.signalrEnabled()
-        ? 'A full reload from Beacon. With live updates on it is only a backstop — every 3–5 min is plenty.'
-        : 'A full reload from Beacon. With live updates off this is the only thing refreshing the board — keep it short, 1–2 min.'
+        ? 'A full reload from Beacon. With live updates on it is only a backstop — every 10 min is plenty.'
+        : 'With live updates off, LAD reloads from Beacon every minute, whatever this is set to. Expanding an incident or team also refreshes it.'
     ));
     self.dataReadoutNote = ko.pureComputed(() => (self.signalrEnabled()
         ? 'Live updates keep the board current; the full refresh is a backstop.'
-        : 'No live updates — the board is only as fresh as the full refresh.'
+        : 'No live updates — the board reloads every minute, and expanding an incident or team refreshes it.'
     ));
 
     // Data pane -- one-tap presets for the values these are actually set to.
@@ -1567,10 +1567,9 @@ export function ConfigVM(root, deps) {
 
     // Build the current config payload (used by save + share)
     const buildConfig = () => ({
-        // Renamed from refreshInterval so existing saved configs (which
-        // only have the old key) fall through to the new default instead
-        // of carrying forward the old 60s value.
-        refreshIntervalV2: Number(self.refreshInterval()),
+        // Versioned key so saved configs on an old default move to the new
+        // one -- see the load path below.
+        refreshIntervalV3: Number(self.refreshInterval()),
         signalrEnabled: !!self.signalrEnabled(),
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
@@ -1820,7 +1819,7 @@ export function ConfigVM(root, deps) {
         if (!cfg) {
             cfg = {}
             console.log('Using defaults.');
-            cfg.refreshIntervalV2 = self.refreshInterval();
+            cfg.refreshIntervalV3 = self.refreshInterval();
             cfg.signalrEnabled = self.signalrEnabled();
             cfg.fetchPeriod = self.fetchPeriod();
             cfg.fetchForward = self.fetchForward();
@@ -1852,14 +1851,15 @@ export function ConfigVM(root, deps) {
             }
         }
         // scalar settings
-        // refreshIntervalV2 (renamed from refreshInterval) -- existing saved
-        // configs only have the old key, so this is undefined for them and
-        // self.refreshInterval just keeps its constructor default (180).
-        // Only someone who saves again under the new build will persist a
-        // value here, at which point it's their own deliberate choice again.
-        if (typeof cfg.refreshIntervalV2 === 'number') {
-            self.refreshInterval(cfg.refreshIntervalV2);
-            lastRefreshInterval = cfg.refreshIntervalV2;
+        // refreshIntervalV3 -- a saved V2 of 180 was the old default, so it
+        // falls through to the constructor default (600); any other V2 was
+        // someone's own choice and carries over. Keys before V2 are ignored.
+        const savedRefreshInterval = typeof cfg.refreshIntervalV3 === 'number'
+            ? cfg.refreshIntervalV3
+            : (cfg.refreshIntervalV2 === 180 ? undefined : cfg.refreshIntervalV2);
+        if (typeof savedRefreshInterval === 'number') {
+            self.refreshInterval(savedRefreshInterval);
+            lastRefreshInterval = savedRefreshInterval;
         }
         if (typeof cfg.signalrEnabled === 'boolean') {
             self.signalrEnabled(cfg.signalrEnabled);

@@ -2540,7 +2540,10 @@ function VM() {
     // them in a single API call.
 
     self.fetchBatchJobTasking = async function () {
-        const staleMs = Number(self.config.refreshInterval() || 60) * 1000;
+        // Just under the timer's own interval: jobs are stamped when the
+        // response lands, after the timer fired, so comparing against the full
+        // interval finds nothing stale and skips every second cycle.
+        const staleMs = effectiveRefreshIntervalMs() * 0.9;
         const now = Date.now();
         const staleJobs = self.filteredJobs().filter(job => {
             const last = job.lastTaskingDataUpdate?.getTime?.() ?? 0;
@@ -2571,7 +2574,7 @@ function VM() {
         }
     };
 
-    // refreshInterval's default (180s) assumes SignalR push is covering
+    // refreshInterval's default (600s) assumes SignalR push is covering
     // freshness in between polls. With push disabled there's nothing else
     // keeping data current, so fall back to the old 60s cadence regardless
     // of what refreshInterval is set to.
