@@ -151,8 +151,9 @@ emulates a dark OS colour scheme.
 The LAD user guide (`docs/lad/`), the Incident Statistics guide
 (`docs/stats/`), the Incident Summary guide (`docs/summary/`), the Incident
 Export guide (`docs/export/`), the NITC Export guide (`docs/nitc/`) and What's New
-(`docs/whats-new/index.md`) are synced to the website: `master` publishes the stable copy, `master-dev`
-the Development Preview. For user-visible changes,
+(`docs/whats-new/index.md`) are synced to the website when a store build is published: `publish_prod.yml`
+(`master`) updates the stable copy, `publish_dev.yml` (`master-dev`) the Development
+Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
 `npm run lad:shots` / `npm run stats:shots` / `npm run summary:shots` /
 `npm run advexport:shots` / `npm run nitcexport:shots` for guide screenshots.
