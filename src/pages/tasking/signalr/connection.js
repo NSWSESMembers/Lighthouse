@@ -27,6 +27,13 @@ export const connectionStatus = new Subject();
 // type -- a single hook point for a UI "heartbeat" that just wants to know
 // the feed is alive, without subscribing to every individual subject.
 export const messageReceived = new Subject();
+
+// Fires when the connection comes back after being lost, or after a failed
+// first start. Subject has no replay and the hub doesn't resend, so anything
+// pushed during the gap is gone: subscribers need to re-fetch it.
+export const connectionRecovered = new Subject();
+let pushesMayBeMissed = false;
+
 let currentStatus = 'disconnected';
 function setStatus(status) {
     currentStatus = status;
@@ -34,6 +41,12 @@ function setStatus(status) {
 }
 export function getConnectionStatus() {
     return currentStatus;
+}
+function markConnected() {
+    setStatus('connected');
+    if (!pushesMayBeMissed) return;
+    pushesMayBeMissed = false;
+    connectionRecovered.next();
 }
 
 let manualRestartTimer = null;
@@ -97,11 +110,12 @@ export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
 
     connection.onreconnecting((error) => {
         console.log('[SignalR] reconnecting', error);
+        pushesMayBeMissed = true;
         setStatus('reconnecting');
     });
     connection.onreconnected((connectionId) => {
         console.log('[SignalR] reconnected, connectionId=', connectionId);
-        setStatus('connected');
+        markConnected();
     });
     const thisConnection = connection;
     connection.onclose((error) => {
@@ -109,6 +123,7 @@ export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
         // (stopped, then started again before its stop handshake landed).
         if (connection !== thisConnection) return;
         console.log('[SignalR] closed', error);
+        pushesMayBeMissed = true;
         setStatus('disconnected');
         scheduleManualRestart(negotiateUrl, getAccessToken);
     });
@@ -118,11 +133,12 @@ export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
         .then(() => {
             if (connection !== thisConnection) return; // replaced mid-connect
             console.log('[SignalR] connected, connectionId=', thisConnection.connectionId);
-            setStatus('connected');
+            markConnected();
         })
         .catch((err) => {
             if (connection !== thisConnection) return; // stopped mid-connect
             console.error('[SignalR] failed to connect:', err);
+            pushesMayBeMissed = true;
             setStatus('disconnected');
             scheduleManualRestart(negotiateUrl, getAccessToken);
         });
@@ -137,6 +153,9 @@ export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
  */
 export function stopBeaconSignalRConnection() {
     stoppedIntentionally = true;
+    // Turning Live Updates back on goes through the config modal, whose
+    // save re-fetches everything anyway.
+    pushesMayBeMissed = false;
     if (manualRestartTimer) {
         clearTimeout(manualRestartTimer);
         manualRestartTimer = null;

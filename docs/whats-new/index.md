@@ -26,6 +26,12 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Clearer wording with Live Updates off.** The Configuration screen now says what happens: LAD reloads every minute, and expanding an incident or team refreshes it.
 - **Tasking keeps up with the full refresh.** It could skip every second refresh, and with Live Updates off it followed the Full Refresh setting instead of reloading every minute.
 
+## Live Updates catch up after a dropout
+
+*7 November 2026*
+
+- **LAD catches up when Live Updates reconnect.** Changes made in Beacon while the connection was down used to be missing until the next full refresh. LAD now reloads incidents, teams and tasking as soon as it reconnects. See [Live Updates](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#live-updates).
+
 ## Deleted teams hidden in LAD
 
 *6 November 2026*
