@@ -3,23 +3,28 @@
  *
  * Stops a forgotten background tab costing Beacon anything. Once LAD has been
  * hidden this long it goes dormant: timers keep ticking but skip their
- * fetches, and main.js drops the live connection. It wakes by itself when the
- * tab is shown again. A shorter hide changes nothing at all.
+ * fetches, and main.js drops the live connection. It stays that way when the
+ * tab is shown again, until the user reloads. A shorter hide changes nothing.
  */
 
 export const DORMANT_AFTER_MS = 30 * 60 * 1000;
 
 export function createTabDormancy({ doc = document, now = Date.now, afterMs = DORMANT_AFTER_MS } = {}) {
     let hiddenAt = null;
+    let expired = false;
     let timer = null;
 
     const api = {
         afterMs,
         onDormant: null,
-        // Called with how long the tab was away.
-        onWake: null,
+        // Called when a dormant tab is shown again.
+        onReturn: null,
         isDormant() {
-            return hiddenAt != null && now() - hiddenAt >= api.afterMs;
+            return expired || (hiddenAt != null && now() - hiddenAt >= api.afterMs);
+        },
+        reset() {
+            expired = false;
+            hiddenAt = null;
         },
     };
 
@@ -35,10 +40,9 @@ export function createTabDormancy({ doc = document, now = Date.now, afterMs = DO
             return;
         }
         clearTimeout(timer);
-        const wasDormant = api.isDormant();
-        const awayMs = hiddenAt == null ? 0 : now() - hiddenAt;
+        expired = api.isDormant();
         hiddenAt = null;
-        if (wasDormant) api.onWake?.(awayMs);
+        if (expired) api.onReturn?.();
     });
     if (doc.visibilityState === 'hidden') onHidden();
 
@@ -48,5 +52,5 @@ export function createTabDormancy({ doc = document, now = Date.now, afterMs = DO
 // A never-dormant stand-in where there's no document (unit tests of code that
 // imports this).
 export const tabDormancy = typeof document === 'undefined'
-    ? { afterMs: DORMANT_AFTER_MS, onDormant: null, onWake: null, isDormant: () => false }
+    ? { afterMs: DORMANT_AFTER_MS, onDormant: null, onReturn: null, isDormant: () => false, reset() {} }
     : createTabDormancy();

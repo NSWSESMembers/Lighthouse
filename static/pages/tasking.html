@@ -8,11 +8,14 @@
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
-    <div id="catching-up-banner" class="signalr-status-banner signalr-status-banner--info" role="status" data-bind="visible: catchingUp">
-        <i class="fa fa-sync fa-spin"></i>
-        <span>Catching up. This tab was paused while in the background…</span>
+    <div id="tab-paused" class="tab-paused" role="alertdialog" aria-modal="true" aria-labelledby="tab-paused-title" style="display: none" data-bind="visible: tabPaused">
+        <div class="tab-paused__card">
+            <h2 id="tab-paused-title" class="h5">This tab was paused</h2>
+            <p>LAD stopped updating after 30 minutes in the background, so what's here is out of date. Reload to carry on.</p>
+            <button type="button" class="btn btn-primary" data-bind="click: reloadPage">Reload</button>
+        </div>
     </div>
-    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !catchingUp()">
+    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !tabPaused()">
         <span class="signalr-status-banner__icon">⚠</span>
         <span data-bind="text: signalrStatusText"></span>
         <button type="button" class="btn btn-sm btn-warning py-0" data-bind="visible: signalrNeedsPermission, click: allowLiveUpdatesHost">Allow</button>

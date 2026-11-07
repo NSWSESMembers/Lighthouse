@@ -67,9 +67,9 @@ If the connection drops, a banner says so and LAD keeps trying to reconnect. Onc
 
 ### Background Tabs
 
-A LAD tab that has been in the background for 30 minutes pauses: it stops loading data and disconnects Live Updates, so a forgotten tab doesn't keep calling Beacon. Going back to the tab resumes it by itself, with a **Catching up** banner at the top of the page until the data has reloaded. Each tab pauses on its own, and a shorter time in the background changes nothing.
+A LAD tab that has been in the background for 30 minutes pauses: it stops loading data and disconnects Live Updates, so a forgotten tab doesn't keep calling Beacon. When you go back to the tab, it asks you to **Reload**, because what's on screen is out of date. Reloading opens the Configuration screen as usual, with your saved settings. Each tab pauses on its own, and a shorter time in the background changes nothing.
 
-While a tab is paused, [asset trails](assets.md) aren't recorded, so they have a gap for that time. ICEMS agencies reload when you next open the incident.
+[Asset trails](assets.md) aren't recorded while a tab is paused, so they have a gap for that time.
 
 ## Filter Settings
 

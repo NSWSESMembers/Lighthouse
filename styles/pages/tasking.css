@@ -6159,9 +6159,25 @@ input[type="search"]:focus {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-.signalr-status-banner--info {
-  background: #cff4fc;
-  color: #055160;
+.tab-paused {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.tab-paused__card {
+  max-width: 420px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #fff;
+  color: #212529;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 .signalr-status-banner__icon {
