@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Forgotten LAD tabs pause
+
+*7 November 2026*
+
+- **LAD pauses after 30 minutes in the background.** A forgotten tab stops calling Beacon. When you go back to it, it asks you to reload, because what's on screen is out of date. See [Background Tabs](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration/#background-tabs).
+
 ## New Statistics, Summary and Export pages
 
 *5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*

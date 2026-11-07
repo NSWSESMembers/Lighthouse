@@ -7,6 +7,7 @@ import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus, messageReceived } from './signalr/connection.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
+import { tabDormancy } from './utils/tabDormancy.js';
 import { getSubject } from './signalr/subjects.js';
 
 require('../lib/shared_chrome_code.js'); // side-effect
@@ -2586,6 +2587,7 @@ function VM() {
         if (batchTaskingTimer) clearInterval(batchTaskingTimer);
         const interval = effectiveRefreshIntervalMs();
         batchTaskingTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchBatchJobTasking();
         }, interval);
         console.log('[batch-tasking] Timer started:', interval, 'ms');
@@ -2619,6 +2621,7 @@ function VM() {
     }
 
     self.fetchAllTrackableAssets = async function () {
+        if (tabDormancy.isDormant()) return;
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
             // With a simulated exercise chosen the radio half of the feed
@@ -2837,6 +2840,7 @@ function VM() {
     function startAssetDataRefreshTimer() {
         if (assetDataRefreshTimer) clearInterval(assetDataRefreshTimer);
         assetDataRefreshTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllTrackableAssets()
         }, 30000);
     };
@@ -2863,6 +2867,7 @@ function VM() {
         const interval = effectiveRefreshIntervalMs();
 
         jobsTeamsTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
             self.fetchAllTeamData();
         }, interval);
@@ -2956,7 +2961,45 @@ function VM() {
 
 
 
+    // ---------------- DORMANT WHILE FORGOTTEN IN THE BACKGROUND -----------------
+    // See utils/tabDormancy.js. A dormant tab has missed too much to patch up,
+    // so it stays stopped and the user reloads it.
+
+    self.tabDormancy = tabDormancy;
+    self.tabPaused = ko.observable(false);
+    let dataLoadStarted = false;
+
+    self.reloadPage = function () {
+        window.location.reload();
+    };
+    tabDormancy.onDormant = () => {
+        stopBeaconSignalRConnection();
+    };
+    tabDormancy.onReturn = () => {
+        // Nothing has loaded behind the config modal yet, so nothing is stale.
+        if (!dataLoadStarted) {
+            tabDormancy.reset();
+            return;
+        }
+        if (self.tabPaused()) return;
+        // Also here: a frozen tab's dormant timer may never have run.
+        stopBeaconSignalRConnection();
+        // Dialogs sit outside .app, and their hotkeys would still submit them
+        // from stale data. The browser's own handling of a key (Enter on
+        // Reload, Tab, reload shortcuts) isn't affected by stopping listeners.
+        Array.from(document.body.children).forEach((el) => {
+            if (el.id !== 'tab-paused') el.inert = true;
+        });
+        ['keydown', 'keyup'].forEach((type) => {
+            window.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
+        });
+        self.tabPaused(true);
+        ko.tasks.runEarly(); // it has to be showing to take focus
+        document.querySelector('#tab-paused button')?.focus();
+    };
+
     self.UserPressedSaveOnTheConfigModal = function () {
+        dataLoadStarted = true;
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
@@ -4578,6 +4621,7 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel.signalrNeedsPermission(false);
             await getToken();
             if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
+            if (tabDormancy.isDormant()) return; // went dormant while waiting for the token
             // Closure over the module-level `token` var (kept current by
             // setToken() on every renewal), so each reconnect/negotiate
             // re-authenticates with whatever token is live at that moment.

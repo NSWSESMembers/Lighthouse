@@ -61,6 +61,12 @@ When information is updated in Beacon, it is pushed directly into LAD, giving ne
 
 > **Note:** When using Live Updates, keep the Full Refresh Interval between 3 and 5 minutes. The full refresh picks up anything Live Updates missed.
 
+### Background Tabs
+
+A LAD tab that has been in the background for 30 minutes pauses: it stops loading data and disconnects Live Updates, so a forgotten tab doesn't keep calling Beacon. When you go back to the tab, it asks you to **Reload**, because what's on screen is out of date. Reloading opens the Configuration screen as usual, with your saved settings. Each tab pauses on its own, and a shorter time in the background changes nothing.
+
+[Asset trails](assets.md) aren't recorded while a tab is paused, so they have a gap for that time.
+
 ## Filter Settings
 
 The **Filters** tab gives more granular control over which incidents and teams are synced into LAD.

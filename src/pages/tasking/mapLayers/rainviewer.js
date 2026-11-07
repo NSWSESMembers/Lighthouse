@@ -1,4 +1,5 @@
 import L from "leaflet";
+import { tabDormancy } from "../utils/tabDormancy.js";
 
 
 
@@ -122,7 +123,9 @@ export function registerRainRadarLayer(vm, map) {
     if (playing) return;
     playing = true;
     control?.update();
-    playTimer = setInterval(stepForward, speed);
+    playTimer = setInterval(() => {
+      if (!tabDormancy.isDormant()) stepForward();
+    }, speed);
   }
 
   function pause() {
@@ -397,7 +400,9 @@ export function registerRainRadarLayer(vm, map) {
 
       // Initial frames + periodic refresh of frame list
       applyFrames(layerGroup, data);
-      dataTimer = setInterval(() => refreshFrames(layerGroup), DATA_REFRESH_MS);
+      dataTimer = setInterval(() => {
+        if (!tabDormancy.isDormant()) refreshFrames(layerGroup);
+      }, DATA_REFRESH_MS);
 
       // Auto-play
       play();

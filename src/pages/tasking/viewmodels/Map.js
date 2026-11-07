@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 var ko = require('knockout');
 var L = require('leaflet');
+import { tabDormancy } from '../utils/tabDormancy.js';
 import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
@@ -809,7 +810,9 @@ export function MapVM(Lmap, root) {
 
     // Periodic refreshes – but still only fetch if visible
     if (entry.refreshMs > 0) {
-      entry.timerId = setInterval(refreshIfVisible, entry.refreshMs);
+      entry.timerId = setInterval(() => {
+        if (!tabDormancy.isDormant()) refreshIfVisible();
+      }, entry.refreshMs);
     }
 
     return entry;
