@@ -534,6 +534,18 @@ describe('updateFromJson', () => {
     expect(t.taskedJobCount()).toBe(3);
   });
 
+  it('tracks IsDeleted, and leaves it alone when a payload omits it', () => {
+    const t = new Team({ Id: 'team1' });
+    expect(t.isDeleted()).toBe(false);
+    t.updateFromJson({ IsDeleted: true });
+    expect(t.isDeleted()).toBe(true);
+    t.updateFromJson({ Callsign: 'RESCUE2' });
+    expect(t.isDeleted()).toBe(true);
+    expect(new Team({ IsDeleted: true }).isDeleted()).toBe(true);
+    t.updateFromJson({ IsDeleted: false });
+    expect(t.isDeleted()).toBe(false);
+  });
+
   it('resolves a reduced {Id}-only TeamStatusType via the enum', () => {
     const t = new Team({});
     t.updateFromJson({ TeamStatusType: { Id: 1 } });

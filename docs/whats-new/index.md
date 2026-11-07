@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Deleted teams hidden in LAD
+
+*6 November 2026*
+
+- **A team deleted in Beacon now disappears from LAD** without a page reload, whatever your team filters are set to. Taskings it had on an incident still show its callsign, and it comes back if the team is restored.
+
 ## New Statistics, Summary and Export pages
 
 *5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*
