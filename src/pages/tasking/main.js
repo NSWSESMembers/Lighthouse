@@ -1273,13 +1273,10 @@ function VM() {
 
         let team = self.teamsById.get(teamJson.Id);
         if (team) { //existing team
-            //deleted beats the stale data rule below, even a tasking's old copy of the team knows this
-            if (teamJson.IsDeleted === true) {
-                self._pruneDeletedTeam(team);
-                return team;
-            }
             //if the team is from tasking, ignore as dont want to overwrite with old data
+            //the exception is a delete, which an older copy can report but never undo
             if (source === 'tasking') {
+                if (teamJson.IsDeleted === true) team.isDeleted(true);
                 return team;
             }
             const prevCallsign = team.callsign?.();
@@ -1331,23 +1328,10 @@ function VM() {
         };
 
         team = new Team(teamJson, deps);
-        self.teamsById.set(team.id(), team);
-        // A deleted team only arrives here via a job's tasking, which still
-        // needs something to link to -- it never joins the team list.
-        if (team.isDeleted()) return team;
         self.teams.push(team);
+        self.teamsById.set(team.id(), team);
         self._refreshTeamTrackableAssets(team);
         return team;
-    };
-
-    // Takes a team Beacon has deleted out of the list and off its assets. It
-    // stays in teamsById so taskings on jobs can still resolve its callsign.
-    self._pruneDeletedTeam = function (team) {
-        console.log("Pruning deleted team:", team.id(), team.callsign());
-        team.isDeleted(true);
-        self.teams.remove(team);
-        (team.trackableAssets() || []).forEach(a => a?.matchingTeams?.remove?.(team));
-        team.trackableAssets([]);
     };
 
 
@@ -1735,7 +1719,6 @@ function VM() {
 
         // Defer execution to avoid blocking UI thread
         setTimeout(() => {
-            if (team.isDeleted()) return; // pruned while this was queued
             const all = self.trackableAssets?.() || [];
             const desired = computeMatchedAssetsForTeam(team, all); // Set<Asset>
 
@@ -2537,9 +2520,9 @@ function VM() {
                 cb(false);
             }
         } catch (err) {
-            // Beacon no longer has this team at all -- same outcome as IsDeleted.
-            const team = err?.status === 404 ? self.teamsById.get(teamId) : null;
-            if (team) self._pruneDeletedTeam(team);
+            // Beacon no longer has this team -- same outcome as IsDeleted, and
+            // a later payload clears it if the team is restored.
+            if (err?.status === 404) self.teamsById.get(teamId)?.isDeleted(true);
             cb(false);
         }
     }
