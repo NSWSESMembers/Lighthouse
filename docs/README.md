@@ -20,8 +20,8 @@ There are two copies of each, one per release channel:
 | `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/guides/stats/`, `/preview/guides/summary/`, `/preview/guides/export/`, `/preview/guides/nitc/`, `/preview/whats-new/`, `/preview/privacy/` |
 
 Both copies come from the same files, so you only ever write the docs once. A
-change shows up in the preview copy when it merges to `master-dev`, and in the
-stable copy when `master-dev` is released to `master`, the same as the code.
+change shows up in each copy when that channel's build is published to the
+Chrome Web Store, the same as the code.
 Preview pages have a banner linking to the stable page, and aren't indexed by
 search engines.
 
@@ -31,16 +31,20 @@ never change, so links in older releases keep working.
 
 ## How it gets published
 
-When a change to either folder lands on `master` or `master-dev`, the
-[Sync Docs to Website](../.github/workflows/sync_website_docs.yml) workflow copies it
+When a build is published to the store
+([Publish Prod](../.github/workflows/publish_prod.yml) or
+[Publish Dev Preview](../.github/workflows/publish_dev.yml)), the
+[Sync Docs to Website](../.github/workflows/sync_website_docs.yml) workflow copies the docs
 into
 [NSWSESMembers/lighthouse.ses.nsw.gov.au](https://github.com/NSWSESMembers/lighthouse.ses.nsw.gov.au):
 `master` into `guides/lad/`, `guides/stats/`, `guides/summary/`, `guides/export/`, `guides/nitc/`, `whats-new/` and `privacy/`, `master-dev` into
 `preview/guides/lad/`, `preview/guides/stats/`, `preview/guides/summary/`, `preview/guides/export/`, `preview/guides/nitc/`, `preview/whats-new/` and `preview/privacy/`. GitHub Pages then builds it with Jekyll. The page layouts
 and styles live in the website repo (`_layouts/`, `assets/site.css`), not here.
 
-So the stable guide only describes features users of the release actually have,
-while Development Preview users can read about what's coming.
+So each guide only describes features users of that build actually have. Merging
+to `master` or `master-dev` publishes no docs until the next store build, and a
+failed store upload doesn't sync either. To publish a docs-only fix without a store
+build, run the Sync Docs to Website workflow by hand on that branch.
 
 Write links to other pages as full `https://lighthouse.ses.nsw.gov.au/guides/lad/...`
 or `.../whats-new/` URLs as usual. The `master-dev` sync rewrites them to the

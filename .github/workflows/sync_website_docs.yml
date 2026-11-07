@@ -1,15 +1,11 @@
 name: Sync Docs to Website
 on:
-  push:
-    # master -> the stable guides (/guides/lad/, /guides/stats/, /guides/summary/, /guides/export/, /guides/nitc/, /whats-new/, /privacy/).
-    # master-dev -> the Development Preview copy (/preview/guides/lad/, ...).
-    branches: [master, master-dev]
-    paths: ['docs/lad/**', 'docs/stats/**', 'docs/summary/**', 'docs/export/**', 'docs/nitc/**', 'docs/whats-new/**', 'docs/privacy/**']
+  # Docs go live with the store build: publish_prod.yml and publish_dev.yml call
+  # this once their upload succeeds.
+  # master -> the stable guides (/guides/lad/, /guides/stats/, /guides/summary/, /guides/export/, /guides/nitc/, /whats-new/, /privacy/).
+  # master-dev -> the Development Preview copy (/preview/guides/lad/, ...).
+  workflow_call:
   workflow_dispatch:
-
-concurrency:
-  group: sync-website-docs
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -18,6 +14,9 @@ jobs:
   sync:
     name: Sync docs to lighthouse.ses.nsw.gov.au
     runs-on: ubuntu-latest
+    concurrency:
+      group: sync-website-docs
+      cancel-in-progress: false
     # WEBSITE_SYNC_TOKEN lives in this environment: master and master-dev only.
     environment: website-sync
     steps:

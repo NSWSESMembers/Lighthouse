@@ -33,3 +33,10 @@ jobs:
           refresh-token: ${{ secrets.CHROMESTORE_REFRESH_TOKEN }}
           publish: true
           glob: true
+
+  # The preview docs go live with the store build, from the same commit.
+  sync-docs:
+    name: Sync preview docs
+    needs: lintandpublish
+    uses: ./.github/workflows/sync_website_docs.yml
+    secrets: inherit
