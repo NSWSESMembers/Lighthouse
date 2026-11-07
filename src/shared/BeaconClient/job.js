@@ -1,4 +1,5 @@
 import { request, requestPaginated } from './core/request.js';
+import { PAGING_PARAMS_LENGTH, splitQueryParts } from './core/queryBatches.js';
 
 /**
  * Job search over a date range.
@@ -93,20 +94,30 @@ export function get(id, ctx = {}) {
 }
 
 /**
- * Tasking for one job id or a batch of them.
+ * Tasking for one job id or a batch of them. A long list of ids is split into
+ * as many requests as Beacon's query string limit needs (about 180 jobs per
+ * request); onProgress and onPage then report per request.
  *
  * @param {string|number|Array} ids
  * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
  *          onProgress?: Function, onPage?: Function}} ctx
  * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export function getTasking(ids, ctx = {}) {
+export async function getTasking(ids, ctx = {}) {
   const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
   const idArr = Array.isArray(ids) ? ids : [ids];
   const fnName = Array.isArray(ids) ? 'GetBulkJobTaskingFromBeacon' : 'GetJobTaskingFromBeacon';
-  const jobIdsParam = idArr.map((jid) => 'JobIds%5B%5D=' + encodeURIComponent(jid)).join('&');
-  const url = host + '/Api/v1/Tasking/Search?LighthouseFunction=' + fnName + '&userId=' + userId + '&' + jobIdsParam;
-  return requestPaginated(url, { token, signal, pageSize: 100, onProgress, onPage });
+  const fixedQuery = 'LighthouseFunction=' + fnName + '&userId=' + userId + '&';
+  const parts = idArr.map((jid) => 'JobIds%5B%5D=' + encodeURIComponent(jid) + '&');
+  const batches = splitQueryParts(parts, fixedQuery.length + PAGING_PARAMS_LENGTH);
+
+  const pages = await Promise.all(
+    batches.map((batch) =>
+      requestPaginated(host + '/Api/v1/Tasking/Search?' + fixedQuery + batch.join('').slice(0, -1), { token, signal, pageSize: 100, onProgress, onPage }),
+    ),
+  );
+  const results = pages.flatMap((p) => p.results);
+  return { results, totalItems: results.length };
 }
 
 /**

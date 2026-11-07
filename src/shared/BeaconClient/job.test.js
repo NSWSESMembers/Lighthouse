@@ -91,6 +91,30 @@ describe('getTasking', () => {
     expect(url).toContain('LighthouseFunction=GetBulkJobTaskingFromBeacon');
     expect(url).toContain('JobIds%5B%5D=job1&JobIds%5B%5D=job2');
   });
+
+  it('sends a short list in one request', async () => {
+    await getTasking(Array.from({ length: 100 }, (_, i) => 10000000 + i), ctx);
+    expect(vi.mocked(requestPaginated)).toHaveBeenCalledTimes(1);
+  });
+
+  it('splits large job lists so each query string stays under the IIS 4096 limit', async () => {
+    vi.mocked(requestPaginated).mockImplementation(async (url) => ({
+      results: [...url.matchAll(/JobIds%5B%5D=(\d+)/g)].map((m) => ({ JobId: Number(m[1]) })),
+      totalItems: 0,
+    }));
+    const jobIds = Array.from({ length: 500 }, (_, i) => 10000000 + i);
+    const result = await getTasking(jobIds, ctx);
+
+    const urls = vi.mocked(requestPaginated).mock.calls.map(([url]) => url);
+    expect(urls.length).toBeGreaterThan(1);
+    urls.forEach((url) => {
+      const query = url.split('?')[1] + '&PageIndex=9999&PageSize=100';
+      expect(query.length).toBeLessThanOrEqual(4096);
+      expect(query).toContain('LighthouseFunction=GetBulkJobTaskingFromBeacon');
+    });
+    expect(result.results.map((r) => r.JobId)).toEqual(jobIds);
+    expect(result.totalItems).toBe(500);
+  });
 });
 
 describe('getHistory', () => {
