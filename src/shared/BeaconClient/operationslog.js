@@ -1,4 +1,5 @@
 import { request, requestPaginated, toCollection } from './core/request.js';
+import { PAGING_PARAMS_LENGTH, splitQueryParts } from './core/queryBatches.js';
 
 /**
  * Ops Log entries for a job. Limited to 1000 entries; no paging.
@@ -104,10 +105,6 @@ export function searchLog(filters = {}, ctx = {}) {
   return requestPaginated(url, { token, signal, pageSize, pageLimit, onPage });
 }
 
-// Beacon's IIS front end rejects query strings over 4096 chars -- with a 404,
-// not a 413 -- so batched JobIds searches are split to stay under this.
-const MAX_QUERY_LENGTH = 3800;
-
 /**
  * Unresolved "action required" Ops Log entries for a job.
  *
@@ -145,7 +142,7 @@ export async function unresolvedActionsLog(job, ctx = {}) {
  *
  * JobIds use the repeated-key form (`JobIds=1&JobIds=2`) rather than
  * `JobIds[N]` to fit more jobs per request; the ids are split into as many
- * requests as needed to keep each query string under MAX_QUERY_LENGTH (about
+ * requests as needed to keep each query string under Beacon's limit (about
  * 240 jobs per request), and every page of each is fetched.
  *
  * @param {Array<string|number>} jobIds
@@ -168,23 +165,8 @@ export async function unresolvedActionsForJobs(jobIds, dateFrom, ctx = {}) {
     LighthouseFunction: 'GetOperationsLogUnresolvedActions',
     userId: userId,
   });
-  // requestPaginated appends `&PageIndex=N&PageSize=100` to each request.
-  const fixedLength = params.toString().length + '&PageIndex=9999&PageSize=100'.length;
-
-  const batches = [];
-  let batch = [];
-  let length = fixedLength;
-  for (const id of jobIds) {
-    const part = `JobIds=${encodeURIComponent(id)}&`;
-    if (batch.length && length + part.length > MAX_QUERY_LENGTH) {
-      batches.push(batch);
-      batch = [];
-      length = fixedLength;
-    }
-    batch.push(part);
-    length += part.length;
-  }
-  batches.push(batch);
+  const fixedLength = params.toString().length + PAGING_PARAMS_LENGTH;
+  const batches = splitQueryParts(jobIds.map((id) => `JobIds=${encodeURIComponent(id)}&`), fixedLength);
 
   const pages = await Promise.all(
     batches.map((parts) =>

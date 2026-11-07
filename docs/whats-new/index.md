@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Tasking in large events
+
+*7 November 2026*
+
+- **Tasking keeps refreshing in large events.** With more than about 180 incidents showing, the regular tasking refresh could fail without any message, leaving the teams shown on incidents out of date or missing. LAD now splits large refreshes into several smaller requests.
+
 ## New Statistics, Summary and Export pages
 
 *5 November 2026 · [v2026.11.05](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.05)*
