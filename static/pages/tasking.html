@@ -11,8 +11,11 @@
     <div id="tab-paused" class="tab-paused" role="alertdialog" aria-modal="true" aria-labelledby="tab-paused-title" style="display: none" data-bind="visible: tabPaused">
         <div class="tab-paused__card">
             <h2 id="tab-paused-title" class="h5">This tab was paused</h2>
-            <p>LAD stopped updating after 30 minutes in the background, so what's here is out of date. Reload to carry on.</p>
-            <button type="button" class="btn btn-primary" data-bind="click: reloadPage">Reload</button>
+            <p>LAD stopped updating after 30 minutes in the background, so what's here is out of date.</p>
+            <p data-bind="visible: pausedLoginChecking">Checking your Beacon login…</p>
+            <p data-bind="visible: pausedLoginOk">Reload to carry on.</p>
+            <p data-bind="visible: pausedLoginExpired">Your Beacon login for this tab has also expired. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon. You can then reload this tab, or close it.</p>
+            <button type="button" class="btn btn-primary" data-bind="visible: pausedLoginOk, click: reloadPage">Reload</button>
         </div>
     </div>
     <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !tabPaused()">

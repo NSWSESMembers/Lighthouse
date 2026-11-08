@@ -69,6 +69,8 @@ If the connection drops, a banner says so and LAD keeps trying to reconnect. Onc
 
 A LAD tab that has been in the background for 30 minutes pauses: it stops loading data and disconnects Live Updates, so a forgotten tab doesn't keep calling Beacon. When you go back to the tab, it asks you to **Reload**, because what's on screen is out of date. Reloading opens the Configuration screen as usual, with your saved settings. Each tab pauses on its own, and a shorter time in the background changes nothing.
 
+If the tab's Beacon login has also expired while it was in the background, reloading wouldn't work, so instead it asks you to open LAD again from the **Lighthouse** menu in Beacon. After that you can reload the paused tab or close it.
+
 [Asset trails](assets.md) aren't recorded while a tab is paused, so they have a gap for that time.
 
 ## Filter Settings

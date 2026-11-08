@@ -177,7 +177,6 @@ import '../../../styles/pages/darkmode.css';
 
 
 let token = '';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let tokenExp = '';
 
 let resolveTokenReady;
@@ -2997,10 +2996,35 @@ function VM() {
 
     self.tabDormancy = tabDormancy;
     self.tabPaused = ko.observable(false);
+    // 'checking' | 'ok' | 'expired'. A reload starts from the stored token, so
+    // with an expired one it would load nothing; only opening LAD again from
+    // Beacon's Lighthouse menu stores a fresh one.
+    self.pausedLogin = ko.observable('checking');
+    self.pausedLoginChecking = ko.pureComputed(() => self.pausedLogin() === 'checking');
+    self.pausedLoginOk = ko.pureComputed(() => self.pausedLogin() === 'ok');
+    self.pausedLoginExpired = ko.pureComputed(() => self.pausedLogin() === 'expired');
     let dataLoadStarted = false;
 
     self.reloadPage = function () {
         window.location.reload();
+    };
+    const showPausedLoginOk = () => {
+        self.pausedLogin('ok');
+        ko.tasks.runEarly(); // it has to be showing to take focus
+        document.querySelector('#tab-paused button')?.focus();
+    };
+    // Called with each token this page is handed, so a paused tab whose login
+    // had expired offers Reload once a Beacon tab or another Lighthouse page
+    // stores a fresh token.
+    self.recheckPausedLogin = function () {
+        if (self.pausedLoginExpired() && !BeaconToken.nearExpiry(tokenExp)) showPausedLoginOk();
+    };
+    const checkPausedLogin = async () => {
+        // Renewed by now unless the tab was frozen past expiry. One more try:
+        // another tab may have stored a newer token, or a renewal may work.
+        if (BeaconToken.nearExpiry(tokenExp)) await refreshCadenceToken();
+        if (BeaconToken.nearExpiry(tokenExp)) self.pausedLogin('expired');
+        else showPausedLoginOk();
     };
     tabDormancy.onDormant = () => {
         stopBeaconSignalRConnection();
@@ -3024,8 +3048,7 @@ function VM() {
             window.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
         });
         self.tabPaused(true);
-        ko.tasks.runEarly(); // it has to be showing to take focus
-        document.querySelector('#tab-paused button')?.focus();
+        checkPausedLogin();
     };
 
     self.UserPressedSaveOnTheConfigModal = function () {
@@ -4364,6 +4387,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
+            myViewModel?.recheckPausedLogin();
         }
     );
 
