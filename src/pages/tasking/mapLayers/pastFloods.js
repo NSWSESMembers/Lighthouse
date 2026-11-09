@@ -143,6 +143,7 @@ export function registerPastFloodLayers(vm) {
       label,
       menuGroup: "Historical Imagery",
       stack: "ground",
+      defaultOpacity: 70,
       refreshMs: 0, // archived imagery
       visibleByDefault: localStorage.getItem(`ov.${key}`) || false,
       fetchFn: async () => ({}),
