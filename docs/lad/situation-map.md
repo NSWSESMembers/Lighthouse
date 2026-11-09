@@ -124,7 +124,7 @@ Most layers are described by their name. Those that need more explanation:
 
 **Infrastructure**
 
-- **Power Outages (Unplanned)** and **Power Outages (Planned, next 48 hrs)**: current outages from Ausgrid, Endeavour Energy and Essential Energy, refreshed every 5 minutes while the layer is on. Planned outages are only shown if they're under way or start within 48 hours. Ausgrid only gives a location, so its outages have a marker but no shaded area. Single-home outages aren't shown. The details come from each company's public outage map and can lag behind what crews on the ground know. If a company's feed stops updating, its outages stay on the map and the popup says when they were last loaded.
+- **Power Outages (Unplanned)** and **Power Outages (Planned, next 48 hrs)**: current outages from Ausgrid, Endeavour Energy and Essential Energy, refreshed every 5 minutes while the layer is on. Planned outages are only shown if they're under way or start within 48 hours. Ausgrid only gives a location, so its outages have a marker but no shaded area. Single-home outages and retailer meter changes aren't shown. An estimated restore time that has already passed is marked *overdue*. The details come from each company's public outage map and can lag behind what crews on the ground know. If a company's feed stops updating, its outages stay on the map and the popup says when they were last loaded.
 
 **NSW SES Geoservices**
 

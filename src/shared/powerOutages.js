@@ -63,9 +63,12 @@ export function outageTitle(props) {
  * caller). Empty values are left out.
  * @param {object} props feature properties
  * @param {object} [meta] response meta, to flag a company whose feed is stale
+ * @param {number} [now] current time in ms
  */
-export function outageRows(props, meta) {
+export function outageRows(props, meta, now = Date.now()) {
   const p = props || {};
+  const estRestore = formatOutageTime(p.estRestore);
+  const overdue = estRestore && Date.parse(p.estRestore) < now;
   const rows = [
     ['Customers affected', p.customers != null ? String(p.customers) : ''],
     ['Status', p.status],
@@ -73,7 +76,7 @@ export function outageRows(props, meta) {
     ['Suburbs', p.suburbs],
     ['Streets', p.streets],
     [p.type === 'planned' ? 'Starts' : 'Started', formatOutageTime(p.start)],
-    ['Est. restore', formatOutageTime(p.estRestore)],
+    ['Est. restore', overdue ? `${estRestore} (overdue)` : estRestore],
     ['Updated', formatOutageTime(p.updated)],
     ['Reference', p.id],
   ];

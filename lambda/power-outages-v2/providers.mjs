@@ -51,10 +51,17 @@ function roundCoords(coords) {
 
 const str = (v) => (v == null ? '' : String(v).trim());
 
+// Endeavour sends 1970-01-01 for "no end time yet", so old dates count as blank.
+const EARLIEST_DATE = Date.UTC(2000, 0, 1);
+
 function isoOrNull(v) {
   if (!v) return null;
   const t = Date.parse(v);
-  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+  return Number.isFinite(t) && t >= EARLIEST_DATE ? new Date(t).toISOString() : null;
+}
+
+function sentenceCase(s) {
+  return s ? s[0].toUpperCase() + s.slice(1) : '';
 }
 
 function joinList(v) {
@@ -88,7 +95,7 @@ function normaliseFeature(provider, f) {
       customers: Number.isFinite(Number(f.customers)) && f.customers !== '' && f.customers != null
         ? Number(f.customers)
         : null,
-      cause: str(f.cause),
+      cause: sentenceCase(str(f.cause)),
       suburbs: str(f.suburbs),
       streets: str(f.streets),
       start: isoOrNull(f.start),
@@ -119,10 +126,16 @@ export function isRelevant(props, now = Date.now()) {
 
 const AUSGRID_FINISHED = new Set(['completed', 'cancelled', 'restored']);
 
+// Retailer meter changes: planned, a few homes on one street, and the same kind
+// of job as Endeavour's singlePremise list, which is also left out. Matched on
+// Ausgrid's wording, so if that changes they reappear rather than outages vanish.
+const isAusgridMeterWork = (o) => o.OutageDisplayType === 'P' && /\bmetering\b/i.test(str(o.Cause));
+
 export function parseAusgrid(json) {
   if (!Array.isArray(json)) throw new Error('Ausgrid: expected an array');
   return json
     .filter((o) => !AUSGRID_FINISHED.has(str(o.PowerStatus).toLowerCase()))
+    .filter((o) => !isAusgridMeterWork(o))
     .map((o) =>
       normaliseFeature('ausgrid', {
         id: o.EventId,
@@ -146,6 +159,17 @@ export function parseAusgrid(json) {
 // { areas: [...], singlePremise: [...] }. Only `areas` is used:
 // `singlePremise` is individual homes with their street address.
 
+// Blank causes arrive as the text "None".
+const endeavourCauseText = (v) => (/^none$/i.test(str(v)) ? '' : str(v));
+
+/** "Defective equipment (Wear & Tear)", or just one of them if they match or one is blank. */
+function endeavourCause(o) {
+  const main = endeavourCauseText(o.cause);
+  const sub = endeavourCauseText(o.sub_cause);
+  if (!main || !sub || main === sub) return main || sub;
+  return `${main} (${sub})`;
+}
+
 export function parseEndeavour(json) {
   if (!json || !Array.isArray(json.areas)) throw new Error('Endeavour: expected { areas: [] }');
   return json.areas
@@ -155,12 +179,12 @@ export function parseEndeavour(json) {
         type: str(o.outage_type).toUpperCase() === 'PLANNED' ? 'planned' : 'unplanned',
         status: o.incident_status,
         customers: o.customers_affected,
-        cause: o.cause || o.sub_cause,
+        cause: endeavourCause(o),
         suburbs: joinList(o.cityname_list?.length ? o.cityname_list : o.cityname),
         // street_name is one premise's address, so it is left out.
         streets: '',
         start: o.start_date_time,
-        estRestore: o.end_date_time || o.etr,
+        estRestore: isoOrNull(o.etr) || isoOrNull(o.end_date_time),
         updated: o.materialized_at,
         lat: Number(o.center_lat),
         lng: Number(o.center_lng),

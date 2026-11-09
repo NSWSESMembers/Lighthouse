@@ -50,6 +50,13 @@ describe('outage popup', () => {
     expect(rows.at(-1)).toEqual(['Contact', 'Ausgrid 13 13 88']);
   });
 
+  it('marks a restore estimate that has passed as overdue', () => {
+    const now = Date.parse('2026-11-09T09:00:00.000Z');
+    const row = (estRestore) => outageRows({ ...props, estRestore }, undefined, now).find(([l]) => l === 'Est. restore')[1];
+    expect(row('2026-11-09T08:00:00.000Z')).toMatch(/ \(overdue\)$/);
+    expect(row('2026-11-09T10:00:00.000Z')).not.toMatch(/overdue/);
+  });
+
   it('flags a company whose feed has stopped updating', () => {
     const meta = { providers: { ausgrid: { ok: false, lastGoodAt: null } } };
     expect(outageRows(props, meta)).toContainEqual(['Feed', 'Not updating']);

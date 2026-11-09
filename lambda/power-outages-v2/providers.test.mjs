@@ -165,6 +165,53 @@ describe('parseEndeavour', () => {
   });
 });
 
+describe('cleaning up feed values', () => {
+  const area = {
+    incident_id: 'INC 00000001',
+    outage_type: 'UNPLANNED',
+    incident_status: 'REPAIR',
+    customers_affected: 3,
+    center_lat: -33.8,
+    center_lng: 150.9,
+    polygon_geojson: { type: 'Polygon', coordinates: square(150.9, -33.8) },
+    start_date_time: '2026-11-09T06:00:00+00:00',
+    end_date_time: '1970-01-01T00:00:00+00:00',
+    etr: '2026-11-09 10:00:00+00',
+    cityname: 'EXAMPLETON',
+  };
+  const endeavour = (extra) => parseEndeavour({ areas: [{ ...area, ...extra }] })[0].properties;
+
+  it("uses Endeavour's restore estimate, not its 1970 placeholder end time", () => {
+    expect(endeavour({ cause: 'Other' }).estRestore).toBe('2026-11-09T10:00:00.000Z');
+    expect(endeavour({ etr: '', end_date_time: '1970-01-01T00:00:00+00:00' }).estRestore).toBeNull();
+  });
+
+  it('builds the Endeavour cause, leaving out the text None', () => {
+    expect(endeavour({ cause: 'None', sub_cause: 'None' }).cause).toBe('');
+    expect(endeavour({ cause: 'Defective equipment', sub_cause: 'Wear & Tear' }).cause).toBe('Defective equipment (Wear & Tear)');
+    expect(endeavour({ cause: 'Maintenance Work', sub_cause: 'Maintenance Work' }).cause).toBe('Maintenance Work');
+    expect(endeavour({ cause: 'None', sub_cause: 'Electrical Failure' }).cause).toBe('Electrical Failure');
+  });
+
+  const ausgrid = (extra) => ({
+    EventId: 900010,
+    OutageDisplayType: 'P',
+    PowerStatus: 'ProceedingAsScheduled',
+    MarkerLocation: { lat: -33.2, lng: 151.5 },
+    ...extra,
+  });
+
+  it('capitalises causes', () => {
+    expect(parseAusgrid([ausgrid({ Cause: 'overhead line damage' })])[0].properties.cause).toBe('Overhead line damage');
+  });
+
+  it('leaves out planned meter changes only', () => {
+    const cause = 'supporting an electricity retailer in replacing existing metering at your property';
+    expect(parseAusgrid([ausgrid({ Cause: cause })])).toEqual([]);
+    expect(parseAusgrid([ausgrid({ Cause: cause, OutageDisplayType: 'U' })])).toHaveLength(1);
+  });
+});
+
 describe('parseEssential', () => {
   const out = parseEssential(essentialSample);
 

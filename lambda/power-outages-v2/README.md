@@ -20,7 +20,8 @@ release.** `providers.mjs` says how to find the new URL.
 
 Unplanned outages are always returned. Planned outages are returned only if
 they're under way or start within 48 hours (`PLANNED_WINDOW_HOURS`).
-Endeavour's single-premise outages (individual home addresses) are dropped.
+Endeavour's single-premise outages (individual home addresses) and Ausgrid's
+planned retailer meter changes are dropped.
 
 ## Files
 
