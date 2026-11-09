@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
-import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
+import { beaconSiteEnvironment, blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import BeaconClient from '../../shared/BeaconClient.js';
 import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
@@ -1376,6 +1376,10 @@ function VM() {
         // must be attached to an HQ (Config.js), and the layer list defaults
         // to showing just this HQ's layers, both seeded from this id.
         defaultHqId: params.hq || null,
+        // Production Beacon must always load against at least one HQ.
+        requireHqFilter: beaconSiteEnvironment(params.source) === 'production',
+        // Each Beacon environment keeps its own saved Configuration.
+        beaconEnvironment: beaconSiteEnvironment(params.source),
         // Collaborative-layer actions (create/delete layer) are attributed
         // (for display/audit only) using the same identity as every
         // marker/comment op on that layer (markerActorId, i.e.
@@ -4760,7 +4764,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // above. Fires on the initial on-load modal too, so nothing connects
         // until the user dismisses it.
         configModalEl.addEventListener('hidden.bs.modal', reconcileSignalRToConfig);
-        bootstrap.Modal.getOrCreateInstance(configModalEl).show();
+        const configModal = bootstrap.Modal.getOrCreateInstance(configModalEl);
+        // Esc mustn't get past a headquarters Production Beacon still needs.
+        // Close and the X are stopped by saveAndCloseAndLoad; hide.bs.modal
+        // can't be used, as Restore Defaults has to hide it too.
+        ko.computed(() => { configModal._config.keyboard = !myViewModel.config.hqFilterMissing(); });
+        configModal.show();
 
         // reveal the page now that bindings are applied and the modal is open,
         // so we don't flash unbound placeholder content beforehand

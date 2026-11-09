@@ -1887,8 +1887,7 @@
                                                         </div>
                                                         <div data-bind="if: config.teamFilters().length === 0">
                                                             <div class="card-body py-2 selected-box">
-                                                                <span class="text-muted small">No Filters Applied - Teams from all units will be
-                                                                    fetched</span>
+                                                                <span class="text-muted small" data-bind="text: config.teamsEmptyHint"></span>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.teamFilters().length > 0">
@@ -1924,8 +1923,7 @@
                                                         </div>
                                                         <div data-bind="if: config.incidentFilters().length === 0">
                                                             <div class="card-body py-2 selected-box">
-                                                                <span class="text-muted small">No Filters Applied - Incidents from all units
-                                                                    will be fetched</span>
+                                                                <span class="text-muted small" data-bind="text: config.incidentsEmptyHint"></span>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.incidentFilters().length > 0">
@@ -3651,7 +3649,7 @@
                         </div>
 
                         <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
-                            data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
+                            data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading() || config.hqFilterMissing()">
                             <span data-bind="visible: !pageIsLoading">Close</span>
                             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
                                 data-bind="visible: pageIsLoading"></span>
