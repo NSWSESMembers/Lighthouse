@@ -166,7 +166,7 @@ It lists every map layer: incident markers, asset markers, routes and measuring,
 
 - **Turn it on or off** with the switch. This is the same as its toggle in the **Layers** menu. Layers on the map are marked **On map**; the rest are marked **Off** and greyed out. Incident and asset markers, and routes and measuring, are always listed as on; hide incidents and assets from the **Layers** menu as before.
 - **Move it** by dragging the grip on the left, or with the up and down arrows (easier in a long list).
-- **Make it see-through** with the slider, from 100% (solid) down to 10%. Layers start at 100%, except **BOM Rain Radar Still** and **BOM Severe Thunderstorm Cells**, which start at 50%, and **RainViewer Animated Rainfall Radar**, **BOM Severe Thunderstorm Warning** and **BOM Sea Surface Temperature (°C)**, which start at 60%, and **Elevation (Height Above Sea Level)**, **Hillshade** and **Steepness**, which start at 70%, so roads and boundaries show through them.
+- **Make it see-through** with the slider, from 100% (solid) down to 10%. Layers start at 100%, except **BOM Rain Radar Still** and **BOM Severe Thunderstorm Cells**, which start at 50%, and **RainViewer Animated Rainfall Radar**, **BOM Severe Thunderstorm Warning** and **BOM Sea Surface Temperature (°C)**, which start at 60%, and **Elevation (Height Above Sea Level)**, **Hillshade**, **Steepness** and the **Historical Imagery** layers, which start at 70%, so roads and boundaries show through them.
 
 Order and transparency are remembered for layers that are off, and apply when you turn them on. **Reset** puts every layer back in its default position and transparency. By default, from top to bottom:
 
