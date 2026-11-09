@@ -90,6 +90,7 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 | **SES Units** | SES logo at each unit headquarters | The unit's status (Monitoring, Not Monitoring or Unavailable), its active teams and incidents, SRB accreditations and contacts |
 | **EPA Contamination Sites** | Red dot | Site name, address, activity type and management class |
 | **NSW Declared Dams** | Blue dot | Dam name, place, owner and declared status |
+| **Power Outages (Unplanned)** and **(Planned, next 48 hrs)** | Red lightning bolt (unplanned) or blue (planned), with the outage area shaded in the same colour where the company maps it | The power company, customers affected, status, cause, suburbs (and streets for Ausgrid), when it started or starts, the estimated restore time and the company's faults number |
 
 **Transport NSW Incidents** shows both incidents managed by Transport NSW and road closures and hazards reported by local councils. Council reports are often regional road closures, such as flooded causeways, that don't appear as Transport NSW incidents. Council roadworks are left out. Where Transport NSW maps the affected stretch of road or area, it's drawn as a coloured line or shaded area, coloured as on Live Traffic NSW: blue for flooding and weather, dark red for fire and heavy impact, orange for moderate and grey for low impact. Click a line or area for the same details.
 
@@ -120,6 +121,10 @@ Most layers are described by their name. Those that need more explanation:
 **Assets**
 
 - **Matched against Teams** and **Unmatched against Teams**: radios and satellite trackers, split by whether they're matched to a team. See [Asset Layers](assets.md#asset-layers).
+
+**Infrastructure**
+
+- **Power Outages (Unplanned)** and **Power Outages (Planned, next 48 hrs)**: current outages from Ausgrid, Endeavour Energy and Essential Energy, refreshed every 5 minutes while the layer is on. Planned outages are only shown if they're under way or start within 48 hours. Ausgrid only gives a location, so its outages have a marker but no shaded area. Single-home outages aren't shown. The details come from each company's public outage map and can lag behind what crews on the ground know. If a company's feed stops updating, its outages stay on the map and the popup says when they were last loaded.
 
 **NSW SES Geoservices**
 

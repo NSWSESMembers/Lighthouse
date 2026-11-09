@@ -69,6 +69,7 @@ then throws it away. It doesn't keep the token.
 | Sharing a LAD configuration | Your LAD settings and filters (for example selected HQs, filters, pinned teams and incidents) | The settings, under a share key, so others with the key can load them. |
 | Default assets for teams | A team id and the asset id chosen for it | The pairing, so other users see the same default. Old entries expire automatically. |
 | Collaborative map layers | Layer names, markers and comments you add, the HQ or event a layer is attached to, the moderators you choose, and your Beacon member id as the author | The layer and its markers, so other users at your organisation can see them. Deleted layers and markers are hidden but kept, so they can be recovered. |
+| Power outages | Nothing beyond the request itself | Nothing about you. The backend downloads the outage feeds of Ausgrid, Endeavour Energy and Essential Energy and keeps the latest copy for a few minutes, so everyone's map shares one download. |
 | MyAvailability activation summaries | An activation id or unit name | Nothing. The backend reads the response counts and member names from MyAvailability and returns them. |
 
 For security and troubleshooting, the backend logs which feature was used, when,
@@ -117,7 +118,6 @@ To show public information on its maps, Lighthouse downloads data from:
 
 - NSW Rural Fire Service and Fires Near Me (fire incidents)
 - Transport for NSW and Live Traffic NSW (traffic incidents and cameras)
-- Ausgrid, Endeavour Energy and Essential Energy (power outages)
 - Hazard Watch (NSW SES warnings)
 - Bureau of Meteorology (via Esri ArcGIS), RainViewer and WaterNSW (weather, radar, rivers and dams)
 - NSW Spatial Services and Esri ArcGIS (base maps, imagery and boundaries)

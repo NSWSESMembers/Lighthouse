@@ -1,9 +1,8 @@
 // This background script is initialised and executed once and exists
 // separate to all other pages.
 
-var tj = require('@tmcw/togeojson');
-var DOMParser = require('@xmldom/xmldom').DOMParser;
 import { installSharedSelection, SHARE_ACCESS_MESSAGE } from './shared/cadenceSimulationShare.js';
+import { fetchPowerOutages } from './shared/powerOutages.js';
 
 // CADence simulated exercises: lets Beacon pages read the exercise chosen on
 // the CADence Simulated Exercise page (shared/cadenceSimulationShare.js).
@@ -35,11 +34,13 @@ const rfsMajorIncidentsFeed =
 const transportFeed = 'https://api.transport.nsw.gov.au/';
 const openSkyFeed = 'https://opensky-network.org/api/states/all';
 const adsbFeed = "https://api.adsb.lol/v2/hex/"
-const essentialEnergyOutagesFeed =
-  'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
-const endeavourEnergyOutagesFeed =
-  'https://www.endeavourenergy.com.au/designs/connectors/outage-feeds/get-current-outage';
-const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
+// Lighthouse map layer -> power company it shows (null = all of them)
+const POWER_OUTAGE_LAYERS = {
+  'power-outages': null,
+  'power-outages-ausgrid': 'ausgrid',
+  'power-outages-endeavour': 'endeavour',
+  'power-outages-essential': 'essential',
+};
 const hazardWatchTrainingUrl = 'https://training.hazardwatch.gov.au/feed/v1/nswses-cap-au-active-warnings.geojson';
 const hazardWatchUrl = 'https://hazardwatch.gov.au/feed/v1/nswses-cap-au-active-warnings.geojson ';
 
@@ -151,23 +152,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse(data);
     });
     return true;
-  } else if (request.type === 'power-outages') {
-    fetchPowerOutages(function (data) {
-      sendResponse(data);
-    });
-    return true;
-  } else if (request.type === 'power-outages-ausgrid') {
-    fetchAusgridOutages(function (data) {
-      sendResponse(data);
-    });
-    return true;
-  } else if (request.type === 'power-outages-endeavour') {
-    fetchEndeavourEnergyOutages(function (data) {
-      sendResponse(data);
-    });
-    return true;
-  } else if (request.type === 'power-outages-essential') {
-    fetchEssentialEnergyOutages(function (data) {
+  } else if (Object.hasOwn(POWER_OUTAGE_LAYERS, request.type)) {
+    fetchPowerOutagesFromLambda(request.params?.token, POWER_OUTAGE_LAYERS[request.type], function (data) {
       sendResponse(data);
     });
     return true;
@@ -438,282 +424,28 @@ function fetchTrainingHazardWatch(callback) {
 }
 
 /**
- * Fetches the current power outage details.
+ * Fetches the current power outages from the power-outages Lambda, which
+ * collects and caches the Ausgrid, Endeavour Energy and Essential Energy
+ * feeds (lambda/power-outages-v2).
  *
- * @param callback the callback to send the data to.
+ * @param token the Beacon access token.
+ * @param provider 'ausgrid' | 'endeavour' | 'essential' to keep one company, or null for all.
+ * @param callback the callback to send the GeoJSON (or { error, httpCode }) to.
  */
-function fetchPowerOutages(callback) {
-  console.info('fetching power outage locations');
-  var finalData = {};
-
-  fetchEssentialEnergyOutages(function (essentialEnergyData) {
-    finalData.essential = essentialEnergyData;
-    merge('EssentialEnergy');
-  });
-
-  fetchEndeavourEnergyOutages(function (endeavourEnergyData) {
-    finalData.endeavour = endeavourEnergyData;
-    merge('EndeavourEnergy');
-  });
-
-  fetchAusgridOutages(function (AusgridData) {
-    finalData.ausgrid = AusgridData;
-    merge('Ausgrid');
-  });
-
-  function merge(name) {
-    console.log(
-      name + ' is back,' + 'checking if all power outage data is back',
-    );
-    if (finalData.essential && finalData.endeavour && finalData.ausgrid) {
-      console.log('merging all power outages');
-      var merged = {};
-      merged.features = [];
-      //if you just push you end up with an array of the array not a merged array like you might want.
-      merged.features.push.apply(merged.features, finalData.essential.features);
-      merged.features.push.apply(merged.features, finalData.endeavour.features);
-      merged.features.push.apply(merged.features, finalData.ausgrid.features);
-      callback(merged);
-    } else {
-      console.log('missing some power outage data');
-    }
+function fetchPowerOutagesFromLambda(token, provider, callback) {
+  if (!token) {
+    callback({ error: 'No Beacon token', httpCode: 'error' });
+    return;
   }
-}
-
-/**
- * Fetches the current power outages for Ausgrid.
- *
- * @param callback the callback to send the data to.
- */
-function fetchAusgridOutages(callback) {
-  console.info('fetching ausgrid power outage locations');
-
-
-  fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetCurrentUnplannedOutageMarkersAndPolygons?bottomleft.lat=-33.45170&bottomleft.lng=148.76319&topright.lat=-32.56033&topright.lng=153.66859&zoom=9`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    }
-  }).then((resp) => {
-    if (resp.ok) {
-      resp.json().then((result) => {
-        let ausgridGeoJson = {
-          type: 'FeatureCollection',
-          features: [],
-        };
-
-        result.forEach(function (item) {
-          //build up some geojson from normal JSON
-          var feature = {};
-          feature.geometry = {};
-          feature.geometry.type = 'GeometryCollection';
-          feature.geometry.geometries = [];
-
-          //make a polygon from each set
-          var polygon = {};
-          polygon.type = 'Polygon';
-          polygon.coordinates = [];
-
-          var ords = [];
-          if (item.Polygons.length > 0) {
-            item.Polygons[0].Coords.forEach(function (point) {
-              ords.push([point.lng, point.lat]);
-            });
-            ords.push([
-              item.Polygons[0].Coords[0].lng,
-              item.Polygons[0].Coords[0].lat,
-            ]); //push the first item again at the end to complete the polygon
-          }
-
-          polygon.coordinates.push(ords);
-
-          feature.geometry.geometries.push(polygon);
-
-          var point = {};
-          point.type = 'Point';
-          point.coordinates = [];
-          point.coordinates.push(
-            item.MarkerLocation.lng,
-            item.MarkerLocation.lat,
-          );
-
-          feature.geometry.geometries.push(point);
-
-          feature.owner = 'Ausgrid';
-          feature.type = 'Feature';
-          feature.properties = {};
-          feature.properties.numberCustomerAffected = item.CustomersAffectedText;
-          feature.properties.incidentId = item.WebId;
-          feature.properties.reason = item.Cause;
-          feature.properties.status = item.Status;
-          feature.properties.type = 'Outage';
-          feature.properties.startDateTime = item.StartDateTime;
-          feature.properties.endDateTime = item.EstRestTime;
-
-          ausgridGeoJson.features.push(feature);
-
-        });
-        callback(ausgridGeoJson);
-      })
-    } else {
-      // error
-      var response = {
-        error: 'Request failed',
-        httpCode: 'error',
-      };
-      callback(response);
-    }
-  }).catch(() => {
-    // error
-    var response = {
-      error: 'Request failed',
-      httpCode: 'error',
-    };
-    callback(response);
-  })
-}
-
-/**
- * Fetche Ausgrid power outage detail.
- * @param webId web ID
- * @param type OutageDisplayType
- * @param callback the callback to send the data to.
- */
-// function fetchAusgridOutage(id, type, callback) {
-//   console.info('fetching ausgrid power outage detail');
-
-//   fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetOutage`, {
-//     method: "POST",
-//     headers: {
-//         "Content-Type": "application/json",
-//       },
-//     body: JSON.stringify({WebId:id,OutageDisplayType: type})
-//   }).then((resp) => {
-//     if (resp.ok) {
-//       resp.json().then((json) => {
-//         callback(json)
-//       })
-//     } else {
-//         // error
-//         var response = {
-//           error: 'Request failed',
-//           httpCode: 'error',
-//         };
-//         callback(response);
-//     }
-// }).catch(() => {
-//     // error
-//     var response = {
-//         error: 'Request failed',
-//         httpCode: 'error',
-//       };
-//       callback(response);
-// })
-// }
-
-/**
- * Fetches the current power outages for Endeavour Energy.
- *
- * @param callback the callback to send the geoJSON data to.
- */
-function fetchEndeavourEnergyOutages(callback) {
-  console.info('fetching endeavour energy power outage locations');
-
-  fetch(endeavourEnergyOutagesFeed)
-    .then((resp) => {
-      if (resp.ok) {
-        resp.json().then((json) => {
-          let endeavourGeoJson = {
-            type: 'FeatureCollection',
-            features: [],
-          };
-          // Convert the feed to geoJSON
-          for (var i = 0; i < json.length; i++) {
-            var incident = json[i];
-            if (
-              new Date() / 1000 - Date.parse(incident.startDateTime) / 1000 <
-              30 * 24 * 60
-            ) {
-              //30 days ago only
-              var feature = {
-                type: 'Feature',
-                owner: 'EndeavourEnergy',
-                geometry: {
-                  type: 'Point',
-                  coordinates: [incident.longitude, incident.latitude],
-                },
-                properties: {
-                  creationDateTime: incident.creationDateTime,
-                  endDateTime: incident.endDateTime,
-                  incidentId: incident.incidentId,
-                  numberCustomerAffected: incident.numberCustomerAffected,
-                  outageType: incident.outageType,
-                  postcode: incident.postcode,
-                  reason: incident.reason,
-                  startDateTime: incident.startDateTime,
-                  status: incident.status,
-                  streetName: incident.streetName,
-                  suburb: incident.suburb,
-                },
-              };
-
-              endeavourGeoJson.features.push(feature);
-            }
-          }
-          callback(endeavourGeoJson);
-        });
-      } else {
-        // error
-        var response = {
-          error: 'Request failed',
-          httpCode: 'error',
-        };
-        callback(response);
-      }
+  fetchPowerOutages(token)
+    .then((body) => {
+      const features = provider
+        ? body.features.filter((f) => f.properties?.provider === provider)
+        : body.features;
+      callback({ ...body, features });
     })
-    .catch(() => {
-      // error
-      var response = {
-        error: 'Request failed',
-        httpCode: 'error',
-      };
-      callback(response);
-    });
-}
-
-/**
- * Fetches the current power outages for Essential Energy.
- *
- * @param callback the callback to send the geoJSON data to.
- */
-function fetchEssentialEnergyOutages(callback) {
-  console.info('fetching essential energy power outage locations');
-  fetch(essentialEnergyOutagesFeed)
-    .then((resp) => {
-      if (resp.ok) {
-        resp.text().then((txt) => {
-          const kml = new DOMParser().parseFromString(txt, 'utf8');
-          var essentialGeoJson = tj.kml(kml);
-          for (var i = 0; i < essentialGeoJson.features.length; i++) {
-            essentialGeoJson.features[i].owner = 'EssentialEnergy';
-          }
-          callback(essentialGeoJson);
-        });
-      } else {
-        // error
-        var response = {
-          error: 'Request failed',
-          httpCode: 'error',
-        };
-        callback(response);
-      }
-    })
-    .catch(() => {
-      // error
-      var response = {
-        error: 'Request failed',
-        httpCode: 'error',
-      };
-      callback(response);
+    .catch((err) => {
+      console.warn('power outages fetch failed', err);
+      callback({ error: err?.message || 'Request failed', httpCode: 'error' });
     });
 }
