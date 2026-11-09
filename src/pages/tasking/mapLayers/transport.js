@@ -12,7 +12,7 @@ import { escapeHtml, httpUrl, sanitizeFeedHtml } from "../../../shared/feedHtml.
 export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params) {
   vm.mapVM.registerPollingLayer("transport-cameras", {
     label: "Transport NSW Cameras",
-    menuGroup: "Transport NSW",
+    menuGroup: "Infrastructure",
     refreshMs: 3600000, // 1 hr poll. the cameras list doesnt change and the images auto-refresh
     visibleByDefault: localStorage.getItem(`ov.transport-cameras`) || false,
     fetchFn: async () => {
@@ -65,7 +65,7 @@ export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params
 export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, params) {
   vm.mapVM.registerPollingLayer("transport-incidents", {
     label: "Transport NSW Incidents",
-    menuGroup: "Transport NSW",
+    menuGroup: "Infrastructure",
     refreshMs: 600000, // 10 mins poll
     visibleByDefault: localStorage.getItem("ov.transport-incidents") || false,
     fetchFn: async () => {

@@ -5691,6 +5691,37 @@ body.dark-mode .ops-log-status-details {
   opacity: 1;
 }
 
+.height-key {
+  width: 200px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  border-radius: 8px;
+  font-size: 10px;
+}
+.height-key-title {
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.height-key-bar {
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+.height-key-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1px;
+}
+.height-key-stepped .height-key-ticks span {
+  flex: 1;
+  text-align: center;
+}
+.dark-mode .height-key {
+  background: rgba(38, 38, 38, 0.92);
+  color: #ddd;
+}
+
 .dark-mode .rv-control {
   color: #ddd;
 }
