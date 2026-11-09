@@ -1280,12 +1280,13 @@ function addAircraftMarker(
   mapLayer.addMarker(lat, lon, marker, name, details);
 }
 
-// Lighthouse map layer -> power company it shows (null = all of them)
+// Lighthouse map layer -> the outage properties it shows
 const POWER_OUTAGE_LAYERS = {
-  'power-outages': null,
-  'power-outages-ausgrid': 'ausgrid',
-  'power-outages-endeavour': 'endeavour',
-  'power-outages-essential': 'essential',
+  'power-outages-unplanned': { type: 'unplanned' },
+  'power-outages-planned': { type: 'planned' },
+  'power-outages-ausgrid': { provider: 'ausgrid' },
+  'power-outages-endeavour': { provider: 'endeavour' },
+  'power-outages-essential': { provider: 'essential' },
 };
 // Bumped when a layer is cleared, so a fetch that finishes after the layer
 // was turned off is dropped.
@@ -1299,13 +1300,13 @@ const powerOutageLoads = {};
  */
 function loadPowerOutages(lighthouseMap, layerName) {
   if (!Object.hasOwn(POWER_OUTAGE_LAYERS, layerName)) return;
-  const provider = POWER_OUTAGE_LAYERS[layerName];
+  const wanted = Object.entries(POWER_OUTAGE_LAYERS[layerName]);
   const load = (powerOutageLoads[layerName] || 0) + 1;
   powerOutageLoads[layerName] = load;
   fetchPowerOutages(window.user?.accessToken)
     .then((body) => {
       if (powerOutageLoads[layerName] !== load) return;
-      const features = provider ? body.features.filter((f) => f.properties?.provider === provider) : body.features;
+      const features = body.features.filter((f) => wanted.every(([key, value]) => f.properties?.[key] === value));
       const mapLayer = lighthouseMap.layers()[layerName];
       mapLayer.clear();
       showPowerOutages(mapLayer, { ...body, features });
@@ -1996,7 +1997,8 @@ export default class InjectScriptMapManager {
 
     lighthouseMap.createLayer('rfs', 2);
 
-    lighthouseMap.createLayer('power-outages', 2);
+    lighthouseMap.createLayer('power-outages-unplanned', 2);
+    lighthouseMap.createLayer('power-outages-planned', 2);
     lighthouseMap.createLayer('power-outages-ausgrid', 2);
     lighthouseMap.createLayer('power-outages-endeavour', 2);
     lighthouseMap.createLayer('power-outages-essential', 2);
@@ -2237,7 +2239,8 @@ ${rows.join('\r')}
       'toggleHelicoptersBtn',
       'toggleAdsbBtn',
       'togglelhqsBtn',
-      'togglePowerOutagesBtn',
+      'togglePowerOutagesUnplannedBtn',
+      'togglePowerOutagesPlannedBtn',
       'toggleBoundaryAusgridBtn',
       'toggleBoundaryEndeavourBtn',
       'toggleBoundaryEssentialBtn',

@@ -30,6 +30,8 @@ const rmsIcon = chrome.runtime.getURL('icons/rms.png');
 const rfscorpIcon = chrome.runtime.getURL('icons/rfs.png');
 const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
 
+const powerUnplannedIcon = chrome.runtime.getURL('icons/power_outage.png');
+const powerPlannedIcon = chrome.runtime.getURL('icons/power_planned.png');
 const ausgridIcon = chrome.runtime.getURL('icons/ausgrid.png');
 const endeavourIcon = chrome.runtime.getURL('icons/endeavour.png');
 const essentialIcon = chrome.runtime.getURL('icons/essential.png');
@@ -207,9 +209,13 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             </a>
             <ul class="sub-sub-menu">
             <li class="clearfix">
-            <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-            <span class="tag-text"> All Power Outages</span>
+            <span id="togglePowerOutagesUnplannedBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={powerUnplannedIcon} />
+            <span class="tag-text">Unplanned Power Outages</span>
+            </span>
+            <span id="togglePowerOutagesPlannedBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={powerPlannedIcon} />
+            <span class="tag-text">Planned Power Outages (next 48 hrs)</span>
             </span>
             </li>
             <li class="clearfix">
@@ -268,7 +274,8 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
         this._registerClickHandler('toggleSesTeamsBtn', 'ses-teams', this._requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
         this._registerClickHandler('toggleSesFilteredAssetsBtn', 'ses-assets-filtered', this._requestSesFilteredAssets, 60000); // every 1 minutes
         //this._registerClickHandler('toggleHazardWatchBtn', 'hazard-watch', this._requestHazardWatchLayerUpdate, 5 * 60000); // every 5 minutes
-        this._registerClickHandler('togglePowerOutagesBtn', 'power-outages', this._requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
+        this._registerClickHandler('togglePowerOutagesUnplannedBtn', 'power-outages-unplanned', this._requestUnplannedPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
+        this._registerClickHandler('togglePowerOutagesPlannedBtn', 'power-outages-planned', this._requestPlannedPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('togglelhqsBtn', 'lhqs', this._requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
         this._registerClickHandler('toggleBoundaryAusgridBtn', 'power-boundary-ausgrid', this._requestAusgridBoundaryOutageLayerUpdate, 5 * 60000); // every 60 mins
@@ -492,15 +499,19 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
         this._fetchTransportResource('transport-cameras');
     }
 
-    _requestPowerOutagesLayerUpdate() {
-        this._requestPowerOutages('power-outages')
+    _requestUnplannedPowerOutagesLayerUpdate() {
+        this._requestPowerOutages('power-outages-unplanned')
+    }
+
+    _requestPlannedPowerOutagesLayerUpdate() {
+        this._requestPowerOutages('power-outages-planned')
     }
 
     /**
      * Power outages come from the Lighthouse power-outages Lambda, which checks
      * the Beacon token, so the injected script (which has the token) fetches
      * and draws them itself.
-     * @param layer 'power-outages' or 'power-outages-<ausgrid|endeavour|essential>'
+     * @param layer 'power-outages-<unplanned|planned|ausgrid|endeavour|essential>'
      */
     _requestPowerOutages(layer) {
         window.postMessage({ type: 'LH_LOAD_POWER_OUTAGES', layer: layer }, '*');

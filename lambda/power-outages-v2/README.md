@@ -38,7 +38,7 @@ runtime, and it's loaded lazily so the tests run without it.
 Set up like the other `lad_v2` Lambdas (`geocode-v2`, `default-assets-v2` and
 so on), in `ap-southeast-2`.
 
-1. **Lambda function**: create `LH-PowerOutagesV2` (or your naming), runtime
+1. **Lambda function**: create `LH-PowerOutagesv2`, runtime
    **Node.js 22.x**, handler `index.handler`. Add `index.mjs` and
    `providers.mjs` (paste both into the console editor, or zip the two files).
 2. **Configuration**:

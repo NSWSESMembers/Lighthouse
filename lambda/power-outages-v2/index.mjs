@@ -26,6 +26,7 @@
  *   FETCH_TIMEOUT_MS   per company, default 6000
  */
 
+import { gzipSync } from 'node:zlib';
 import { PROVIDERS, isRelevant } from './providers.mjs';
 
 const BUCKET = process.env.BUCKET_NAME || '';
@@ -186,12 +187,18 @@ export const handler = async (event) => {
   console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'power-outages-v2', userId }));
 
   try {
-    const body = toResponseBody(await getState());
-    return {
-      statusCode: 200,
-      headers: { ...corsHeaders, 'cache-control': 'private, max-age=60' },
-      body: JSON.stringify(body),
-    };
+    const body = JSON.stringify(toResponseBody(await getState()));
+    const headers = { ...corsHeaders, 'cache-control': 'private, max-age=60', vary: 'accept-encoding' };
+    // CloudFront can't compress this route (its cache policy is CachingDisabled).
+    if (/\bgzip\b/i.test(event?.headers?.['accept-encoding'] || '')) {
+      return {
+        statusCode: 200,
+        headers: { ...headers, 'content-encoding': 'gzip' },
+        isBase64Encoded: true,
+        body: gzipSync(body).toString('base64'),
+      };
+    }
+    return { statusCode: 200, headers, body };
   } catch (err) {
     console.error(JSON.stringify({ msg: 'power_outages_failed', fn: 'power-outages-v2', error: err?.message || String(err) }));
     return { statusCode: 502, headers: corsHeaders, body: JSON.stringify({ error: 'Could not load power outages' }) };

@@ -24,9 +24,26 @@ function loadShared(getToken) {
 }
 
 const STYLE = {
-  unplanned: { colour: "#c62828", icon: "/icons/power_outage.png" },
-  planned: { colour: "#1a7bbf", icon: "/icons/power_planned.png" },
+  unplanned: { colour: "#c62828", iconFill: "#ffd21f", iconBolt: "#1f1f1f" },
+  planned: { colour: "#1a7bbf", iconFill: "#ffffff", iconBolt: "#1a7bbf" },
 };
+
+// An electrical warning triangle, centred on the outage.
+function outageIcon({ colour, iconFill, iconBolt }) {
+  const triangle = "M14 3.5 25.5 23H2.5Z";
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="26" viewBox="0 0 28 26">` +
+    `<path d="${triangle}" fill="#fff" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>` +
+    `<path d="${triangle}" fill="${iconFill}" stroke="${colour}" stroke-width="2.4" stroke-linejoin="round"/>` +
+    `<path d="M15 9 10 16.4h3.2l-.9 4.8 5.7-7.3h-3.4z" fill="${iconBolt}"/>` +
+    `</svg>`;
+  return L.icon({
+    iconUrl: `data:image/svg+xml,${encodeURIComponent(svg)}`,
+    iconSize: [28, 26],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -12],
+  });
+}
 
 function popupHtml(props, meta) {
   const rows = outageRows(props, meta)
@@ -40,6 +57,7 @@ function registerOutageLayer(vm, getToken, key, type, label) {
     label,
     menuGroup: "Infrastructure",
     refreshMs: REFRESH_MS,
+    stackAbove: "powerBoundaries",
     visibleByDefault: localStorage.getItem(`ov.${key}`) || false,
     fetchFn: async () => {
       const body = await loadShared(getToken);
@@ -57,6 +75,7 @@ function registerOutageLayer(vm, getToken, key, type, label) {
     drawFn: (layerGroup, data) => {
       if (!data) return;
       const style = STYLE[type];
+      const icon = outageIcon(style);
       for (const f of data.features) {
         const p = f.properties;
         const html = popupHtml(p, data.meta);
@@ -74,7 +93,7 @@ function registerOutageLayer(vm, getToken, key, type, label) {
           L.marker([p.lat, p.lng], {
             pane: "pane-middle",
             title: outageTitle(p),
-            icon: L.icon({ iconUrl: style.icon, iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13] }),
+            icon,
           }).bindPopup(html, { pane: "pane-popup-top" }),
         );
       }

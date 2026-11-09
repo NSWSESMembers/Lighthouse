@@ -478,7 +478,7 @@ export function ConfigVM(root, deps) {
         const overlays = root.mapVM?.stackOverlays?.() || [];
         const byId = new Map(overlays.map(o => [o.id, o]));
         for (const o of overlays) {
-            if (!stackIds.includes(o.id)) stackIds = insertStackId(stackIds, o.id, o.stack, id => byId.get(id)?.stack);
+            if (!stackIds.includes(o.id)) stackIds = insertStackId(stackIds, o.id, o.stack, id => byId.get(id)?.stack, o.stackAbove);
         }
         const rows = stackIds
             .filter(id => !id.startsWith('ov:') || byId.has(id))

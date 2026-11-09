@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { gunzipSync } from 'node:zlib';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseAusgrid,
   parseEndeavour,
@@ -7,7 +8,7 @@ import {
   humaniseStatus,
   isRelevant,
 } from './providers.mjs';
-import { refresh, toResponseBody } from './index.mjs';
+import { handler, refresh, toResponseBody } from './index.mjs';
 
 // Shapes copied from each company's feed (November 2026); every value is invented.
 
@@ -276,5 +277,29 @@ describe('refresh', () => {
       lastGoodAt: null,
       error: 'Essential: expected KML',
     });
+  });
+});
+
+describe('handler', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('gzips only for callers that accept it', async () => {
+    vi.stubGlobal('fetch', async (url) => ({
+      ok: true,
+      status: 200,
+      text: async () => {
+        if (url.includes('ausgrid')) return JSON.stringify(ausgridSample);
+        if (url.includes('endeavour')) return JSON.stringify(endeavourSample);
+        return essentialSample;
+      },
+    }));
+    const plain = await handler({ headers: {} });
+    expect(plain.isBase64Encoded).toBeUndefined();
+    expect(plain.headers['content-encoding']).toBeUndefined();
+
+    const zipped = await handler({ headers: { 'accept-encoding': 'gzip, deflate, br' } });
+    expect(zipped.isBase64Encoded).toBe(true);
+    expect(zipped.headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(Buffer.from(zipped.body, 'base64')).toString()).toBe(plain.body);
   });
 });
