@@ -69,7 +69,7 @@ import { decodeJwtSub } from './utils/jwt.js';
 import { debounce } from './utils/debounce.js';
 import { parseSearchParams } from './utils/urlParams.js';
 
-import { ConfigVM } from './viewmodels/Config.js';
+import { ConfigVM, DEFAULT_MAP_MAX_ZOOM } from './viewmodels/Config.js';
 import { initHqCoverageMap } from './components/hqCoverageMap.js';
 
 import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
@@ -307,6 +307,7 @@ if (params.source === "https://devbeacon.ses.nsw.gov.au") {
 const map = L.map('map', {
     zoomControl: true, // 1 / 10th of the original zoom step
     zoomSnap: .5,
+    maxZoom: DEFAULT_MAP_MAX_ZOOM, // The "Zoom in as far as" config option replaces this
     // Faster debounce time while zooming
     wheelDebounceTime: 50,
     // Long-press opens the map context menu on touch. Leaflet only turns this
@@ -443,6 +444,10 @@ const OVERLAY_GROUP_ICONS = {
 // Tile rows kept loaded beyond each edge of the map, by device memory.
 const BASEMAP_KEEP_BUFFER = basemapKeepBuffer(navigator.deviceMemory);
 
+// Closest any basemap can draw, by scaling up its last real tiles. The map's
+// own maxZoom (a config option) sets how much of this is reachable.
+const BASEMAP_MAX_ZOOM = 22;
+
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
     if (key === "nsw-vector") {
@@ -457,7 +462,7 @@ function buildBasemapLayer(key) {
         // marker cluster grid rebuild (MapVM.ensureClusterGridCompatibility)
         // never ends. Register its limits the way GridLayer does.
         layer.options.minZoom = 0;
-        layer.options.maxZoom = 20;
+        layer.options.maxZoom = BASEMAP_MAX_ZOOM;
         const { onAdd, onRemove } = layer;
         layer.onAdd = function (map) {
             onAdd.call(this, map);
@@ -475,7 +480,8 @@ function buildBasemapLayer(key) {
         return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
             {
-                maxZoom: 20,
+                maxNativeZoom: 19,
+                maxZoom: BASEMAP_MAX_ZOOM,
                 keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
@@ -486,7 +492,8 @@ function buildBasemapLayer(key) {
         return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
             {
-                maxZoom: 20,
+                maxNativeZoom: 20,
+                maxZoom: BASEMAP_MAX_ZOOM,
                 keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
@@ -494,8 +501,8 @@ function buildBasemapLayer(key) {
     }
 
     // --- EXISTING ESRI BASEMAPS ---
-    // Dark and Gray only have tiles to zoom 16. Keep zoom 19 on every
-    // basemap by scaling up their last tiles rather than capping the map.
+    // Reach the same zoom on every basemap by scaling up their last tiles
+    // (zoom 16 on Dark and Gray) rather than capping the map.
     // (esri merges these options into its shared config, so read
     // maxNativeZoom first to keep repeat calls the same.)
     const tiles = esri.BasemapLayer.TILES[key]?.options;
@@ -503,7 +510,7 @@ function buildBasemapLayer(key) {
     return withEdgeBuffer(esri.basemapLayer(key, {
         ignoreDeprecationWarning: true,
         keepBuffer: BASEMAP_KEEP_BUFFER,
-        ...(nativeMax < 19 ? { maxNativeZoom: nativeMax, maxZoom: 19 } : {}),
+        ...(tiles ? { maxNativeZoom: nativeMax, maxZoom: BASEMAP_MAX_ZOOM } : {}),
     }));
 }
 

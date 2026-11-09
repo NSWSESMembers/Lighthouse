@@ -321,6 +321,8 @@ function makeHqPicker(searchEntities, initial = null) {
 
 
 
+export const DEFAULT_MAP_MAX_ZOOM = 20;
+
 export function ConfigVM(root, deps) {
     const self = this;
 
@@ -1452,6 +1454,8 @@ export function ConfigVM(root, deps) {
         minZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
         allowLines: !!self.assetPinAllowLines(),
     });
+    // How close the map can zoom in (19-22).
+    self.mapMaxZoom = ko.observable(DEFAULT_MAP_MAX_ZOOM);
     self.alertsCollapsibleRules = ko.observable(true);
     // Low-priority alert when a Tasked/Enroute team's radio is within this
     // many metres of its incident (utils/onsiteGeofence.js).
@@ -1604,6 +1608,7 @@ export function ConfigVM(root, deps) {
         assetPinDeclutter: !!self.assetPinDeclutter(),
         assetPinDeclutterMinZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
         assetPinAllowLines: !!self.assetPinAllowLines(),
+        mapMaxZoom: Number(self.mapMaxZoom()) || DEFAULT_MAP_MAX_ZOOM,
         assetTrails: !!self.assetTrails(),
         showAssetCapabilityCodes: !!self.showAssetCapabilityCodes(),
         assetTrailMinutes: Number(self.assetTrailMinutes()) || 30,
@@ -2005,6 +2010,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.assetPinAllowLines === 'boolean') {
             self.assetPinAllowLines(cfg.assetPinAllowLines);
         }
+        if (Number.isInteger(cfg.mapMaxZoom) && cfg.mapMaxZoom >= 19 && cfg.mapMaxZoom <= 22) {
+            self.mapMaxZoom(cfg.mapMaxZoom);
+        }
         if (typeof cfg.assetTrails === 'boolean') {
             self.assetTrails(cfg.assetTrails);
         }
@@ -2175,6 +2183,7 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
         root.mapVM?.applyAssetPinDeclutter?.(!!self.assetPinDeclutter());
         root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        root.mapVM?.applyMapMaxZoom?.(Number(self.mapMaxZoom()) || DEFAULT_MAP_MAX_ZOOM);
         root.mapVM?.applyAssetTrailMinutes?.(Number(self.assetTrailMinutes()) || 30);
         root.mapVM?.applyAssetTrails?.(!!self.assetTrails());
         root.mapVM?.applyAssetCapabilityCodes?.(!!self.showAssetCapabilityCodes());
@@ -2244,6 +2253,11 @@ export function ConfigVM(root, deps) {
 
     self.assetPinDeclutter.subscribe((v) => {
         root.mapVM?.applyAssetPinDeclutter?.(!!v);
+        self.save();
+    })
+
+    self.mapMaxZoom.subscribe((v) => {
+        root.mapVM?.applyMapMaxZoom?.(Number(v) || DEFAULT_MAP_MAX_ZOOM);
         self.save();
     })
 

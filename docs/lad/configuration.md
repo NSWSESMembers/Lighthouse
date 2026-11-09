@@ -156,6 +156,12 @@ These options only show while **Spread out overlapping asset markers** is on.
 - **Alert when a team has arrived but isn't marked Onsite** (on by default). The [Arrived, not marked Onsite](interface.md#alerts) alert lists *Tasked* or *Enroute* teams whose asset has reported a location in the last 15 minutes close to their incident.
 - **Distance from the incident marker** sets how close the asset must be, from **50 m** to **1 km**. The default is **200 m**. Make it larger for big properties or rural incidents where assets stop well away from the marker.
 
+### Map View
+
+#### Map Zoom
+
+**Zoom in as far as** sets how close you can zoom in on the Situation Map, from **zoom 19** to **zoom 22**. The default is **zoom 20**. Most basemaps run out of detail at zoom 19 or 20. Past that they enlarge their closest imagery, so the map looks softer the further you go.
+
 ## Map Layers
 
 The **Map layers** tab sets the order map layers are drawn in and how see-through each one is.

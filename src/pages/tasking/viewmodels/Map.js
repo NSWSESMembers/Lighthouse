@@ -319,6 +319,11 @@ export function MapVM(Lmap, root) {
     self.assetPinLayout.setOptions(opts);
   };
 
+  /** "Zoom in as far as" config option. */
+  self.applyMapMaxZoom = function (zoom) {
+    self.map.setMaxZoom(zoom);
+  };
+
   /** "Show recent travel (breadcrumbs)" config option. */
   self.applyAssetTrails = function (on) {
     self.assetTrails.setEnabled(!!on);

@@ -2806,6 +2806,42 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-mapView" aria-expanded="false" aria-controls="cfgSub-mapView">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-search-plus"></i></span><span>Map view</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-mapView" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
+                                                <div class="accordion-body">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-search-plus me-1"></i>Map Zoom
+                                                                </legend>
+                                                                <label for="mapMaxZoomRange" class="form-label mb-1">
+                                                                    Zoom in as far as:
+                                                                    <strong>zoom <span data-bind="text: config.mapMaxZoom"></span></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <small class="text-muted text-nowrap">Further out</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        id="mapMaxZoomRange" min="19" max="22" step="1"
+                                                                        data-bind="value: config.mapMaxZoom, valueUpdate: 'input'">
+                                                                    <small class="text-muted text-nowrap">Closer in</small>
+                                                                </div>
+                                                                <div class="form-text">
+                                                                    Most basemaps run out of detail at zoom 19 or 20.
+                                                                    Past that they enlarge their closest imagery, so
+                                                                    the map looks softer the further you go.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-layers" role="tabpanel" aria-labelledby="cfgTab-layers" tabindex="0">
