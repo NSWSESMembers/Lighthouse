@@ -20,7 +20,7 @@ const MIN_ZOOM = 5;
 const MAX_HEIGHT_ZOOM = 16;
 // Past this the hillshade service returns a "no data" placeholder.
 const MAX_HILLSHADE_ZOOM = 16;
-const MAX_ZOOM = 19;
+const MAX_ZOOM = 22;
 const DEFAULT_OPACITY = 70;
 
 const HeightGridLayer = L.GridLayer.extend({

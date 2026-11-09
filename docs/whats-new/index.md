@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Closer map zoom in LAD
+
+*9 November 2026*
+
+- **Zoom in closer on the Situation Map.** Every basemap now zooms in to at least zoom 20, and you can go as far as zoom 22 with [Zoom in as far as](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#map-zoom) in the Configuration screen. Past a basemap's closest imagery, the map enlarges it instead of going blank.
+
 ## Power outages in LAD
 
 *9 November 2026*
