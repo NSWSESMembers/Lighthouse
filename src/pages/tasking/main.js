@@ -1274,7 +1274,9 @@ function VM() {
         let team = self.teamsById.get(teamJson.Id);
         if (team) { //existing team
             //if the team is from tasking, ignore as dont want to overwrite with old data
+            //the exception is a delete, which an older copy can report but never undo
             if (source === 'tasking') {
+                if (teamJson.IsDeleted === true) team.isDeleted(true);
                 return team;
             }
             const prevCallsign = team.callsign?.();
@@ -2517,7 +2519,10 @@ function VM() {
             } else {
                 cb(false);
             }
-        } catch (_err) {
+        } catch (err) {
+            // Beacon no longer has this team -- same outcome as IsDeleted, and
+            // a later payload clears it if the team is restored.
+            if (err?.status === 404) self.teamsById.get(teamId)?.isDeleted(true);
             cb(false);
         }
     }
