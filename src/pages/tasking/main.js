@@ -2543,7 +2543,7 @@ function VM() {
     // ---- BATCH TASKING REFRESH ----
     // Collects all filtered-in jobs whose tasking data is stale
     // (older than the configured refresh interval) and fetches
-    // them in a single API call.
+    // them together (BeaconClient splits a long list into several requests).
 
     self.fetchBatchJobTasking = async function ({ force = false } = {}) {
         // Just under the timer's own interval: jobs are stamped when the
