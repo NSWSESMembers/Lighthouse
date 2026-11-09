@@ -5,7 +5,8 @@ import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js'
 import BeaconClient from '../../shared/BeaconClient.js';
 import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
-import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus, messageReceived } from './signalr/connection.js';
+import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, connectionRecovered, getConnectionStatus, messageReceived } from './signalr/connection.js';
+import { createCatchUpScheduler } from './signalr/catchUp.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
 import { getSubject } from './signalr/subjects.js';
 
@@ -2544,13 +2545,14 @@ function VM() {
     // (older than the configured refresh interval) and fetches
     // them in a single API call.
 
-    self.fetchBatchJobTasking = async function () {
+    self.fetchBatchJobTasking = async function ({ force = false } = {}) {
         // Just under the timer's own interval: jobs are stamped when the
         // response lands, after the timer fired, so comparing against the full
         // interval finds nothing stale and skips every second cycle.
         const staleMs = effectiveRefreshIntervalMs() * 0.9;
         const now = Date.now();
         const staleJobs = self.filteredJobs().filter(job => {
+            if (force) return true;
             const last = job.lastTaskingDataUpdate?.getTime?.() ?? 0;
             return (now - last) > staleMs;
         });
@@ -2877,6 +2879,26 @@ function VM() {
 
         console.log("Jobs/Teams refresh timer started:", interval, "ms");
     }
+
+    // ---------------- CATCH UP AFTER LIVE UPDATES RECONNECT -----------------
+    // Pushes sent while the connection was down are gone. Re-fetch what they
+    // would have updated rather than leaving it to the next poll: everything
+    // the poll covers, plus tasking (its batch skips recently fetched jobs)
+    // and ICEMS data (which has no poll at all).
+    self.catchUpAfterReconnect = async function () {
+        console.log('[SignalR] catching up on anything missed while disconnected');
+        // This is the poll, so start the interval again from here.
+        startJobsTeamsTimer();
+        startBatchTaskingTimer();
+        self.fetchAllTeamData();
+        // Jobs first, so incidents created during the gap get tasking too.
+        await self.fetchAllJobsData();
+        self.fetchBatchJobTasking({ force: true });
+        self.filteredJobs().forEach(job => job.refreshIcemsIncident({ force: true }));
+
+        const modalVisible = document.getElementById('jobTimelineModal')?.classList.contains('show');
+        if (modalVisible && self.jobTimelineVM?.job()) self.jobTimelineVM.refreshCurrentJob({ silent: true });
+    };
 
     // ---------------- DROP INCIDENTS NOBODY NEEDS -----------------
     // Polling and push only ever add incidents; one that completes (or
@@ -4336,6 +4358,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // than fail silently.
         myViewModel.signalrStatus = ko.observable(getConnectionStatus());
         connectionStatus.subscribe((status) => myViewModel.signalrStatus(status));
+        connectionRecovered.subscribe(createCatchUpScheduler(() => myViewModel.catchUpAfterReconnect()));
         // True once we've actually kicked off a connection attempt (i.e. the
         // config modal has been closed at least once with live updates on).
         // Before that the connection isn't *meant* to be up yet, so a
