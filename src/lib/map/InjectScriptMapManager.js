@@ -6,7 +6,7 @@ const moment = require('moment');
 const LighthouseMap = require('./LighthouseMap.js').default;
 const MapLayer = require('./MapLayer.js').default;
 import { escapeHtml, httpUrl, sanitizeFeedHtml } from '../../shared/feedHtml.js';
-import { outageRows, outageTitle } from '../../shared/powerOutages.js';
+import { fetchPowerOutages, outageRows, outageTitle } from '../../shared/powerOutages.js';
 
 /**
  * Sends the selected HQs & start/end date range to the content script.
@@ -69,16 +69,20 @@ window.addEventListener('message', function (event) {
         showSesFilteredAssets(mapLayer, event.data.response, { simulated: true });
       } else if (event.data.layer === 'lhqs') {
         showLhqs(mapLayer, event.data.response);
-      } else if (['power-outages','power-outages-ausgrid','power-outages-endeavour','power-outages-essential'].includes(event.data.layer)) {
-        showPowerOutages(mapLayer, event.data.response);
       } else if (event.data.layer === 'hazard-watch') {
         showHazardWatch(mapLayer, event.data.response);
       } else if (['power-boundary-ausgrid','power-boundary-endeavour','power-boundary-essential','power-boundary-evo'].includes(event.data.layer)) {
         showElectricityDistributionBoundary(mapLayer, event.data.response);
       }
+    } else if (event.data.type === 'LH_LOAD_POWER_OUTAGES') {
+      loadPowerOutages(lighthouseMap, event.data.layer);
     } else if (event.data.type === 'LH_CLEAR_LAYER_DATA') {
         console.info('clearing layer:' + event.data.layer);
         lighthouseMap.layers()[event.data.layer].clear();
+        // A power outages fetch still running for this layer mustn't redraw it.
+        powerOutageLoads[event.data.layer] = (powerOutageLoads[event.data.layer] || 0) + 1;
+        const outagesLayer = event.data.layer.replace(/^power-boundary-/, 'power-outages-');
+        powerOutageLoads[outagesLayer] = (powerOutageLoads[outagesLayer] || 0) + 1;
         
         switch(event.data.layer) {
           case ('power-boundary-ausgrid'):
@@ -1274,6 +1278,39 @@ function addAircraftMarker(
   marker.setHeight(32);
   marker.setAngle(heading);
   mapLayer.addMarker(lat, lon, marker, name, details);
+}
+
+// Lighthouse map layer -> power company it shows (null = all of them)
+const POWER_OUTAGE_LAYERS = {
+  'power-outages': null,
+  'power-outages-ausgrid': 'ausgrid',
+  'power-outages-endeavour': 'endeavour',
+  'power-outages-essential': 'essential',
+};
+// Bumped when a layer is cleared, so a fetch that finishes after the layer
+// was turned off is dropped.
+const powerOutageLoads = {};
+
+/**
+ * Fetches the power outages Lambda with Beacon's token and draws one layer.
+ *
+ * @param lighthouseMap the Lighthouse map.
+ * @param layerName a POWER_OUTAGE_LAYERS key.
+ */
+function loadPowerOutages(lighthouseMap, layerName) {
+  if (!Object.hasOwn(POWER_OUTAGE_LAYERS, layerName)) return;
+  const provider = POWER_OUTAGE_LAYERS[layerName];
+  const load = (powerOutageLoads[layerName] || 0) + 1;
+  powerOutageLoads[layerName] = load;
+  fetchPowerOutages(window.user?.accessToken)
+    .then((body) => {
+      if (powerOutageLoads[layerName] !== load) return;
+      const features = provider ? body.features.filter((f) => f.properties?.provider === provider) : body.features;
+      const mapLayer = lighthouseMap.layers()[layerName];
+      mapLayer.clear();
+      showPowerOutages(mapLayer, { ...body, features });
+    })
+    .catch((err) => console.error(`Update to ${layerName} failed:`, err));
 }
 
 /**

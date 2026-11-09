@@ -2,7 +2,6 @@
 // separate to all other pages.
 
 import { installSharedSelection, SHARE_ACCESS_MESSAGE } from './shared/cadenceSimulationShare.js';
-import { fetchPowerOutages } from './shared/powerOutages.js';
 
 // CADence simulated exercises: lets Beacon pages read the exercise chosen on
 // the CADence Simulated Exercise page (shared/cadenceSimulationShare.js).
@@ -34,13 +33,6 @@ const rfsMajorIncidentsFeed =
 const transportFeed = 'https://api.transport.nsw.gov.au/';
 const openSkyFeed = 'https://opensky-network.org/api/states/all';
 const adsbFeed = "https://api.adsb.lol/v2/hex/"
-// Lighthouse map layer -> power company it shows (null = all of them)
-const POWER_OUTAGE_LAYERS = {
-  'power-outages': null,
-  'power-outages-ausgrid': 'ausgrid',
-  'power-outages-endeavour': 'endeavour',
-  'power-outages-essential': 'essential',
-};
 const hazardWatchTrainingUrl = 'https://training.hazardwatch.gov.au/feed/v1/nswses-cap-au-active-warnings.geojson';
 const hazardWatchUrl = 'https://hazardwatch.gov.au/feed/v1/nswses-cap-au-active-warnings.geojson ';
 
@@ -149,11 +141,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     return true;
   } else if (request.type === 'adsb') {
     fetchAdsbLocations(request.params, function (data) {
-      sendResponse(data);
-    });
-    return true;
-  } else if (Object.hasOwn(POWER_OUTAGE_LAYERS, request.type)) {
-    fetchPowerOutagesFromLambda(request.params?.token, POWER_OUTAGE_LAYERS[request.type], function (data) {
       sendResponse(data);
     });
     return true;
@@ -420,32 +407,5 @@ function fetchTrainingHazardWatch(callback) {
         httpCode: 'error',
       };
       callback(response);
-    });
-}
-
-/**
- * Fetches the current power outages from the power-outages Lambda, which
- * collects and caches the Ausgrid, Endeavour Energy and Essential Energy
- * feeds (lambda/power-outages-v2).
- *
- * @param token the Beacon access token.
- * @param provider 'ausgrid' | 'endeavour' | 'essential' to keep one company, or null for all.
- * @param callback the callback to send the GeoJSON (or { error, httpCode }) to.
- */
-function fetchPowerOutagesFromLambda(token, provider, callback) {
-  if (!token) {
-    callback({ error: 'No Beacon token', httpCode: 'error' });
-    return;
-  }
-  fetchPowerOutages(token)
-    .then((body) => {
-      const features = provider
-        ? body.features.filter((f) => f.properties?.provider === provider)
-        : body.features;
-      callback({ ...body, features });
-    })
-    .catch((err) => {
-      console.warn('power outages fetch failed', err);
-      callback({ error: err?.message || 'Request failed', httpCode: 'error' });
     });
 }

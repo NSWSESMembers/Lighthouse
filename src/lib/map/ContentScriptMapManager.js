@@ -497,13 +497,13 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
     }
 
     /**
-     * Power outages come from the Lighthouse power-outages Lambda, which
-     * checks the Beacon token, so the background script is given it.
+     * Power outages come from the Lighthouse power-outages Lambda, which checks
+     * the Beacon token, so the injected script (which has the token) fetches
+     * and draws them itself.
      * @param layer 'power-outages' or 'power-outages-<ausgrid|endeavour|essential>'
      */
     _requestPowerOutages(layer) {
-        const token = this._token ? Promise.resolve(this._token) : this._freshToken();
-        token.then((t) => this._requestLayerUpdate(layer, { token: t }));
+        window.postMessage({ type: 'LH_LOAD_POWER_OUTAGES', layer: layer }, '*');
     }
 
     _requestHazardWatchLayerUpdate() {
