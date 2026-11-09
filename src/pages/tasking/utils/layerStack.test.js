@@ -25,6 +25,14 @@ describe('insertStackId', () => {
             .toEqual(['pane-tippy-top', 'ov:c1', 'ov:c2', 'pane-top', 'ov:zones']);
     });
 
+    it('puts a layer directly above the row it asks for, when that row exists', () => {
+        const ids = ['pane-tippy-top', 'pane-top', 'ov:a', 'ov:zones', 'ov:b', 'ov:radar'];
+        expect(insertStackId(ids, 'ov:new', 'vector', kindOf, 'ov:zones'))
+            .toEqual(['pane-tippy-top', 'pane-top', 'ov:a', 'ov:new', 'ov:zones', 'ov:b', 'ov:radar']);
+        expect(insertStackId(ids, 'ov:new', 'vector', kindOf, 'ov:missing'))
+            .toEqual(['pane-tippy-top', 'pane-top', 'ov:a', 'ov:zones', 'ov:b', 'ov:new', 'ov:radar']);
+    });
+
     it('puts tile layers at the bottom', () => {
         expect(insertStackId(defaultStackIds(), 'ov:radar', 'tiles', kindOf))
             .toEqual(['pane-tippy-top', 'pane-top', 'lh-drawn', 'ov:radar']);

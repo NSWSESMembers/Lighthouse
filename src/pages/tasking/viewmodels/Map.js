@@ -797,6 +797,7 @@ export function MapVM(Lmap, root) {
       label: entry.label,
       menuGroup: entry.menuGroup,
       stack: opts.stack || 'vector',
+      stackAbove: opts.stackAbove ? overlayStackId(opts.stackAbove) : null, // overlay key to sit directly above
       defaultOpacity: clampOpacityPct(opts.defaultOpacity ?? 100),
       layerGroup,
       visible: ko.observable(!!entry.visibleByDefault),

@@ -6,6 +6,7 @@ const moment = require('moment');
 const LighthouseMap = require('./LighthouseMap.js').default;
 const MapLayer = require('./MapLayer.js').default;
 import { escapeHtml, httpUrl, sanitizeFeedHtml } from '../../shared/feedHtml.js';
+import { fetchPowerOutages, outageRows, outageTitle } from '../../shared/powerOutages.js';
 
 /**
  * Sends the selected HQs & start/end date range to the content script.
@@ -68,16 +69,20 @@ window.addEventListener('message', function (event) {
         showSesFilteredAssets(mapLayer, event.data.response, { simulated: true });
       } else if (event.data.layer === 'lhqs') {
         showLhqs(mapLayer, event.data.response);
-      } else if (['power-outages','power-outages-ausgrid','power-outages-endeavour','power-outages-essential'].includes(event.data.layer)) {
-        showPowerOutages(mapLayer, event.data.response);
       } else if (event.data.layer === 'hazard-watch') {
         showHazardWatch(mapLayer, event.data.response);
       } else if (['power-boundary-ausgrid','power-boundary-endeavour','power-boundary-essential','power-boundary-evo'].includes(event.data.layer)) {
         showElectricityDistributionBoundary(mapLayer, event.data.response);
       }
+    } else if (event.data.type === 'LH_LOAD_POWER_OUTAGES') {
+      loadPowerOutages(lighthouseMap, event.data.layer);
     } else if (event.data.type === 'LH_CLEAR_LAYER_DATA') {
         console.info('clearing layer:' + event.data.layer);
         lighthouseMap.layers()[event.data.layer].clear();
+        // A power outages fetch still running for this layer mustn't redraw it.
+        powerOutageLoads[event.data.layer] = (powerOutageLoads[event.data.layer] || 0) + 1;
+        const outagesLayer = event.data.layer.replace(/^power-boundary-/, 'power-outages-');
+        powerOutageLoads[outagesLayer] = (powerOutageLoads[outagesLayer] || 0) + 1;
         
         switch(event.data.layer) {
           case ('power-boundary-ausgrid'):
@@ -153,10 +158,8 @@ function getOpsLog(id, cb) {
 
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
-const powerIcon = lighthouseUrl + 'icons/power.png';
 const powerOutageIcon = lighthouseUrl + 'icons/power_outage.png';
 const powerPlannedIcon = lighthouseUrl + 'icons/power_planned.png';
-const powerCompleteIcon = lighthouseUrl + 'icons/power_complete.png';
 const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
 const teamEnrouteIcon = lighthouseUrl + 'icons/enroute.png';
 const teamOnsiteIcon = lighthouseUrl + 'icons/bus.png';
@@ -1277,179 +1280,78 @@ function addAircraftMarker(
   mapLayer.addMarker(lat, lon, marker, name, details);
 }
 
+// Lighthouse map layer -> the outage properties it shows
+const POWER_OUTAGE_LAYERS = {
+  'power-outages-unplanned': { type: 'unplanned' },
+  'power-outages-planned': { type: 'planned' },
+  'power-outages-ausgrid': { provider: 'ausgrid' },
+  'power-outages-endeavour': { provider: 'endeavour' },
+  'power-outages-essential': { provider: 'essential' },
+};
+// Bumped when a layer is cleared, so a fetch that finishes after the layer
+// was turned off is dropped.
+const powerOutageLoads = {};
+
 /**
- * Shows the current power outages on the map.
+ * Fetches the power outages Lambda with Beacon's token and draws one layer.
+ *
+ * @param lighthouseMap the Lighthouse map.
+ * @param layerName a POWER_OUTAGE_LAYERS key.
+ */
+function loadPowerOutages(lighthouseMap, layerName) {
+  if (!Object.hasOwn(POWER_OUTAGE_LAYERS, layerName)) return;
+  const wanted = Object.entries(POWER_OUTAGE_LAYERS[layerName]);
+  const load = (powerOutageLoads[layerName] || 0) + 1;
+  powerOutageLoads[layerName] = load;
+  fetchPowerOutages(window.user?.accessToken)
+    .then((body) => {
+      if (powerOutageLoads[layerName] !== load) return;
+      const features = body.features.filter((f) => wanted.every(([key, value]) => f.properties?.[key] === value));
+      const mapLayer = lighthouseMap.layers()[layerName];
+      mapLayer.clear();
+      showPowerOutages(mapLayer, { ...body, features });
+    })
+    .catch((err) => console.error(`Update to ${layerName} failed:`, err));
+}
+
+/**
+ * Shows the current power outages on the map: the GeoJSON from the
+ * power-outages Lambda (see src/shared/powerOutages.js for its properties).
  *
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
 function showPowerOutages(mapLayer, data) {
-  console.info('showing power outages');
   let count = 0;
-  if (data && data.features) {
-    for (let i = 0; i < data.features.length; i++) {
-      let feature = data.features[i];
+  for (const feature of data?.features || []) {
+    const props = feature?.properties;
+    if (!props) continue;
+    const name = escapeHtml(outageTitle(props));
+    const details = outageRows(props, data.meta)
+      .map(([label, text]) => `<div>${escapeHtml(label)}: ${escapeHtml(text)}</div>`)
+      .join('');
+    const markerIcon = props.type === 'planned' ? powerPlannedIcon : powerOutageIcon;
 
-      
-
-      const PowerOutageDetails = function (source) {
-        var name,
-          start,
-          end,
-          reason,
-          status,
-          type,
-          featureIcon = powerIcon,
-          CustomerAffected,
-          contact = 'Unknown';
-        switch (source.owner) {
-          case 'EndeavourEnergy':
-            name = 'Endeavour Energy: ' + source.properties.incidentId;
-            start = moment(source.properties.startDateTime).format(
-              'DD/MM/YY HH:mm:ss',
-            );
-            end = moment(source.properties.endDateTime).format(
-              'DD/MM/YY HH:mm:ss',
-            );
-            reason = source.properties.reason;
-            status = source.properties.status;
-            type = source.properties.outageType;
-            if (type == 'U') type = 'Outage',featureIcon = powerOutageIcon;
-            if (type == 'P') type = 'Planned',featureIcon = powerPlannedIcon;
-            if (status == 'OUTAGE COMPLETED') featureIcon = powerCompleteIcon;
-            CustomerAffected = source.properties.numberCustomerAffected;
-            contact = 'Endeavour Energy 131 003';
-            break;
-          case 'Ausgrid':
-            name = 'Ausgrid: ' + source.properties.incidentId;
-            start = moment(source.properties.startDateTime).format(
-              'DD/MM/YY HH:mm:ss',
-            );
-            end = moment(source.properties.endDateTime).format(
-              'DD/MM/YY HH:mm:ss',
-            );
-            reason = source.properties.reason;
-            type = source.properties.outageType;
-            status = source.properties.status;
-            if (status == '') status = 'Unknown', type = 'Outage',featureIcon = powerOutageIcon;
-            if (status == '1') status = 'Reported', type = 'Outage',featureIcon = powerOutageIcon;
-            if (status == '2') status = 'Under Investigation', type = 'Outage',featureIcon = powerOutageIcon;
-            if (status == '3') status = 'Repair In Progress', type = 'Outage',featureIcon = powerOutageIcon;
-            if (status == '4') status = 'Restored', type = 'Outage',featureIcon = powerCompleteIcon;
-            type = source.properties.type;
-            CustomerAffected = source.properties.numberCustomerAffected;
-            contact = 'Ausgrid 13 13 88';
-            break;
-          case 'EssentialEnergy':
-            name = 'Essential Energy: ' + source.id;
-            start = /Time Off:<\/span>(.*?)<\/div>/g.exec(
-              source.properties.description.value,
-            )[1];
-
-            end = /Time On:<\/span>(.*?)<\/div>/g.exec(
-              source.properties.description.value,
-            )[1];
-            if (end == '') end = 'Unknown';
-            status = /Status:<\/span>(.*?)<\/div>/g.exec(
-              source.properties.description.value,
-            );
-            if (status) {
-              status = status[1];
-            } else {
-              status = 'NA';
-            }
-            type = source.properties.outageType;
-            reason = 'Unknown';
-            if (source.properties.styleUrl.match('unplanned')) {
-              type = 'Unplanned';
-              reason = /Reason:<\/span>(.*?)<\/div>/g.exec(
-                source.properties.description.value,
-              )[1];
-            } else {
-              type = 'Planned';
-              reason = /Reason:<\/span>(.*?)<\/div>/g.exec(
-                source.properties.description.value,
-              )[1];
-            }
-
-            if(type == 'Unplanned') {
-              featureIcon = powerOutageIcon;
-            } else if (type == 'Planned') {
-              featureIcon = powerPlannedIcon;
-            }
-
-            CustomerAffected =
-              /No\. of Customers affected:<\/span>(\d*)<\/div>/g.exec(
-                source.properties.description.value,
-              )[1];
-            contact = 'Essential Energy 132 080';
-            break;
-        }
-
-        let dateDetails = `<div class="dateDetails">\
-                <div><span class="dateDetailsLabel">Start Time: </span> ${sanitizeFeedHtml(start)}</div>\
-                <div><span class="dateDetailsLabel">End Time: </span> ${sanitizeFeedHtml(end)}</div>\
-                </div>`;
-        let details = `<div>Affected Customers: ${sanitizeFeedHtml(CustomerAffected)}</div>\
-                <div>Outage Type: ${sanitizeFeedHtml(type)}</div>\
-                <div>Reason: ${sanitizeFeedHtml(reason)}</div>\
-                <div>Status: ${sanitizeFeedHtml(status)}</div>\
-                ${dateDetails}\
-                <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-                <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-                ${contact}\
-                </span>`;
-
-        return { name: escapeHtml(name), details: details, markerIcon: featureIcon};
-      };
-
-      if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
-        let details = PowerOutageDetails(feature);
-
-        for (let j = 0; j < feature.geometry.geometries.length; j++) {
-          let geometry = feature.geometry.geometries[j];
-
-          if (geometry.type.toLowerCase() === 'polygon') {
-            let polygonPoints = geometry.coordinates[0];
-            mapLayer.addPolygon(
-              polygonPoints,
-              '#000000',
-              [100, 100, 100, 0.5],
-              3,
-              SimpleLineSymbol.STYLE_SOLID,
-              details.name,
-              details.details,
-            );
-          } else if (geometry.type.toLowerCase() === 'point') {
-            let lat = geometry.coordinates[1];
-            let lon = geometry.coordinates[0];
-            mapLayer.addImageMarker(
-              lat,
-              lon,
-              details.markerIcon,
-              details.name,
-              details.details,
-            );
-          }
-        }
-
-        count++;
-      } else if (feature.geometry.type.toLowerCase() === 'point') {
-        let lat = feature.geometry.coordinates[1];
-        let lon = feature.geometry.coordinates[0];
-
-        let details = PowerOutageDetails(feature);
-
-        mapLayer.addImageMarker(
-          lat,
-          lon,
-          details.markerIcon,
-          details.name,
-          details.details,
-        );
-        count++;
-      }
+    const geometry = feature.geometry || {};
+    const polygons =
+      geometry.type === 'Polygon' ? [geometry.coordinates]
+        : geometry.type === 'MultiPolygon' ? geometry.coordinates
+          : [];
+    for (const polygon of polygons) {
+      mapLayer.addPolygon(
+        polygon[0],
+        '#000000',
+        [100, 100, 100, 0.5],
+        3,
+        SimpleLineSymbol.STYLE_SOLID,
+        name,
+        details,
+      );
     }
+    if (Number.isFinite(props.lat) && Number.isFinite(props.lng)) {
+      mapLayer.addImageMarker(props.lat, props.lng, markerIcon, name, details);
+    }
+    count++;
   }
 
   console.info(`added ${count} power outages`);
@@ -2095,7 +1997,8 @@ export default class InjectScriptMapManager {
 
     lighthouseMap.createLayer('rfs', 2);
 
-    lighthouseMap.createLayer('power-outages', 2);
+    lighthouseMap.createLayer('power-outages-unplanned', 2);
+    lighthouseMap.createLayer('power-outages-planned', 2);
     lighthouseMap.createLayer('power-outages-ausgrid', 2);
     lighthouseMap.createLayer('power-outages-endeavour', 2);
     lighthouseMap.createLayer('power-outages-essential', 2);
@@ -2336,7 +2239,8 @@ ${rows.join('\r')}
       'toggleHelicoptersBtn',
       'toggleAdsbBtn',
       'togglelhqsBtn',
-      'togglePowerOutagesBtn',
+      'togglePowerOutagesUnplannedBtn',
+      'togglePowerOutagesPlannedBtn',
       'toggleBoundaryAusgridBtn',
       'toggleBoundaryEndeavourBtn',
       'toggleBoundaryEssentialBtn',

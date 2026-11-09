@@ -95,6 +95,7 @@ import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
+import { registerPowerOutagesLayers } from "./mapLayers/powerOutages.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
@@ -3095,6 +3096,7 @@ function VM() {
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
     registerPowerBoundariesGridLayer(self, map);
+    registerPowerOutagesLayers(self, getToken);
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);

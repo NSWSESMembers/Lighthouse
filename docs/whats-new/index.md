@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Power outages in LAD
+
+*9 November 2026*
+
+- **New Power Outages overlays.** Current Ausgrid, Endeavour Energy and Essential Energy outages, with the area affected, customers, cause and estimated restore time. Unplanned and planned outages (next 48 hours) are separate overlays under **Infrastructure** in the **Layers** menu. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
+- **Power outages on the Lighthouse map in Beacon work again.** Ausgrid and Endeavour Energy outages had stopped showing after both companies changed their websites. **All Power Outages** is now two buttons, **Unplanned Power Outages** and **Planned Power Outages (next 48 hrs)**.
+
 ## LAD settings for each Beacon
 
 *9 November 2026*
