@@ -137,7 +137,7 @@ export function registerHazardWatchWarningsLayer(vm, apiHost) {
 
     vm.mapVM.registerPollingLayer("hazardwatch-warnings", {
         label: "HazardWatch Active Warnings",
-        menuGroup: "HazardWatch",
+        menuGroup: "Warnings",
         refreshMs: 5 * 60 * 1000, // 5 minutes in milliseconds
         visibleByDefault: localStorage.getItem("ov.hazardwatch-warnings") || false,
 

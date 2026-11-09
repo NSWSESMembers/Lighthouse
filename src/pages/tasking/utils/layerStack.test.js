@@ -35,6 +35,21 @@ describe('insertStackId', () => {
         expect(insertStackId(ids, 'ov:power', 'vector', kindOf))
             .toEqual(['pane-tippy-top', 'pane-top', 'ov:zones', 'ov:power', 'ov:radar', 'ov:sat']);
     });
+
+    it('keeps ground layers under tile and vector layers registered after them', () => {
+        const groundKinds = { ...kinds, 'ov:height': 'ground' };
+        const groundKindOf = (id) => groundKinds[id];
+        let ids = insertStackId(defaultStackIds(), 'ov:height', 'ground', groundKindOf);
+        ids = insertStackId(ids, 'ov:radar', 'tiles', groundKindOf);
+        ids = insertStackId(ids, 'ov:zones', 'vector', groundKindOf);
+        expect(ids).toEqual(['pane-tippy-top', 'pane-top', 'lh-drawn', 'ov:zones', 'ov:radar', 'ov:height']);
+    });
+
+    it('draws later ground layers over earlier ones', () => {
+        const groundKindOf = (id) => ({ 'ov:height': 'ground', 'ov:floods': 'ground' }[id]);
+        const ids = insertStackId(defaultStackIds().concat('ov:height'), 'ov:floods', 'ground', groundKindOf);
+        expect(ids.slice(-2)).toEqual(['ov:floods', 'ov:height']);
+    });
 });
 
 describe('mergeKnownOrder', () => {

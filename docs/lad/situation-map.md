@@ -43,7 +43,7 @@ Measure distances between multiple points. Several separate measurements can be 
 
 Layers control what is shown on the map. Open the Layers menu with the layer button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> in the top left of the map.
 
-The menu has a list of sections down the left: **Basemap**, **On the map** (every layer that's turned on), **Presets** (see [Layer Presets](#layer-presets)), then each group of overlays. Click a section to show its layers. A number beside a group shows how many of its layers are on. The menu fits itself to the map and stops above the Legend. On a narrow map the sections become a row of buttons along the top.
+The menu has a list of sections down the left: **Basemap**, **Markers** (see [Overlay Notes](#overlay-notes)), **On the map** (every layer that's turned on), **Presets** (see [Layer Presets](#layer-presets)), then the other groups of overlays in alphabetical order. Click a section to show its layers. A number beside a group shows how many of its layers are on. The menu fits itself to the map and stops above the Legend. On a narrow map the sections become a row of buttons along the top.
 
 ### Basemap
 
@@ -103,9 +103,19 @@ Overlay markers are drawn under incidents by default. If one is hidden behind an
 
 Most layers are described by their name. Those that need more explanation:
 
-**Visibility**
+**Markers**
 
 - **Incidents**: shows or hides every incident marker, along with their [status indicators](#incident-status-on-markers). Focusing an incident from an [alert](interface.md#alerts), the Incident Register or [Spotlight](spotlight.md) turns the layer back on.
+
+**Terrain**
+
+- **Elevation (Height Above Sea Level)**: colours the ground by height across NSW, from green on low ground through tan to pale grey on the highest ranges, with relief shading so hills and valleys stand out. It's most useful for seeing low ground and floodplains at a glance. A colour key shows on the map while it's on. Heights come from NSW Spatial Services 5 m data derived from stereo imagery, so treat them as indicative and don't use them to judge flood levels at a property. It starts at 70% so the basemap shows through; you can change that on the [Map layers](configuration.md#map-layers) tab.
+- **Hillshade**: grey shading that makes hills, ridges and valleys stand out. It shows the shape of the land rather than heights, so it fades out on flat ground.
+- **Steepness**: colours slopes by how steep they are, from yellow at 5 degrees to purple at 45 degrees or more. Gentler ground is left clear. It's most accurate zoomed in, because steep ground gets averaged out when you zoom out. It uses the same indicative heights as **Elevation**, so it doesn't tell you whether a slope is stable.
+
+**Historical Imagery**
+
+- Aerial photos taken during past floods, from NSW Spatial Services, with one layer per flood. Each layer only covers the places in its name, so zoom in on those areas to see it. A photo shows the day it was taken, which may not be the peak of the flood.
 
 **Assets**
 
@@ -119,27 +129,18 @@ Most layers are described by their name. Those that need more explanation:
 - **SES Units**: the location of every SES unit headquarters.
 - **Active FRAOs**: active FRAO declarations, from the Beacon FRAO register.
 
-**HazardWatch**
+**Warnings**
 
 - **HazardWatch Active Warnings**: flood, tsunami, severe weather, coastal erosion and snow warnings. Click a warning to see the published product details. Refer to the Public Information Manual for more on warnings.
-
-**BOM Warnings**
-
 - **BOM Land Warnings**: BOM's current flood warnings, flood watches, severe weather, severe thunderstorm and fire weather warnings, drawn by BOM in its own colours. It's a picture only: clicking a warning area doesn't open a popup.
 - **BOM Severe Thunderstorm Warning**: the areas under a current severe thunderstorm warning.
 - **BOM Severe Thunderstorm Cells**: the storm cells named in those warnings, with an arrow for the direction each is moving and the time of the cell's position (UTC).
 - **BOM Volcanic Ash Advisory**: advisories from the Darwin Volcanic Ash Advisory Centre: the erupting volcano, the ash cloud now, and where it's forecast to be in 6, 12 and 18 hours.
 
-**BOM Radar & Satellite**
+**Radar & Observations**
 
 - **BOM Rain Radar Still**, **BOM Thunderstorm Tracking**, **BOM Satellite Composite True Colour** and the two **BOM Lightning** layers load as one picture of the area you're looking at, so the whole map always shows the same radar scan or satellite image. After you pan or zoom, the new picture replaces the old one once it has loaded. A big jump can show a blank edge for a moment.
-
-**BOM Observations**
-
 - **BOM Sea Surface Temperature (°C)**: the daily sea surface temperature analysis, shaded with contour lines.
-
-**RainViewer**
-
 - **RainViewer Animated Rainfall Radar**: the last two hours of rainfall radar, played on a loop. While it's on, a small **Radar** bar sits above the [Legend](#legend) with play/pause, the time of the frame showing, and how far that frame is behind the latest one. Click **Radar** to open the step buttons, a slider to drag through the frames, the playback speed and the colour scale (hover over a colour to see its rain or hail level). Click the time badge, or **Latest**, to jump back to the newest frame. New frames are added every few minutes: if you've paused on an earlier frame it stays on that frame, and if you're on the latest it moves on to the new one. The bar remembers whether you left it open. To make the radar more or less see-through, use the [Map layers](configuration.md#map-layers) tab; it starts at 60%.
 
 **Collaborative layers** you've subscribed to are also listed here. See [Collaborative Map Layers](#collaborative-map-layers).

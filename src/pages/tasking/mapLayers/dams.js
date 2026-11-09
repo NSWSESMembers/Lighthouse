@@ -21,7 +21,7 @@ function getNameFromProps(p) {
 export function registerNSWDeclaredDamsLayer(vm) {
   vm.mapVM.registerPollingLayer("nswDeclaredDams", {
     label: "NSW Declared Dams",
-    menuGroup: "Public Service",
+    menuGroup: "Infrastructure",
     refreshMs: 0, // reference data – no auto-refresh
     visibleByDefault: localStorage.getItem("ov.nswDeclaredDams") || false,
     fetchFn: async () => ({ ok: true }),

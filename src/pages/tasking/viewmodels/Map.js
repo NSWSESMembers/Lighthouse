@@ -711,7 +711,7 @@ export function MapVM(Lmap, root) {
    *   label: string,
    *   refreshMs?: number,
    *   visibleByDefault?: boolean,
-   *   stack?: 'vector'|'tiles'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
+   *   stack?: 'vector'|'tiles'|'ground'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
    *   defaultOpacity?: number,  // default opacity in the layer order, percent (100 if unset)
    *   fetchFn: () => Promise<any>,
    *   drawFn: (layerGroup: L.LayerGroup, data: any) => void
@@ -850,7 +850,7 @@ export function MapVM(Lmap, root) {
         key: 'matched-assets',
         label: 'Assets Matched against Teams',
         layer: self.assetLayer,
-        group: 'Visibility',
+        group: 'Markers',
         visibleByDefault: true,
       });
     }
@@ -862,7 +862,7 @@ export function MapVM(Lmap, root) {
         key: 'unmatched-assets',
         label: 'Assets Unmatched against Teams',
         layer: self.unmatchedAssetLayer,
-        group: 'Visibility',
+        group: 'Markers',
         visibleByDefault: false,
       });
     }

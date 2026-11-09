@@ -18,6 +18,15 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Terrain and historical imagery in LAD
+
+*9 November 2026*
+
+- **New Elevation overlay.** Colours the ground by height across NSW, so low ground and floodplains stand out on the map. Find it under **Terrain** in the **Layers** menu. Heights are indicative. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
+- **New Hillshade and Steepness overlays**, also under **Terrain**, show the shape of the land and how steep it is.
+- **New Historical Imagery section.** Aerial photos of floods from 2012 to 2022 in the places where they were taken, including Lismore, Grafton, Forbes and the Hawkesbury-Nepean.
+- **A shorter Layers menu.** Layers are now grouped by what they show, in fewer sections, listed alphabetically with an icon each: **Forecasts**, **Historical Imagery**, **Infrastructure**, **NSW SES Geoservices**, **Radar & Observations**, **Terrain** and **Warnings**. **Visibility** is now called **Markers** and sits just below **Basemap**. Your layers and presets are unchanged.
+
 ## Lighter LAD refreshes
 
 *7 November 2026*

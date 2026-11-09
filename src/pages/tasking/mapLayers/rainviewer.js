@@ -368,7 +368,7 @@ export function registerRainRadarLayer(vm, map) {
   /* ── layer registration ────────────────────────────────────── */
   vm.mapVM.registerPollingLayer("rainRadar", {
     label: "RainViewer Animated Rainfall Radar",
-    menuGroup: "RainViewer",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     // The playback bar used to default the frames to 60%.
     defaultOpacity: 60,

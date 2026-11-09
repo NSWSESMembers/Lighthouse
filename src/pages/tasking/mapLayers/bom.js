@@ -21,7 +21,7 @@ export function registerBOMLandWarningsLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomLandWarnings", {
     label: "BOM Land Warnings",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "tiles",
     refreshMs: 300000, // 5 min – warnings update frequently
     visibleByDefault: localStorage.getItem(`ov.bomLandWarnings`) || false,

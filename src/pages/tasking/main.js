@@ -107,6 +107,8 @@ import {
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
+import { registerTerrainLayers } from "./mapLayers/terrain.js";
+import { registerPastFloodLayers } from "./mapLayers/pastFloods.js";
 import { registerCollabLayers, getWritableCollabLayers, startAddMarkerFlow } from "./mapLayers/collabLayer.js";
 import {
     registerBOMRainfallLayer,
@@ -423,6 +425,19 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 // render above every marker, including the topmost "Incident markers" pane.
 map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
 
+
+// Font Awesome icon for each section of the Layers menu.
+const OVERLAY_GROUP_ICONS = {
+    "Collaborative Layers": "fa-users",
+    "Forecasts": "fa-cloud-sun",
+    "Historical Imagery": "fa-history",
+    "Infrastructure": "fa-city",
+    "NSW SES Geoservices": "fa-map-marked-alt",
+    "Radar & Observations": "fa-satellite-dish",
+    "Terrain": "fa-mountain",
+    "Markers": "fa-map-marker-alt",
+    "Warnings": "fa-exclamation-triangle",
+};
 
 // Tile rows kept loaded beyond each edge of the map, by device memory.
 const BASEMAP_KEEP_BUFFER = basemapKeepBuffer(navigator.deviceMemory);
@@ -3079,6 +3094,8 @@ function VM() {
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
+    registerTerrainLayers(self, map);
+    registerPastFloodLayers(self);
     registerBOMLandWarningsLayer(self, sourceUrl);
     registerBOMSevereThunderstormWarningLayer(self, sourceUrl);
     registerBOMSevereThunderstormCellsLayer(self, sourceUrl);
@@ -3325,14 +3342,17 @@ function VM() {
 
             // --- Overlays: group by def.group ---
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
-            const groups = new Map();
+            const byGroup = new Map();
             overlayDefs.forEach((def) => {
                 const g = def.group || "";
-                if (!groups.has(g)) groups.set(g, []);
-                groups.get(g).push(def);
+                if (!byGroup.has(g)) byGroup.set(g, []);
+                byGroup.get(g).push(def);
             });
 
             const groupTitle = (k) => (k && String(k).trim() ? k : "Other");
+
+            // Alphabetical: registration order sets the draw order, not this.
+            const groups = new Map([...byGroup].sort((a, b) => groupTitle(a[0]).localeCompare(groupTitle(b[0]))));
 
             // --- Build a cell per group; _applyView shows the selected section ---
             const grid = c.querySelector(".ld-grid");
@@ -3355,8 +3375,8 @@ function VM() {
                 const body = document.createElement("div");
                 body.className = "ld-group-body";
 
-                // If this is the Visibility group, add Incidents toggle first
-                if (groupKey === 'Visibility') {
+                // If this is the Markers group, add Incidents toggle first
+                if (groupKey === 'Markers') {
                     const incidentsBtn = document.createElement("button");
                     incidentsBtn.type = "button";
                     const isIncidentsOn = self.incidentsVisible();
@@ -3823,7 +3843,7 @@ function VM() {
             this._presetBar?.render(this._presets, (p) => presetState(p, isOn).state, (k) => labelOf(k));
         },
 
-        /** Rail of sections: Basemap, On the map, Presets, then one per overlay group. */
+        /** Rail of sections: Basemap, Markers, On the map, Presets, then one per other overlay group. */
         _renderRail(groupNames) {
             const rail = this._container.querySelector(".ld-rail");
             const item = (section, label, icon = "") => `
@@ -3832,15 +3852,21 @@ function VM() {
                     <span class="ld-rail-label">${label}${section === "__base" ? `<span class="ld-rail-sub"></span>` : ""}</span>
                     <span class="ld-rail-count"></span>
                 </button>`;
+            const groupItems = (names) => names.map((g) => item(g, g, OVERLAY_GROUP_ICONS[g] || "fa-layer-group")).join("");
+            // Markers is a core control, so it sits above the list, under Basemap.
+            const pinned = groupNames.filter((g) => g === "Markers");
+            const listed = groupNames.filter((g) => g !== "Markers");
             rail.innerHTML = item("__base", "Basemap", "fa-map")
+                + groupItems(pinned)
                 + item("__on", "On the map", "fa-eye")
                 + item("__presets", "Presets", "fa-bookmark")
                 + `<div class="ld-rail-sep"></div>`
-                + groupNames.map((g) => item(g, g)).join("");
+                + groupItems(listed);
             const fixed = ["__base", "__on", "__presets"];
+            const sections = [fixed[0], ...pinned, ...fixed.slice(1), ...listed];
             rail.querySelectorAll(".ld-rail-item").forEach((btn, i) => {
                 // dataset holds the unescaped group name; the template only used it for markup
-                btn.dataset.section = i < fixed.length ? btn.dataset.section : groupNames[i - fixed.length];
+                btn.dataset.section = sections[i];
                 btn.addEventListener("click", () => {
                     this._section = btn.dataset.section;
                     localStorage.setItem("layers.section", this._section);
