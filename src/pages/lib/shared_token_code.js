@@ -23,7 +23,7 @@ function readStored(data, apiHost) {
   return null;
 }
 
-function nearExpiry(tokenexp) {
+export function nearExpiry(tokenexp) {
   return moment().isAfter(moment(tokenexp).subtract(5, "minutes"));
 }
 

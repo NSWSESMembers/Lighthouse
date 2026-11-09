@@ -8,6 +8,7 @@ const BeaconToken = require('../lib/shared_token_code.js');
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, connectionRecovered, getConnectionStatus, messageReceived } from './signalr/connection.js';
 import { createCatchUpScheduler } from './signalr/catchUp.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
+import { tabDormancy } from './utils/tabDormancy.js';
 import { getSubject } from './signalr/subjects.js';
 
 require('../lib/shared_chrome_code.js'); // side-effect
@@ -176,7 +177,6 @@ import '../../../styles/pages/darkmode.css';
 
 
 let token = '';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let tokenExp = '';
 
 let resolveTokenReady;
@@ -2596,6 +2596,7 @@ function VM() {
         if (batchTaskingTimer) clearInterval(batchTaskingTimer);
         const interval = effectiveRefreshIntervalMs();
         batchTaskingTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchBatchJobTasking();
         }, interval);
         console.log('[batch-tasking] Timer started:', interval, 'ms');
@@ -2629,6 +2630,7 @@ function VM() {
     }
 
     self.fetchAllTrackableAssets = async function () {
+        if (tabDormancy.isDormant()) return;
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
             // With a simulated exercise chosen the radio half of the feed
@@ -2847,6 +2849,7 @@ function VM() {
     function startAssetDataRefreshTimer() {
         if (assetDataRefreshTimer) clearInterval(assetDataRefreshTimer);
         assetDataRefreshTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllTrackableAssets()
         }, 30000);
     };
@@ -2873,6 +2876,7 @@ function VM() {
         const interval = effectiveRefreshIntervalMs();
 
         jobsTeamsTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
             self.fetchAllTeamData();
         }, interval);
@@ -2986,7 +2990,69 @@ function VM() {
 
 
 
+    // ---------------- DORMANT WHILE FORGOTTEN IN THE BACKGROUND -----------------
+    // See utils/tabDormancy.js. A dormant tab has missed too much to patch up,
+    // so it stays stopped and the user reloads it.
+
+    self.tabDormancy = tabDormancy;
+    self.tabPaused = ko.observable(false);
+    // 'checking' | 'ok' | 'expired'. A reload starts from the stored token, so
+    // with an expired one it would load nothing; only opening LAD again from
+    // Beacon's Lighthouse menu stores a fresh one.
+    self.pausedLogin = ko.observable('checking');
+    self.pausedLoginChecking = ko.pureComputed(() => self.pausedLogin() === 'checking');
+    self.pausedLoginOk = ko.pureComputed(() => self.pausedLogin() === 'ok');
+    self.pausedLoginExpired = ko.pureComputed(() => self.pausedLogin() === 'expired');
+    let dataLoadStarted = false;
+
+    self.reloadPage = function () {
+        window.location.reload();
+    };
+    const showPausedLoginOk = () => {
+        self.pausedLogin('ok');
+        ko.tasks.runEarly(); // it has to be showing to take focus
+        document.querySelector('#tab-paused button')?.focus();
+    };
+    // Called with each token this page is handed, so a paused tab whose login
+    // had expired offers Reload once a Beacon tab or another Lighthouse page
+    // stores a fresh token.
+    self.recheckPausedLogin = function () {
+        if (self.pausedLoginExpired() && !BeaconToken.nearExpiry(tokenExp)) showPausedLoginOk();
+    };
+    const checkPausedLogin = async () => {
+        // Renewed by now unless the tab was frozen past expiry. One more try:
+        // another tab may have stored a newer token, or a renewal may work.
+        if (BeaconToken.nearExpiry(tokenExp)) await refreshCadenceToken();
+        if (BeaconToken.nearExpiry(tokenExp)) self.pausedLogin('expired');
+        else showPausedLoginOk();
+    };
+    tabDormancy.onDormant = () => {
+        stopBeaconSignalRConnection();
+    };
+    tabDormancy.onReturn = () => {
+        // Nothing has loaded behind the config modal yet, so nothing is stale.
+        if (!dataLoadStarted) {
+            tabDormancy.reset();
+            return;
+        }
+        if (self.tabPaused()) return;
+        // Also here: a frozen tab's dormant timer may never have run.
+        stopBeaconSignalRConnection();
+        // Dialogs sit outside .app, and their hotkeys would still submit them
+        // from stale data. The browser's own handling of a key (Enter on
+        // Reload, Tab, reload shortcuts) isn't affected by stopping listeners.
+        Array.from(document.body.children).forEach((el) => {
+            if (el.id !== 'tab-paused') el.inert = true;
+        });
+        ['keydown', 'keyup'].forEach((type) => {
+            window.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
+        });
+        self.tabPaused(true);
+        checkPausedLogin();
+    };
+
     self.UserPressedSaveOnTheConfigModal = function () {
+        dataLoadStarted = true;
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
@@ -4321,6 +4387,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
+            myViewModel?.recheckPausedLogin();
         }
     );
 
@@ -4609,6 +4676,7 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel.signalrNeedsPermission(false);
             await getToken();
             if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
+            if (tabDormancy.isDormant()) return; // went dormant while waiting for the token
             // Closure over the module-level `token` var (kept current by
             // setToken() on every renewal), so each reconnect/negotiate
             // re-authenticates with whatever token is live at that moment.
