@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD settings for each Beacon
+
+*9 November 2026*
+
+- **LAD always loads at least one headquarters on Production Beacon.** An empty Teams or Incidents filter, including after **Clear**, now uses your Beacon focus unit instead of loading every unit. Train and Dev Beacon can still load all units. See [Clearing Headquarters](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#clearing-headquarters).
+- **Each Beacon keeps its own LAD Configuration.** Changes on Train or Dev Beacon no longer carry over to Production Beacon, or the other way around. Train and Dev go back to the default settings the first time you open them after this update.
+
 ## Terrain and historical imagery in LAD
 
 *9 November 2026*

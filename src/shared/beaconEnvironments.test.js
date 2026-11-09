@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { knownBeaconEnvironment, isKnownSignalRHub, isExtensionPage, pageParamsAllowed } from './beaconEnvironments.js';
+import { knownBeaconEnvironment, beaconSiteEnvironment, isKnownSignalRHub, isExtensionPage, pageParamsAllowed } from './beaconEnvironments.js';
 
 const EXTENSION = { protocol: 'chrome-extension:' };
 const HARNESS = { protocol: 'http:' };
@@ -22,6 +22,20 @@ describe('knownBeaconEnvironment', () => {
     expect(knownBeaconEnvironment('https://evil.example', 'https://beacon.ses.nsw.gov.au')).toBeNull();
     expect(knownBeaconEnvironment('', '')).toBeNull();
     expect(knownBeaconEnvironment(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('beaconSiteEnvironment', () => {
+  it('knows each Beacon site', () => {
+    expect(beaconSiteEnvironment('https://beacon.ses.nsw.gov.au')).toBe('production');
+    expect(beaconSiteEnvironment('https://trainbeacon.ses.nsw.gov.au/')).toBe('train');
+    expect(beaconSiteEnvironment('https://testbeacon.ses.nsw.gov.au')).toBe('test');
+    expect(beaconSiteEnvironment('https://devbeacon.ses.nsw.gov.au')).toBe('dev');
+  });
+
+  it('is null for anything else', () => {
+    expect(beaconSiteEnvironment('https://beacon.demo.test')).toBeNull();
+    expect(beaconSiteEnvironment(undefined)).toBeNull();
   });
 });
 

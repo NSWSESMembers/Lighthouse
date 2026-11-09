@@ -18,6 +18,7 @@ import {
     ONSITE_GEOFENCE_DEFAULT_METRES, ONSITE_GEOFENCE_MIN_METRES, ONSITE_GEOFENCE_MAX_METRES,
 } from '../utils/onsiteGeofence.js';
 import { RESET_GROUPS, keysToReset } from '../utils/resetGroups.js';
+import { taskingConfigKey } from '../utils/taskingConfigStorage.js';
 import { defaultLayoutPreset, splitLayoutPreset, joinLayoutPreset } from '../utils/layoutPreset.js';
 
 
@@ -787,7 +788,7 @@ export function ConfigVM(root, deps) {
     if (deps.defaultHqId) {
         Promise.resolve(deps.entity(deps.defaultHqId)).then(entity => {
             if (!entity?.Id) return;
-            const hq = { id: String(entity.Id), name: entity.Name || String(entity.Id) };
+            const hq = { id: String(entity.Id), name: entity.Name || String(entity.Id), entityType: entity.EntityTypeId ?? 0 };
             self.defaultHq(hq);
             self.newLayerHqPicker.reset(hq);
             self.discoverHqPicker.reset(hq);
@@ -1638,15 +1639,59 @@ export function ConfigVM(root, deps) {
         return r;
     }
 
+    // Production Beacon must not load every unit's teams and incidents, so
+    // there an empty HQ list falls back to the focus unit (?hq=<id>). This
+    // has to happen synchronously: loadShared fetches straight after loading,
+    // before a deferred subscriber would run. The fallback is never saved
+    // (see self.save), so an empty list keeps following whichever focus unit
+    // LAD was opened with; it's identified by being this exact object.
+    const requireHqFilter = !!deps.requireHqFilter;
+    const focusHqId = requireHqFilter ? parseInt(deps.defaultHqId, 10) : NaN;
+    let focusUnitFilter = focusHqId > 0 ? { id: focusHqId, name: 'Your focus unit', entityType: 0 } : null;
+
+    const fillEmptyHqFilters = () => {
+        if (!focusUnitFilter) return;
+        [self.teamFilters, self.incidentFilters].forEach((arr) => {
+            if (arr().length === 0) arr([focusUnitFilter]);
+        });
+    };
+
+    // The name arrives after the filter is already in use.
+    self.defaultHq.subscribe((hq) => {
+        if (!focusUnitFilter || !hq) return;
+        const placeholder = focusUnitFilter;
+        focusUnitFilter = { ...placeholder, name: hq.name, entityType: hq.entityType };
+        [self.teamFilters, self.incidentFilters].forEach((arr) => {
+            if (arr().includes(placeholder)) arr(arr().map(f => (f === placeholder ? focusUnitFilter : f)));
+        });
+    });
+
+    const hqFiltersForStorage = (filters) =>
+        (filters.length === 1 && filters[0] === focusUnitFilter ? [] : ko.toJS(filters));
+
+    // Only when Production Beacon has no focus unit to fall back on.
+    self.hqFilterMissing = ko.pureComputed(() =>
+        requireHqFilter && (self.teamFilters().length === 0 || self.incidentFilters().length === 0));
+    self.teamsEmptyHint = requireHqFilter
+        ? 'Choose at least one headquarters - Production Beacon can\'t load teams from all units'
+        : 'No Filters Applied - Teams from all units will be fetched';
+    self.incidentsEmptyHint = requireHqFilter
+        ? 'Choose at least one headquarters - Production Beacon can\'t load incidents from all units'
+        : 'No Filters Applied - Incidents from all units will be fetched';
+
     const upsert = (arr, item) => {
         const exists = arr().some(x => x.id === item.id);
         if (!exists) arr.push(item);
         if (exists) arr.remove(x => x.id === item.id);
+        fillEmptyHqFilters();
     };
-    const removeById = (arr, id) => arr.remove(x => x.id === id);
+    const removeById = (arr, id) => {
+        arr.remove(x => x.id === id);
+        fillEmptyHqFilters();
+    };
 
-    self.clearTeams = () => { self.teamFilters.removeAll(); self.teamsExpanded(false); };
-    self.clearIncidents = () => { self.incidentFilters.removeAll(); self.incidentsExpanded(false); };
+    self.clearTeams = () => { self.teamFilters.removeAll(); fillEmptyHqFilters(); self.teamsExpanded(false); };
+    self.clearIncidents = () => { self.incidentFilters.removeAll(); fillEmptyHqFilters(); self.incidentsExpanded(false); };
     self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
@@ -1771,16 +1816,21 @@ export function ConfigVM(root, deps) {
 
 
     // Persistence
-    const STORAGE_KEY = 'lh-taskingConfig';
+    const STORAGE_KEY = taskingConfigKey(deps.beaconEnvironment);
 
     self.save = () => {
         const cfg = buildConfig();
+        cfg.locationFilters = {
+            teams: hqFiltersForStorage(self.teamFilters()),
+            incidents: hqFiltersForStorage(self.incidentFilters())
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
 
     };
 
     self.saveAndCloseAndLoad = () => {
-        
+        if (self.hqFilterMissing()) return;
+
         self.save();
 
         root.UserPressedSaveOnTheConfigModal()
@@ -1814,6 +1864,7 @@ export function ConfigVM(root, deps) {
             cfg = JSON.parse(saved);
         } catch (e) {
             console.warn('Failed to parse lh-taskingConfig:', e);
+            fillEmptyHqFilters();
             return;
         }
         if (!cfg) {
@@ -1897,6 +1948,7 @@ export function ConfigVM(root, deps) {
             self.teamFilters(cfg.locationFilters.teams || []);
             self.incidentFilters(cfg.locationFilters.incidents || []);
         }
+        fillEmptyHqFilters();
 
 
         // status filters (arrays of status names to show)
@@ -2072,9 +2124,11 @@ export function ConfigVM(root, deps) {
             self.loadFromStorage();
 
             // Refresh data based on new filters
-            root.fetchAllTeamData();
-            root.fetchAllJobsData();
-            root.fetchAllTrackableAssets();
+            if (!self.hqFilterMissing()) {
+                root.fetchAllTeamData();
+                root.fetchAllJobsData();
+                root.fetchAllTrackableAssets();
+            }
 
             self.shareId(id);
             self.shareKeyInput(id);
@@ -2294,7 +2348,7 @@ export function ConfigVM(root, deps) {
         if (ids.includes('trails')) root.mapVM?.assetTrails?.discardPendingSave?.();
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
-        keysToReset(keys, ids).forEach(k => localStorage.removeItem(k));
+        keysToReset(keys, ids, STORAGE_KEY).forEach(k => localStorage.removeItem(k));
         location.reload();
     };
 

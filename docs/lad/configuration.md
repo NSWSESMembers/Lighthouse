@@ -41,6 +41,8 @@ If you select a zone, you can expand it to include all units under the zone. Thi
 
 To remove a headquarters from a filter, click the cross next to it. To remove all headquarters, click the **Clear** button above the list of selected headquarters.
 
+On Production Beacon, each filter needs at least one headquarters, so LAD doesn't load every unit. If a filter is empty, including after you click **Clear**, LAD uses your Beacon focus unit. On Train and Dev Beacon you can leave a filter empty to load all units.
+
 ![Clear button](images/hq-clear.png)
 
 ### Full Refresh Interval
@@ -225,11 +227,13 @@ Set separate weights for **Rescue** and **Standard** (non-rescue) incidents, bal
 
 **Share** generates a code that captures your current filters and settings. Another user can click **Load**, enter the code and click **Go** to apply the same configuration.
 
+Production, Train, Test and Dev Beacon each keep their own Configuration, so changes on one don't affect the others. Loading a code replaces the Configuration for the Beacon you're on.
+
 ![Share and Load buttons](images/config-share-load.png)
 
 ## Restoring Default Settings
 
-**Restore Defaults** lets you pick what to put back to its defaults, then reloads LAD. Click it to open the **Restore Defaults** window, untick anything you want to keep, and click **Reset and reload**. **Cancel** takes you back to the Configuration screen with nothing changed.
+**Restore Defaults** lets you pick what to put back to its defaults, then reloads LAD. Click it to open the **Restore Defaults** window, untick anything you want to keep, and click **Reset and reload**. **Cancel** takes you back to the Configuration screen with nothing changed. **Configuration settings** are only reset for the Beacon you're on.
 
 | Option | What it resets | Ticked to start |
 | --- | --- | --- |
