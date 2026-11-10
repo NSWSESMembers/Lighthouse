@@ -25,6 +25,12 @@ The home page shows the first three `##` entries, so keep the title short.
 - **See what a team can do at a glance.** Expanding a team in the Team Register now shows a [Team Capabilities](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-capabilities) box counting how many members hold each capability. Each member counts at their highest level, so a count such as **Storm Ground only** leaves out anyone with Storm Heights.
 - **Members column in the Team Register.** The Team Leader column is now Members and shows the team leader and how many others are on the team, such as Alex Nguyen + 4.
 
+## Non-Incident Task Card hours
+
+*10 November 2026*
+
+- **Summed hours are back on Non-Incident Task Cards.** The total of all participants' hours shows beside the duration at the top of a task card again. It had stopped appearing after a change to Beacon's page layout.
+
 ## Closer map zoom in LAD
 
 *9 November 2026*
