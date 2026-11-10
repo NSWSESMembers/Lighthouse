@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Non-Incident Task Card hours
+
+*10 November 2026*
+
+- **Summed hours are back on Non-Incident Task Cards.** The total of all participants' hours shows beside the duration at the top of a task card again. It had stopped appearing after a change to Beacon's page layout.
+
 ## Closer map zoom in LAD
 
 *9 November 2026*
