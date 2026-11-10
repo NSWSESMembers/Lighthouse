@@ -2725,6 +2725,24 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   font-size: 0.7rem;
 }
 
+/* Legend button that collapses the box; looks like the plain legend text */
+.team-capabilities-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.team-capabilities-toggle .fa {
+  width: 0.9em;
+  transition: transform 0.15s;
+}
+
+.team-capabilities-toggle__icon--collapsed {
+  transform: rotate(-90deg);
+}
+
 .team-capabilities {
   display: flex;
   flex-wrap: wrap;

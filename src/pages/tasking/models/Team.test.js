@@ -554,6 +554,16 @@ describe('showCapabilities (shared singleton)', () => {
     expect(t2.showCapabilities()).toBe(!before); // shared singleton
     t1.toggleCapabilities(); // restore, so other tests in this file aren't affected
   });
+
+  it('collapsing the Team Capabilities box applies to every team and is remembered', () => {
+    const t1 = new Team({});
+    const t2 = new Team({});
+    const before = t1.capabilitiesCollapsed();
+    t1.toggleCapabilitiesCollapsed();
+    expect(t2.capabilitiesCollapsed()).toBe(!before);
+    expect(localStorage.getItem('lh_teamCapabilitiesCollapsed')).toBe(String(!before));
+    t1.toggleCapabilitiesCollapsed();
+  });
 });
 
 describe('updateFromJson', () => {

@@ -21,11 +21,12 @@ export const RESET_GROUPS = [
   {
     id: 'layout',
     label: 'Layout',
-    detail: 'Page layout and pane sizes, collapsed side drawer and Legend, radar bar, view filters, capability icons',
+    detail: 'Page layout and pane sizes, collapsed side drawer and Legend, radar bar, view filters, capability icons, collapsed Team Capabilities',
     checked: true,
     match: (k) => k === 'lh.layoutPreset' || k.startsWith('lh.layout.')
       || ['sidebar.collapsed', 'legendCollapsed', 'lh-rainRadar.expanded',
-        'tasking.teamsInViewOnly', 'tasking.incidentsInViewOnly', 'lh_showCapabilities'].includes(k),
+        'tasking.teamsInViewOnly', 'tasking.incidentsInViewOnly', 'lh_showCapabilities',
+        'lh_teamCapabilitiesCollapsed'].includes(k),
   },
   {
     id: 'layers',

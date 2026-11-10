@@ -18,6 +18,11 @@ const _capKey = 'lh_showCapabilities';
 const _showCapabilities = ko.observable(localStorage.getItem(_capKey) === 'true');
 _showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
 
+// Team Capabilities box collapsed, likewise shared by every team card
+const _capBoxKey = 'lh_teamCapabilitiesCollapsed';
+const _capabilitiesCollapsed = ko.observable(localStorage.getItem(_capBoxKey) === 'true');
+_capabilitiesCollapsed.subscribe(v => localStorage.setItem(_capBoxKey, v ? 'true' : 'false'));
+
 // ── Default-asset persistence (shared across all teams) ──
 // Uses the shared mapping (lh_sharedDefaultAssets) backed by Lambda/S3.
 // An asset can only be the default for one team.
@@ -125,6 +130,10 @@ export function Team(data = {}, deps = {}) {
     // capabilities visibility (shared singleton)
     self.showCapabilities = _showCapabilities;
     self.toggleCapabilities = function () { _showCapabilities(!_showCapabilities()); };
+    self.capabilitiesCollapsed = _capabilitiesCollapsed;
+    self.toggleCapabilitiesCollapsed = function () { _capabilitiesCollapsed(!_capabilitiesCollapsed()); };
+    // a string, because the attr binding drops an attribute whose value is false
+    self.capabilitiesAriaExpanded = ko.pureComputed(() => String(!_capabilitiesCollapsed()));
 
     // pinning
     self.isPinned = ko.pureComputed(() => {

@@ -77,6 +77,8 @@ The **Team Capabilities** box across the top of the expanded view counts how man
 
 This applies to Storm Ground and Heights, Chainsaw L1 and L2, Land Based and On Water or In Water, Boat Operator and On Water, High Clearance Vehicle levels, Driver levels, Job Ready, Field Foundations and Field Operator, and the Beacon access levels. Anyone with a technical capability, such as a storm, chainsaw, rescue or land search accreditation, isn't counted under Field Operator, Field Foundations or Job Ready. Driver levels are also counted at the highest level, but aren't labelled **only**. All other capabilities are counted separately, including On Water and In Water.
 
+Click **Team Capabilities** to collapse the box, and again to open it. LAD remembers your choice for every team, including after a reload.
+
 ### Matched Assets
 
 The bottom left of the expanded view lists each matched radio or satellite tracker. Click one to zoom to it on the Situation Map.

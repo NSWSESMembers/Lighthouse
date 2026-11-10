@@ -5,6 +5,7 @@ const ALL_KEYS = [
   'lh-taskingConfig',
   'lh.layoutPreset', 'lh.layout.default.sidebarWidthPx', 'sidebar.collapsed', 'legendCollapsed',
   'lh-rainRadar.expanded', 'tasking.teamsInViewOnly', 'tasking.incidentsInViewOnly', 'lh_showCapabilities',
+  'lh_teamCapabilitiesCollapsed',
   'ov.online-bomRadar', 'ov.matched-assets', 'map.base', 'map.incidentsVisible', 'layers.open', 'layers.section',
   'lh-layerPresets',
   'lh_collabLayer_subscriptions',

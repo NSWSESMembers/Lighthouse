@@ -404,7 +404,15 @@
                                                         <!-- full width: capabilities -->
                                                         <div class="col-12">
                                                             <fieldset>
-                                                                <legend class="job-details-legend" title="Team members holding each capability">Team Capabilities</legend>
+                                                                <legend class="job-details-legend">
+                                                                    <button type="button" class="team-capabilities-toggle"
+                                                                        title="Show or hide the team members holding each capability"
+                                                                        data-bind="click: t.toggleCapabilitiesCollapsed, clickBubble: false, attr: { 'aria-expanded': t.capabilitiesAriaExpanded }">
+                                                                        <i class="fa fa-chevron-down small me-1"
+                                                                            data-bind="css: { 'team-capabilities-toggle__icon--collapsed': t.capabilitiesCollapsed }"></i>Team Capabilities
+                                                                    </button>
+                                                                </legend>
+                                                                <!-- ko ifnot: t.capabilitiesCollapsed -->
                                                                 <div class="team-capabilities"
                                                                     data-bind="foreach: { data: t.capabilityCounts, as: 'c' }">
                                                                     <span class="team-capability">
@@ -416,6 +424,7 @@
                                                                     data-bind="visible: t.capabilityCounts().length === 0">
                                                                     No capabilities recorded.
                                                                 </div>
+                                                                <!-- /ko -->
                                                             </fieldset>
                                                         </div>
                                                         <div class="col-12 col-lg-3">
