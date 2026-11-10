@@ -244,6 +244,33 @@ function person(i) {
   };
 }
 
+// Accreditations for team members, a repeating mix so teams differ. Same shape
+// as Beacon's PersonCapabilityTags; the ids are invented.
+const CAPABILITY_TAGS = {
+  'SWDH-ACC': 'Storm and Water Damage (Heights) Operator',
+  'SWDG-ACC': 'Storm and Water Damage (Ground) Operator',
+  'CL1-ACC': 'Chainsaw Level 1 (Cross cut) Operator',
+  'DRL1-ACC': 'Driver Authorisation Level 1',
+  'FRL1-ACC': 'Land based Flood Rescue Operator (FRL1)',
+  'FTL-ACC': 'Field Team leader',
+};
+const MEMBER_CAPABILITIES = [
+  ['FTL-ACC', 'SWDH-ACC', 'SWDG-ACC', 'CL1-ACC', 'DRL1-ACC'],
+  ['SWDG-ACC', 'DRL1-ACC'],
+  ['SWDH-ACC', 'SWDG-ACC', 'FRL1-ACC'],
+  ['SWDG-ACC', 'CL1-ACC'],
+  [],
+];
+const memberPerson = (i) => ({
+  ...person(i),
+  PersonCapabilityTags: MEMBER_CAPABILITIES[i % MEMBER_CAPABILITIES.length].map((Name) => ({
+    Id: 9000 + Object.keys(CAPABILITY_TAGS).indexOf(Name),
+    Name,
+    TagGroupId: 49,
+    Description: CAPABILITY_TAGS[Name],
+  })),
+});
+
 const OPERATOR = person(17);
 const fakePhone = (i) => `0491 570 ${String(100 + i).slice(-3)}`; // ACMA fictional-use range
 
@@ -432,7 +459,7 @@ export function buildScenario(now = new Date(), { jobCount = JOB_SPECS.length } 
     TeamType: TEAM_TYPE_FIELD,
     // NOTE: the captured sample team had no members, so this element shape
     // (TeamLeader + Person) is taken from models/Team.js, not from Beacon.
-    Members: Array.from({ length: memberCount }, (_, m) => ({ TeamLeader: m === 0, Person: person(memberSeq++) })),
+    Members: Array.from({ length: memberCount }, (_, m) => ({ TeamLeader: m === 0, Person: memberPerson(memberSeq++) })),
     Resources: [],
     Tags: [],
     Capabilities: [],

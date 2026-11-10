@@ -990,6 +990,16 @@ body.dark-mode .team-cell {
   border-color: #444;
 }
 
+body.dark-mode .team-capability {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+body.dark-mode .team-capability__count {
+  background: #444;
+}
+
 body.dark-mode .team-details {
   background: #2d2d2d !important;
   border-top-color: #444 !important;

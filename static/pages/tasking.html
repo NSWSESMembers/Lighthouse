@@ -401,6 +401,23 @@
                                             <div class="card border-0 mb-0">
                                                 <div class="card-body p-2">
                                                     <div class="row g-3">
+                                                        <!-- full width: capabilities -->
+                                                        <div class="col-12">
+                                                            <fieldset>
+                                                                <legend class="job-details-legend" title="Team members holding each capability">Capabilities</legend>
+                                                                <div class="team-capabilities"
+                                                                    data-bind="foreach: { data: t.capabilityCounts, as: 'c' }">
+                                                                    <span class="team-capability">
+                                                                        <span class="team-capability__count" data-bind="text: c.count"></span>
+                                                                        <span data-bind="text: c.label"></span>
+                                                                    </span>
+                                                                </div>
+                                                                <div class="text-muted"
+                                                                    data-bind="visible: t.capabilityCounts().length === 0">
+                                                                    No capabilities recorded.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
                                                         <div class="col-12 col-lg-3">
                                                             <div class="row g-2">
                                                                 <!-- LEFT: team members + capabilities -->

@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Team capabilities in LAD
+
+*10 November 2026*
+
+- **See what a team can do at a glance.** Expanding a team in the Team Register now shows a [Capabilities](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#capabilities) box counting how many members hold each capability. Each member counts at their highest level, so a count such as **Storm Ground only** leaves out anyone with Storm Heights.
+
 ## Closer map zoom in LAD
 
 *9 November 2026*

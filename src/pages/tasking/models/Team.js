@@ -11,6 +11,7 @@ import { Enum } from '../utils/enum.js';
 
 import { loadSharedMapping, saveSharedMapping, pushSharedDefault, fetchSharedDefaults } from '../utils/defaultAssetSync.js';
 import { getSingleFetchCooldownMs } from '../signalr/pushMode.js';
+import { teamCapabilityCounts } from '../utils/teamCapabilities.js';
 
 // Shared across all Team instances — single localStorage key
 const _capKey = 'lh_showCapabilities';
@@ -160,6 +161,8 @@ export function Team(data = {}, deps = {}) {
             return 0;
         });
     })
+
+    self.capabilityCounts = ko.pureComputed(() => teamCapabilityCounts(ko.unwrap(self.members)));
 
     self.statusDate = ko.observable((data.TeamStatusStartDate) ? new Date(data.TeamStatusStartDate) : null);
 
