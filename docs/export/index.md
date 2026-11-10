@@ -13,7 +13,7 @@ Incident Export downloads an HQ's incidents as a CSV file you can open in Excel 
 
 ## Opening Incident Export
 
-- **From the Lighthouse menu in Beacon:** choose **Incident Export (*your HQ* Today)**. This opens today's incidents for the HQ you're logged in to.
+- **From the Lighthouse menu in Beacon:** choose **Incident Export (*your HQ* Today)**. This opens today's incidents for your focus HQ.
 - **From Beacon's Jobs screen:** filter the incident list as you want it (HQs and dates), then click **Advanced Export (Filtered)** above the list. Incident Export opens with the same HQs and date range.
 
 If no HQ is selected, the export covers all of NSW. The header names the HQs and shows the date range. It's coloured by the Beacon the page was opened from, as in LAD: orange for Beacon, green for Train Beacon and blue for Dev Beacon.
