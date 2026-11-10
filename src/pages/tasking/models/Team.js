@@ -162,6 +162,14 @@ export function Team(data = {}, deps = {}) {
         });
     })
 
+    // Register column: leader first, e.g. "Alex Nguyen + 4".
+    self.membersSummary = ko.pureComputed(() => {
+        const [first, ...others] = self.membersSorted();
+        if (!first) return '-';
+        const name = `${first.Person.FirstName} ${first.Person.LastName}`;
+        return others.length ? `${name} + ${others.length}` : name;
+    });
+
     self.capabilityCounts = ko.pureComputed(() => teamCapabilityCounts(ko.unwrap(self.members)));
 
     self.statusDate = ko.observable((data.TeamStatusStartDate) ? new Date(data.TeamStatusStartDate) : null);

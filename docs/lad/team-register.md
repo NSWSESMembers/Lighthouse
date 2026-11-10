@@ -10,10 +10,10 @@ The Team Register is in the top left of LAD. It lists all filtered teams. Each r
 - Callsign
 - Status
 - HQ (assigned HQ)
-- Task count: current active taskings (Tasked, Enroute, Onsite and Offsite), with the team's soonest [ETA or ETC](tasking.md#arrival-and-completion-times) underneath
-- Team leader
+- Tasking: current active taskings (Tasked, Enroute, Onsite and Offsite), with the team's soonest [ETA or ETC](tasking.md#arrival-and-completion-times) underneath
+- Members: the team leader and how many others are on the team, e.g. Alex Nguyen + 4
 
-Sort by Callsign, Status, HQ or Task Count by clicking the column heading; click again to swap between ascending and descending.
+Sort by Callsign, Status, HQ or Tasking by clicking the column heading; click again to swap between ascending and descending.
 
 ![Team Register](images/team-register.png)
 
@@ -53,7 +53,7 @@ Every team row has four action buttons, whether or not the team is expanded:
 Click anywhere on a team row (or the **+** at its left) to expand it; click again to collapse it. Expanding a team reloads its details and taskings from Beacon. Everything in this section is only shown once a team is expanded:
 
 - [Team Members](#team-members), including the team leader
-- [Capabilities](#capabilities), how many members hold each one
+- [Team Capabilities](#team-capabilities), how many members hold each one
 - [Matched Assets](#matched-assets), the radios and satellite trackers tracked against the team
 - [Team Taskings](#team-taskings), with actions for each tasking
 
@@ -71,9 +71,9 @@ Show or hide member capabilities with the tags icon to the right of the **Member
 
 ![Member capability toggle](images/team-member-capability-toggle.png)
 
-### Capabilities
+### Team Capabilities
 
-The **Capabilities** box across the top of the expanded view counts how many of the team's members hold each capability, such as **2 Storm Heights**, so you can see what a team can do without opening each member. Each member is counted at their highest level. A count labelled **only**, such as **1 Storm Ground only**, is the members at just that level, so anyone with Storm Heights isn't included in it even if they also hold Storm Ground.
+The **Team Capabilities** box across the top of the expanded view counts how many of the team's members hold each capability, such as **2 Storm Heights**, so you can see what a team can do without opening each member. Each member is counted at their highest level. A count labelled **only**, such as **1 Storm Ground only**, is the members at just that level, so anyone with Storm Heights isn't included in it even if they also hold Storm Ground.
 
 This applies to Storm Ground and Heights, Chainsaw L1 and L2, Land Based and On Water or In Water, Boat Operator and On Water, High Clearance Vehicle levels, Driver levels, Job Ready, Field Foundations and Field Operator, and the Beacon access levels. Anyone with a technical capability, such as a storm, chainsaw, rescue or land search accreditation, isn't counted under Field Operator, Field Foundations or Job Ready. Driver levels are also counted at the highest level, but aren't labelled **only**. All other capabilities are counted separately, including On Water and In Water.
 

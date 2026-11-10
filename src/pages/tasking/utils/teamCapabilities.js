@@ -5,18 +5,22 @@ const TECHNICAL = [
 ];
 
 // Beacon accreditation tag (Person.PersonCapabilityTags[].Name) -> the short
-// label shown in the expanded team's Capabilities box, in display order.
+// label shown in the expanded team's Team Capabilities box, in display order:
+// driver, flood rescue, chainsaw and storm first, then everything else.
 // `supersededBy`: a member holding any of those tags isn't counted for this one,
 // so its count is members at just that level and its label says "only"
 // (unless `plainLabel`).
 const CAPABILITIES = [
-    { code: 'SWDH-ACC', label: 'Storm Heights' },
-    { code: 'SWDG-ACC', label: 'Storm Ground', supersededBy: ['SWDH-ACC'] },
-    { code: 'CL2-ACC', label: 'Chainsaw L2' },
-    { code: 'CL1-ACC', label: 'Chainsaw L1', supersededBy: ['CL2-ACC'] },
+    { code: 'DRL3-ACC', label: 'Driver L3' },
+    { code: 'DRL2-ACC', label: 'Driver L2', supersededBy: ['DRL3-ACC'], plainLabel: true },
+    { code: 'DRL1-ACC', label: 'Driver L1', supersededBy: ['DRL2-ACC', 'DRL3-ACC'], plainLabel: true },
     { code: 'FRL3-ACC', label: 'In Water' },
     { code: 'FRL2-ACC', label: 'On Water' },
     { code: 'FRL1-ACC', label: 'Land Based', supersededBy: ['FRL2-ACC', 'FRL3-ACC'] },
+    { code: 'CL2-ACC', label: 'Chainsaw L2' },
+    { code: 'CL1-ACC', label: 'Chainsaw L1', supersededBy: ['CL2-ACC'] },
+    { code: 'SWDH-ACC', label: 'Storm Heights' },
+    { code: 'SWDG-ACC', label: 'Storm Ground', supersededBy: ['SWDH-ACC'] },
     { code: 'BOAT-ACC', label: 'Boat Operator', supersededBy: ['FRL2-ACC'] },
     { code: 'USAR1-ACC', label: 'USAR Cat 1' },
     { code: 'RCR-ACC', label: 'Road Crash Rescue' },
@@ -29,9 +33,6 @@ const CAPABILITIES = [
     { code: 'HCV3-ACC', label: 'HCV Flood' },
     { code: 'HCV2-ACC', label: 'HCV General', supersededBy: ['HCV3-ACC'] },
     { code: 'HCV1-ACC', label: 'HCV Logistics', supersededBy: ['HCV2-ACC', 'HCV3-ACC'] },
-    { code: 'DRL3-ACC', label: 'Driver L3' },
-    { code: 'DRL2-ACC', label: 'Driver L2', supersededBy: ['DRL3-ACC'], plainLabel: true },
-    { code: 'DRL1-ACC', label: 'Driver L1', supersededBy: ['DRL2-ACC', 'DRL3-ACC'], plainLabel: true },
     { code: 'FTL-ACC', label: 'Field Team Leader' },
     { code: 'FIELD-ACC', label: 'Field Operator', supersededBy: TECHNICAL },
     { code: 'FO', label: 'Field Foundations', supersededBy: ['FIELD-ACC', ...TECHNICAL] },

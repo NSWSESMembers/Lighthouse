@@ -2540,9 +2540,9 @@ body.dark-mode .hq-coverage-watermark.is-visible {
      bare px track, minmax() can still shrink at narrow pane widths instead
      of forcing the row into horizontal scroll. chevron/pin/actions stay
      true fixed widths since they hold buttons, not text. */
-  --team-cols: 30px /* chevron */ 30px /* pin */ 1.35fr /* callsign */ minmax(64px, 90px)
-    /* status */ minmax(40px, 60px) /* HQ */ minmax(96px, 120px) /* task count (+ ETA/ETC chip) */ 1fr
-    /* leader */ 140px; /* actions (fixed) */
+  --team-cols: 30px /* chevron */ 30px /* pin */ 1fr /* callsign */ minmax(64px, 78px)
+    /* status: fits "Stood down" */ minmax(40px, 56px) /* HQ: fits the heading and sort arrow */ minmax(96px, 100px) /* tasking: fits the "ETA +59m" chip */ minmax(110px, 170px)
+    /* members */ 140px; /* actions (fixed) */
 }
 
 /* header */

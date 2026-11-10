@@ -36,6 +36,36 @@ describe('teamLeader / membersSorted', () => {
     expect(t.teamLeader()).toBe('-');
   });
 
+  it('membersSummary is the leader plus how many others', () => {
+    const t = new Team({
+      Members: [
+        { Person: { FirstName: 'A', LastName: 'One' }, TeamLeader: false },
+        { Person: { FirstName: 'B', LastName: 'Two' }, TeamLeader: true },
+        { Person: { FirstName: 'C', LastName: 'Three' }, TeamLeader: false },
+      ],
+    });
+    expect(t.membersSummary()).toBe('B Two + 2');
+  });
+
+  it('membersSummary is just the name for a team of one', () => {
+    const t = new Team({ Members: [{ Person: { FirstName: 'A', LastName: 'One' }, TeamLeader: true }] });
+    expect(t.membersSummary()).toBe('A One');
+  });
+
+  it('membersSummary starts with the first member when there is no leader', () => {
+    const t = new Team({
+      Members: [
+        { Person: { FirstName: 'A', LastName: 'One' }, TeamLeader: false },
+        { Person: { FirstName: 'B', LastName: 'Two' }, TeamLeader: false },
+      ],
+    });
+    expect(t.membersSummary()).toBe('A One + 1');
+  });
+
+  it('membersSummary is "-" for a team with no members', () => {
+    expect(new Team({ Members: [] }).membersSummary()).toBe('-');
+  });
+
   it('membersSorted puts the leader first', () => {
     const t = new Team({
       Members: [

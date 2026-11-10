@@ -279,9 +279,9 @@
                                 </th>
                                 <th class="sortable" data-sort-key="taskedJobCount" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
-                                    <span class="th-label">Task Count</span> <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Tasking</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="not-sortable" scope="col">Team Leader</th>
+                                <th class="not-sortable" scope="col">Members</th>
                                 <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
@@ -327,7 +327,7 @@
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
-                                            <!-- 5. Task Count (+ ETA/ETC of the tasking that matters most) -->
+                                            <!-- 5. Tasking (+ ETA/ETC of the tasking that matters most) -->
                                             <div class="team-cell team-cell--count">
                                                 <div data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
                                                 <!-- ko with: t.etaInfo -->
@@ -335,8 +335,8 @@
                                                 <!-- /ko -->
                                             </div>
 
-                                            <!-- 6. Team Leader -->
-                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader, flashTextOnChange: t.teamLeader">
+                                            <!-- 6. Members -->
+                                            <div class="team-cell team-cell--leader" data-bind="text: t.membersSummary, flashTextOnChange: t.membersSummary">
                                             </div>
 
                                             <!-- 7. Actions -->
@@ -404,7 +404,7 @@
                                                         <!-- full width: capabilities -->
                                                         <div class="col-12">
                                                             <fieldset>
-                                                                <legend class="job-details-legend" title="Team members holding each capability">Capabilities</legend>
+                                                                <legend class="job-details-legend" title="Team members holding each capability">Team Capabilities</legend>
                                                                 <div class="team-capabilities"
                                                                     data-bind="foreach: { data: t.capabilityCounts, as: 'c' }">
                                                                     <span class="team-capability">

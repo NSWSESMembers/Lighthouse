@@ -8,8 +8,8 @@ const member = (...names) => ({
 describe('teamCapabilityCounts', () => {
     it('counts the members holding each capability', () => {
         expect(teamCapabilityCounts([member('SWDH-ACC'), member('SWDH-ACC', 'CL1-ACC')])).toEqual([
-            { code: 'SWDH-ACC', label: 'Storm Heights', count: 2 },
             { code: 'CL1-ACC', label: 'Chainsaw L1 only', count: 1 },
+            { code: 'SWDH-ACC', label: 'Storm Heights', count: 2 },
         ]);
     });
 
@@ -99,8 +99,8 @@ describe('teamCapabilityCounts', () => {
     });
 
     it('lists capabilities in table order whatever order Beacon sends them', () => {
-        expect(teamCapabilityCounts([member('BEAF-ACC', 'DRL1-ACC', 'SWDH-ACC')]).map(c => c.code))
-            .toEqual(['SWDH-ACC', 'DRL1-ACC', 'BEAF-ACC']);
+        expect(teamCapabilityCounts([member('BEAF-ACC', 'SWDH-ACC', 'CL1-ACC', 'FRL1-ACC', 'DRL1-ACC')]).map(c => c.code))
+            .toEqual(['DRL1-ACC', 'FRL1-ACC', 'CL1-ACC', 'SWDH-ACC', 'BEAF-ACC']);
     });
 
     it('counts a person once if Beacon repeats a tag', () => {
