@@ -421,7 +421,11 @@
                                                                     </span>
                                                                 </div>
                                                                 <div class="text-muted"
-                                                                    data-bind="visible: t.capabilityCounts().length === 0">
+                                                                    data-bind="visible: t.members().length === 0">
+                                                                    Team has no members assigned.
+                                                                </div>
+                                                                <div class="text-muted"
+                                                                    data-bind="visible: t.members().length > 0 && t.capabilityCounts().length === 0">
                                                                     No capabilities recorded.
                                                                 </div>
                                                                 <!-- /ko -->
