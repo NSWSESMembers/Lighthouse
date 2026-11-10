@@ -13,7 +13,7 @@ Incident Statistics shows how many incidents an HQ has had over a period, what k
 
 ## Opening Incident Statistics
 
-- **From the Lighthouse menu in Beacon:** choose **Incident Statistics (*your HQ* Today)**. This opens today's incidents for the HQ you're logged in to.
+- **From the Lighthouse menu in Beacon:** choose **Incident Statistics (*your HQ* Today)**. This opens today's incidents for your focus HQ.
 - **From Beacon's Jobs screen:** filter the incident list as you want it (HQs and dates), then click **Statistics (Filtered)** above the list. Incident Statistics opens with the same HQs and date range.
 
 If no HQ is selected, the page covers all of NSW.
