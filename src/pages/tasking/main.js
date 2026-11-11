@@ -85,6 +85,7 @@ import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
 import "./bindings/fitInPane.js";    // registers ko.bindingHandlers.fitInPane
 import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
+import "./bindings/compactBelow.js";  // registers ko.bindingHandlers.compactBelow
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";

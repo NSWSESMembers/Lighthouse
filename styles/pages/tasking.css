@@ -2539,8 +2539,10 @@ body.dark-mode .hq-coverage-watermark.is-visible {
      competing with callsign/leader for proportional space — and unlike a
      bare px track, minmax() can still shrink at narrow pane widths instead
      of forcing the row into horizontal scroll. chevron/pin/actions stay
-     true fixed widths since they hold buttons, not text. */
-  --team-cols: 30px /* chevron */ 30px /* pin */ 1fr /* callsign */ minmax(64px, 78px)
+     true fixed widths since they hold buttons, not text. Callsign is the
+     one field that matters most, so it keeps a floor of its own: without
+     one, the other tracks' floors leave it nothing on a phone. */
+  --team-cols: 30px /* chevron */ 30px /* pin */ minmax(80px, 1fr) /* callsign */ minmax(64px, 78px)
     /* status: fits "Stood down" */ minmax(40px, 56px) /* HQ: fits the heading and sort arrow */ minmax(96px, 100px) /* tasking: fits the "ETA +59m" chip */ minmax(110px, 170px)
     /* members */ 140px; /* actions (fixed) */
 }
@@ -2564,6 +2566,34 @@ body.dark-mode .hq-coverage-watermark.is-visible {
 .teams > thead > th .sort-icon {
   width: 10px;
   flex-shrink: 0;
+}
+
+/* Narrow list (compactBelow binding): short status and task count, and the actions
+   collapse into one menu button. */
+.team-table-container.is-compact .teams {
+  --team-cols: 30px /* chevron */ 30px /* pin */ minmax(80px, 1.35fr) /* callsign */ minmax(40px, 48px)
+    /* status */ minmax(40px, 56px) /* HQ */ minmax(36px, 64px) /* task count */ minmax(60px, 1fr) /* members */ 44px; /* actions */
+}
+.team-status-short,
+.team-count-short,
+.team-actions-menu,
+.is-compact .team-status-full,
+.is-compact .team-count-full,
+.is-compact .team-cell > .btn-group {
+  display: none;
+}
+.is-compact .team-status-short,
+.is-compact .team-actions-menu {
+  display: inline-block;
+}
+.is-compact .team-count-short {
+  display: block;
+}
+.team-actions-dropdown {
+  z-index: 3000 !important;
+}
+.team-actions-dropdown.show {
+  position: fixed !important;
 }
 
 /* body card */
@@ -3461,6 +3491,47 @@ overflow: hidden;
     minmax(96px, 104px) /* Status (+ ETA/ETC chip) */ minmax(70px, 1fr); /* Address */
 }
 
+/* Narrow list (compactBelow binding): Received moves under the Id, status
+   is shortened (Job.statusShortAndCount), and Situation and Address share
+   what's left. Every row is its own grid, so the tracks are fixed widths
+   rather than max-content, or the columns wouldn't line up between rows. */
+.job-table-container.is-compact .jobs {
+  --job-cols: 30px /* chev */ 20px /* pin */ 70px /* Id + Received */
+    40px /* HQ */ minmax(44px, 52px) /* Type */
+    minmax(60px, 1.6fr) /* Situation */ 64px /* Status (+ ETA/ETC chip) */ minmax(60px, 1fr); /* Address */
+}
+/* Narrow lists: only the sorted column keeps its sort arrow, so the short
+   headings fit. */
+.is-compact th[aria-sort="none"] .sort-icon {
+  display: none;
+}
+.job-status-short,
+.job-id-received,
+.is-compact .job-status-full,
+.is-compact .job-th-received,
+.is-compact .job-cell--received {
+  display: none;
+}
+.is-compact .job-cell--address .btn {
+  padding: 2px 3px;
+  font-size: 0.8rem;
+  overflow-wrap: break-word;
+}
+.is-compact .job-id-received {
+  display: block;
+  line-height: 1.2;
+}
+.is-compact .job-id-text {
+  font-weight: 600;
+}
+.job-id-received .received-date {
+  font-size: 0.85em;
+  color: #6c757d;
+}
+.is-compact .job-status-short {
+  display: inline;
+}
+
 /* body */
 .job-summary {
   display: grid;
@@ -3578,6 +3649,10 @@ overflow: hidden;
   align-items: center;
   justify-content: center;
   height: 1em;
+  /* The height is the icon's: touch screens pad these buttons for a bigger
+     hit area (pointer: coarse), which would otherwise squash the icon to 1px
+     and spill it over the line above. */
+  box-sizing: content-box;
   line-height: 1;
   border: 0;
   margin: 0;
@@ -3784,6 +3859,11 @@ overflow: hidden;
 .layer-stack-list {
   max-height: 26rem;
   overflow-y: auto;
+}
+
+/* The name can shrink (and truncate) instead of widening the row. */
+.layer-stack-row > .flex-grow-1 {
+  min-width: 0;
 }
 
 .layer-stack-row.layer-stack-off .layer-stack-name {
@@ -4084,7 +4164,7 @@ body.dark-mode .config-subaccordion .accordion-button::after {
 
 @media (max-width: 640px) {
   .config-settings {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     /* rail stacks on top here -- let the modal body scroll normally */
     height: auto;
   }
@@ -4114,6 +4194,134 @@ body.dark-mode .config-subaccordion .accordion-button::after {
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+  }
+
+  /* Phone: the sections are one row you swipe along, pinned to the top of
+     the modal body while a page scrolls under it. */
+  .config-rail {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: -1rem; /* the modal body's padding */
+    z-index: 10; /* above the input groups (up to 5) scrolling under it */
+    margin: -1rem -1rem 0.75rem;
+    padding: 0.5rem 1rem;
+    background: #fff;
+  }
+  .config-rail .nav-link {
+    white-space: nowrap;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* No card inside the modal: its border and padding only cost width. */
+  .config-card {
+    margin-top: 0 !important;
+    border: 0;
+    background: transparent;
+  }
+  .config-card > .card-body {
+    padding: 0;
+  }
+
+  /* Map layers: name on its own line, then switch-less controls under it. */
+  .layer-stack-row {
+    flex-wrap: wrap;
+  }
+  .layer-stack-row > .flex-grow-1 {
+    flex-basis: calc(100% - 4.5rem);
+  }
+  .layer-stack-opacity {
+    flex: 1 1 auto;
+    width: auto;
+    margin-left: 3.5rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Full-screen modal: one row of smaller footer buttons. */
+  #configModal .modal-footer {
+    flex-wrap: nowrap;
+    padding: 0.5rem 0.75rem;
+  }
+  #configModal .modal-footer > div {
+    flex-wrap: nowrap !important;
+  }
+  #configModal .modal-footer .btn {
+    white-space: nowrap;
+    --bs-btn-padding-y: 0.25rem;
+    --bs-btn-padding-x: 0.5rem;
+    --bs-btn-font-size: 0.875rem;
+  }
+}
+
+/* === Trackable Assets Library === */
+/* Bootstrap's modal-lg is only 500px wide below lg; use the iPad's width.
+   Phones get the full-screen modal (modal-fullscreen-sm-down). */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .asset-lib-dialog {
+    max-width: min(800px, calc(100vw - 2rem));
+  }
+}
+
+.asset-lib-list {
+  max-height: 400px;
+  overflow-y: auto;
+  container-type: inline-size;
+}
+
+/* Callsign | details | IDs & last seen | show on map */
+.asset-lib-card {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 180px auto;
+  align-items: start;
+}
+.asset-lib-action {
+  align-self: stretch;
+}
+
+/* Narrow card: callsign and the show-on-map button across the top, the
+   details and IDs side by side under them. */
+@container (max-width: 560px) {
+  .asset-lib-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "name action"
+      "details ids";
+    row-gap: 0.4rem;
+  }
+  .asset-lib-name {
+    grid-area: name;
+    text-align: start !important;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 0.5rem;
+  }
+  .asset-lib-name .fs-4 {
+    font-size: 1.25rem !important;
+  }
+  .asset-lib-action {
+    grid-area: action;
+    justify-self: end;
+    border-left: 0 !important;
+  }
+  .asset-lib-details {
+    grid-area: details;
+    padding-left: 0 !important;
+    border-left: 0 !important;
+  }
+  .asset-lib-ids {
+    grid-area: ids;
+    padding-left: 0.5rem !important;
+  }
+}
+
+/* Full-screen on a phone: the modal body scrolls, not a 400px box in it. */
+@media (max-width: 575.98px) {
+  .asset-lib-list {
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -5951,6 +6159,21 @@ input[type='search']::-ms-clear {
   position: static !important; /* override your current sticky-on-th */
   display: block;
   background: transparent;
+}
+
+/* Stacked expanded team (below lg): Members sits beside Team Capabilities.
+   The Members/Assets column steps out of the way so its boxes join the
+   outer row (col-6 / col-12 in tasking.html). */
+@media (max-width: 991.98px) {
+  .team-details-side,
+  .team-details-side > .row {
+    display: contents;
+  }
+  /* ...and lines up with them: the outer row's g-3 gutters, not g-2. */
+  .team-details-side > .row {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+  }
 }
 
 .team-details fieldset {

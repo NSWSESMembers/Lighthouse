@@ -256,7 +256,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive team-table-container">
+                <div class="table-responsive team-table-container" data-bind="compactBelow: 540">
                     <table class="teams table align-middle">
                         <thead class="table-light">
                             <tr>
@@ -317,19 +317,23 @@
                                             </div>
 
                                             <!-- 2. Callsign -->
-                                            <div class="team-cell">
+                                            <div class="team-cell team-cell--callsign">
                                                 <span data-bind="text: t.callsign"></span>
                                             </div>
 
                                             <!-- 3. Status -->
-                                            <div class="team-cell" data-bind="text: t.statusName, flashTextOnChange: t.statusName"></div>
+                                            <div class="team-cell" data-bind="flashTextOnChange: t.statusName, attr: { title: t.statusName }">
+                                                <span class="team-status-full" data-bind="text: t.statusName"></span>
+                                                <span class="team-status-short" data-bind="text: t.statusShort"></span>
+                                            </div>
 
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
                                             <!-- 5. Tasking (+ ETA/ETC of the tasking that matters most) -->
                                             <div class="team-cell team-cell--count">
-                                                <div data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
+                                                <div class="team-count-full" data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
+                                                <div class="team-count-short" data-bind="text: t.taskedJobCount, flashTextOnChange: t.taskedJobCount"></div>
                                                 <!-- ko with: t.etaInfo -->
                                                 <span class="eta-chip" data-bind="css: chipClass, fastTooltip: t.etaTitle"><i class="fa" data-bind="css: iconClass"></i><span data-bind="text: compactLabel"></span></span>
                                                 <!-- /ko -->
@@ -391,6 +395,24 @@
                                                         </span>
                                                     </button>
                                                 </div>
+                                                <!-- Narrow list (.is-compact): the same actions as a menu -->
+                                                <div class="dropdown team-actions-menu">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="dropdown" aria-expanded="false"
+                                                        title="Actions" aria-label="Team actions">
+                                                        <i class="fa fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end team-actions-dropdown">
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.openRadioLogModal">
+                                                            <i class="fa fa-microphone fa-fw me-2"></i>Radio Log</button></li>
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.sendSMS, enable: t.members().length">
+                                                            <i class="fa fa-envelope fa-fw me-2"></i>Message</button></li>
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.openBeaconEditTeam">
+                                                            <i class="fas fa-external-link-alt fa-fw me-2"></i>Edit in Beacon</button></li>
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.markerFocus, enable: t.trackableAssets().length">
+                                                            <i class="fa fa-crosshairs fa-fw me-2"></i><span data-bind="visible: t.trackableAssets().length">Zoom to</span><span data-bind="visible: !t.trackableAssets().length">No matching asset</span></button></li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
                                         <!-- /team-summary -->
@@ -401,8 +423,9 @@
                                             <div class="card border-0 mb-0">
                                                 <div class="card-body p-2">
                                                     <div class="row g-3">
-                                                        <!-- full width: capabilities -->
-                                                        <div class="col-12">
+                                                        <!-- capabilities: full width, or beside Members when stacked (below lg);
+                                                             collapsed and stacked, it's a heading across the top and Members sits beside Matched Assets -->
+                                                        <div class="col-lg-12" data-bind="css: { 'col-6': !t.capabilitiesCollapsed(), 'col-12': t.capabilitiesCollapsed() }">
                                                             <fieldset>
                                                                 <legend class="job-details-legend">
                                                                     <button type="button" class="team-capabilities-toggle"
@@ -431,9 +454,10 @@
                                                                 <!-- /ko -->
                                                             </fieldset>
                                                         </div>
-                                                        <div class="col-12 col-lg-3">
+                                                        <div class="col-12 col-lg-3 team-details-side">
                                                             <div class="row g-2">
                                                                 <!-- LEFT: team members + capabilities -->
+                                                                <div class="col-6 col-lg-12">
                                                                 <fieldset>
                                                                     <div
                                                                         class="team-members-header d-flex justify-content-between align-items-center mb-2">
@@ -471,7 +495,9 @@
                                                                         Team has no members assigned.
                                                                     </div>
                                                                 </fieldset>
+                                                                </div>
 
+                                                                <div class="col-lg-12" data-bind="css: { 'col-12': !t.capabilitiesCollapsed(), 'col-6': t.capabilitiesCollapsed() }">
                                                                 <fieldset>
                                                                     <div
                                                                         class="d-flex justify-content-between align-items-center mb-2">
@@ -511,6 +537,7 @@
                                                                         Team has no matching assets.
                                                                     </div>
                                                                 </fieldset>
+                                                                </div>
                                                             </div><!-- /col-md-4 -->
                                                         </div>
                                                         <div class="col-12 col-lg-9">
@@ -968,7 +995,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive job-table-container">
+                <div class="table-responsive job-table-container" data-bind="compactBelow: 540">
                     <table class="jobs table align-middle">
                         <thead class="table-light">
                             <tr>
@@ -981,7 +1008,7 @@
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none" title="Received"
+                                <th class="sortable job-th-received" data-sort-key="receivedAt" aria-sort="none" title="Received"
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Recv</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
@@ -1034,6 +1061,11 @@
                                             <!-- 2. Id -->
                                             <div class="job-cell job-cell--id">
                                                 <div class="job-id-text" data-bind="text: j.identifierTrimmed"></div>
+                                                <!-- Narrow list (.is-compact): Received sits here instead of its own column -->
+                                                <div class="job-id-received" data-bind="attr:{ title: j.receivedAt }">
+                                                    <div class="received-time" data-bind="text: j.receivedAtTimeShort"></div>
+                                                    <div class="received-date" data-bind="text: j.receivedAtDateShort"></div>
+                                                </div>
                                                 <div class="job-id-icons">
                                                     <button type="button"
                                                         class="btn btn-link p-0 text-decoration-none fa-center images-button"
@@ -1082,8 +1114,9 @@
                                                 <div class="dropdown">
                                                     <button class="jobstatus-dropdown-btn" type="button"
                                                         data-bs-toggle="dropdown"
-                                                        data-bind="click: j.onStatusNameClick">
-                                                        <span data-bind="text: j.statusNameAndCount, flashOnChange: j.statusNameAndCount"></span>
+                                                        data-bind="click: j.onStatusNameClick, attr: { title: j.statusName }">
+                                                        <span class="job-status-full" data-bind="text: j.statusNameAndCount, flashOnChange: j.statusNameAndCount"></span>
+                                                        <span class="job-status-short" data-bind="text: j.statusShortAndCount, flashOnChange: j.statusNameAndCount"></span>
                                                         <span class="caret"></span>
                                                     </button>
                                                     <ul class="dropdown-menu jobstatusDropdown">
@@ -1762,7 +1795,7 @@
 
     <!-- Config Modal -->
     <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header py-2 px-3">
 
@@ -1904,7 +1937,7 @@
                                             </div>
 
                                             <div class="row g-3 mt-0">
-                                                <div class="col-6">
+                                                <div class="col-12 col-sm-6">
                                                     <div class="card">
                                                         <div class="card-header py-1 d-flex justify-content-between align-items-center">
                                                             <span class="small fw-semibold">Only Load Teams Attached To:</span>
@@ -1940,7 +1973,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6">
+                                                <div class="col-12 col-sm-6">
                                                     <div class="card">
                                                         <div class="card-header py-1 d-flex justify-content-between align-items-center">
                                                             <span class="small fw-semibold">Only Show Incidents From: </span>
@@ -4691,7 +4724,7 @@
 
     <div class="modal fade" id="trackableAssetsModal" tabindex="-1" aria-labelledby="trackableAssetsModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-fullscreen-sm-down asset-lib-dialog">
             <div class="modal-content" data-bind="with: trackableAssetsModalVM">
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title" id="trackableAssetsModalLabel">Trackable Assets Library</h5>
@@ -4735,17 +4768,17 @@
                         </div>
                     </div>
                     <!-- Asset list -->
-                    <div data-bind="foreach: filteredAssets" style="max-height: 400px; overflow-y: auto;">
+                    <div class="asset-lib-list" data-bind="foreach: filteredAssets">
                         <div class="card mb-2">
-                            <div class="card-body py-2 d-flex">
+                            <div class="card-body py-2 asset-lib-card">
                                 <!-- Column 1: Callsign -->
-                                <div class="flex-shrink-0 text-center" style="width: 160px;">
+                                <div class="asset-lib-name text-center">
                                     <div class="fw-bold fs-4" data-bind="text: name"></div>
                                     <div class="fw-bold fs-7" data-bind="text: entity"></div>
 
                                 </div>
                                 <!-- Column 2: Details -->
-                                <div class="flex-grow-1 ps-3 border-start" style="min-width: 0;">
+                                <div class="asset-lib-details ps-3 border-start">
                                     <div class="small mb-1">
                                         <span class="fw-semibold">Capability:</span>
                                         <span class="text-muted" data-bind="text: capability"></span>
@@ -4764,7 +4797,7 @@
                                     </div>
                                 </div>
                                 <!-- Column 3: IDs & Last Seen -->
-                                <div class="flex-shrink-0 ps-3 border-start text-start" style="width: 180px;">
+                                <div class="asset-lib-ids ps-3 border-start text-start">
                                     <div class="small mb-1" data-bind="visible: radioId() || !isSatellite()">
                                         <span class="fw-semibold">PSN ID:</span>
                                         <span class="text-muted" data-bind="text: radioId"></span>
@@ -4785,7 +4818,7 @@
                                     </div>
                                 </div>
                                 <!-- Column 4: Show on map -->
-                                <div class="flex-shrink-0 ps-3 border-start d-flex align-items-center">
+                                <div class="asset-lib-action ps-3 border-start d-flex align-items-center">
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                         title="Show on map"
                                         data-bind="click: $parent.focusAsset, enable: latLngText">

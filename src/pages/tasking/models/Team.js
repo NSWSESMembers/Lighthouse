@@ -35,6 +35,9 @@ _capabilitiesCollapsed.subscribe(v => localStorage.setItem(_capBoxKey, v ? 'true
  */
 const _defaultAssetTick = ko.observable(0);
 
+// Team status (Enum.TeamStatusType Name) -> short form for a narrow Team Register.
+const STATUS_SHORT = { Standby: 'Stby', OnAlert: 'Alert', Activated: 'Act', Rest: 'Rest', StoodDown: 'Down' };
+
 /** Allow main.js to force re-evaluation after a shared-defaults fetch. */
 export function bumpDefaultAssetTick() {
     _defaultAssetTick(_defaultAssetTick() + 1);
@@ -282,7 +285,9 @@ export function Team(data = {}, deps = {}) {
         }
     };
 
-    self.toggleAndExpand = function () {
+    self.toggleAndExpand = function (_, e) {
+        // The Actions menu's toggle has to let the click bubble for Bootstrap.
+        if (e?.target?.closest?.('.team-actions-menu')) return;
         const wasExpanded = self.expanded();
         self.expanded(!wasExpanded);
 
@@ -418,6 +423,9 @@ export function Team(data = {}, deps = {}) {
     self.statusName = ko.pureComputed(() => {
         return (self.teamStatusType() && self.teamStatusType().Name);
     })
+
+    // Short form for the Team Register when the list is narrow.
+    self.statusShort = ko.pureComputed(() => STATUS_SHORT[self.statusName()] || self.statusName());
 
     self.activeTaskingsCount = ko.pureComputed(() => {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
