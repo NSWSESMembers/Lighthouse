@@ -2539,8 +2539,10 @@ body.dark-mode .hq-coverage-watermark.is-visible {
      competing with callsign/leader for proportional space — and unlike a
      bare px track, minmax() can still shrink at narrow pane widths instead
      of forcing the row into horizontal scroll. chevron/pin/actions stay
-     true fixed widths since they hold buttons, not text. */
-  --team-cols: 30px /* chevron */ 30px /* pin */ 1fr /* callsign */ minmax(64px, 78px)
+     true fixed widths since they hold buttons, not text. Callsign is the
+     one field that matters most, so it keeps a floor of its own: without
+     one, the other tracks' floors leave it nothing on a phone. */
+  --team-cols: 30px /* chevron */ 30px /* pin */ minmax(80px, 1fr) /* callsign */ minmax(64px, 78px)
     /* status: fits "Stood down" */ minmax(40px, 56px) /* HQ: fits the heading and sort arrow */ minmax(96px, 100px) /* tasking: fits the "ETA +59m" chip */ minmax(110px, 170px)
     /* members */ 140px; /* actions (fixed) */
 }
@@ -2564,6 +2566,34 @@ body.dark-mode .hq-coverage-watermark.is-visible {
 .teams > thead > th .sort-icon {
   width: 10px;
   flex-shrink: 0;
+}
+
+/* Narrow list (compactBelow binding): short status and task count, and the actions
+   collapse into one menu button. */
+.team-table-container.is-compact .teams {
+  --team-cols: 30px /* chevron */ 30px /* pin */ minmax(80px, 1.35fr) /* callsign */ minmax(40px, 48px)
+    /* status */ minmax(40px, 56px) /* HQ */ minmax(36px, 64px) /* task count */ minmax(60px, 1fr) /* members */ 44px; /* actions */
+}
+.team-status-short,
+.team-count-short,
+.team-actions-menu,
+.is-compact .team-status-full,
+.is-compact .team-count-full,
+.is-compact .team-cell > .btn-group {
+  display: none;
+}
+.is-compact .team-status-short,
+.is-compact .team-actions-menu {
+  display: inline-block;
+}
+.is-compact .team-count-short {
+  display: block;
+}
+.team-actions-dropdown {
+  z-index: 3000 !important;
+}
+.team-actions-dropdown.show {
+  position: fixed !important;
 }
 
 /* body card */
@@ -3461,6 +3491,47 @@ overflow: hidden;
     minmax(96px, 104px) /* Status (+ ETA/ETC chip) */ minmax(70px, 1fr); /* Address */
 }
 
+/* Narrow list (compactBelow binding): Received moves under the Id, status
+   is shortened (Job.statusShortAndCount), and Situation and Address share
+   what's left. Every row is its own grid, so the tracks are fixed widths
+   rather than max-content, or the columns wouldn't line up between rows. */
+.job-table-container.is-compact .jobs {
+  --job-cols: 30px /* chev */ 20px /* pin */ 70px /* Id + Received */
+    40px /* HQ */ minmax(44px, 52px) /* Type */
+    minmax(60px, 1.6fr) /* Situation */ 64px /* Status (+ ETA/ETC chip) */ minmax(60px, 1fr); /* Address */
+}
+/* Narrow lists: only the sorted column keeps its sort arrow, so the short
+   headings fit. */
+.is-compact th[aria-sort="none"] .sort-icon {
+  display: none;
+}
+.job-status-short,
+.job-id-received,
+.is-compact .job-status-full,
+.is-compact .job-th-received,
+.is-compact .job-cell--received {
+  display: none;
+}
+.is-compact .job-cell--address .btn {
+  padding: 2px 3px;
+  font-size: 0.8rem;
+  overflow-wrap: break-word;
+}
+.is-compact .job-id-received {
+  display: block;
+  line-height: 1.2;
+}
+.is-compact .job-id-text {
+  font-weight: 600;
+}
+.job-id-received .received-date {
+  font-size: 0.85em;
+  color: #6c757d;
+}
+.is-compact .job-status-short {
+  display: inline;
+}
+
 /* body */
 .job-summary {
   display: grid;
@@ -3578,6 +3649,10 @@ overflow: hidden;
   align-items: center;
   justify-content: center;
   height: 1em;
+  /* The height is the icon's: touch screens pad these buttons for a bigger
+     hit area (pointer: coarse), which would otherwise squash the icon to 1px
+     and spill it over the line above. */
+  box-sizing: content-box;
   line-height: 1;
   border: 0;
   margin: 0;

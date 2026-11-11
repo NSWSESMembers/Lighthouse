@@ -256,7 +256,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive team-table-container">
+                <div class="table-responsive team-table-container" data-bind="compactBelow: 540">
                     <table class="teams table align-middle">
                         <thead class="table-light">
                             <tr>
@@ -317,19 +317,23 @@
                                             </div>
 
                                             <!-- 2. Callsign -->
-                                            <div class="team-cell">
+                                            <div class="team-cell team-cell--callsign">
                                                 <span data-bind="text: t.callsign"></span>
                                             </div>
 
                                             <!-- 3. Status -->
-                                            <div class="team-cell" data-bind="text: t.statusName, flashTextOnChange: t.statusName"></div>
+                                            <div class="team-cell" data-bind="flashTextOnChange: t.statusName, attr: { title: t.statusName }">
+                                                <span class="team-status-full" data-bind="text: t.statusName"></span>
+                                                <span class="team-status-short" data-bind="text: t.statusShort"></span>
+                                            </div>
 
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
                                             <!-- 5. Tasking (+ ETA/ETC of the tasking that matters most) -->
                                             <div class="team-cell team-cell--count">
-                                                <div data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
+                                                <div class="team-count-full" data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
+                                                <div class="team-count-short" data-bind="text: t.taskedJobCount, flashTextOnChange: t.taskedJobCount"></div>
                                                 <!-- ko with: t.etaInfo -->
                                                 <span class="eta-chip" data-bind="css: chipClass, fastTooltip: t.etaTitle"><i class="fa" data-bind="css: iconClass"></i><span data-bind="text: compactLabel"></span></span>
                                                 <!-- /ko -->
@@ -390,6 +394,24 @@
 
                                                         </span>
                                                     </button>
+                                                </div>
+                                                <!-- Narrow list (.is-compact): the same actions as a menu -->
+                                                <div class="dropdown team-actions-menu">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="dropdown" aria-expanded="false"
+                                                        title="Actions" aria-label="Team actions">
+                                                        <i class="fa fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end team-actions-dropdown">
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.openRadioLogModal">
+                                                            <i class="fa fa-microphone fa-fw me-2"></i>Radio Log</button></li>
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.sendSMS, enable: t.members().length">
+                                                            <i class="fa fa-envelope fa-fw me-2"></i>Message</button></li>
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.openBeaconEditTeam">
+                                                            <i class="fas fa-external-link-alt fa-fw me-2"></i>Edit in Beacon</button></li>
+                                                        <li><button type="button" class="dropdown-item" data-bind="click: t.markerFocus, enable: t.trackableAssets().length">
+                                                            <i class="fa fa-crosshairs fa-fw me-2"></i><span data-bind="visible: t.trackableAssets().length">Zoom to</span><span data-bind="visible: !t.trackableAssets().length">No matching asset</span></button></li>
+                                                    </ul>
                                                 </div>
                                             </div>
                                         </div>
@@ -968,7 +990,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive job-table-container">
+                <div class="table-responsive job-table-container" data-bind="compactBelow: 540">
                     <table class="jobs table align-middle">
                         <thead class="table-light">
                             <tr>
@@ -981,7 +1003,7 @@
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none" title="Received"
+                                <th class="sortable job-th-received" data-sort-key="receivedAt" aria-sort="none" title="Received"
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Recv</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
@@ -1034,6 +1056,11 @@
                                             <!-- 2. Id -->
                                             <div class="job-cell job-cell--id">
                                                 <div class="job-id-text" data-bind="text: j.identifierTrimmed"></div>
+                                                <!-- Narrow list (.is-compact): Received sits here instead of its own column -->
+                                                <div class="job-id-received" data-bind="attr:{ title: j.receivedAt }">
+                                                    <div class="received-time" data-bind="text: j.receivedAtTimeShort"></div>
+                                                    <div class="received-date" data-bind="text: j.receivedAtDateShort"></div>
+                                                </div>
                                                 <div class="job-id-icons">
                                                     <button type="button"
                                                         class="btn btn-link p-0 text-decoration-none fa-center images-button"
@@ -1082,8 +1109,9 @@
                                                 <div class="dropdown">
                                                     <button class="jobstatus-dropdown-btn" type="button"
                                                         data-bs-toggle="dropdown"
-                                                        data-bind="click: j.onStatusNameClick">
-                                                        <span data-bind="text: j.statusNameAndCount, flashOnChange: j.statusNameAndCount"></span>
+                                                        data-bind="click: j.onStatusNameClick, attr: { title: j.statusName }">
+                                                        <span class="job-status-full" data-bind="text: j.statusNameAndCount, flashOnChange: j.statusNameAndCount"></span>
+                                                        <span class="job-status-short" data-bind="text: j.statusShortAndCount, flashOnChange: j.statusNameAndCount"></span>
                                                         <span class="caret"></span>
                                                     </button>
                                                     <ul class="dropdown-menu jobstatusDropdown">

@@ -23,7 +23,7 @@
   This listener runs in the capture phase, before anything can stop the click.
 */
 
-export const LIFTED_MENUS = '.tasking-dropdown-menu, .jobstatusDropdown, .sectorDropdown, .job-taskteam-dropdown';
+export const LIFTED_MENUS = '.tasking-dropdown-menu, .jobstatusDropdown, .sectorDropdown, .job-taskteam-dropdown, .team-actions-dropdown';
 
 const HOME = Symbol('dropdownHome');
 

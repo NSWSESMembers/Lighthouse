@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD lists on phones
+
+*11 November 2026*
+
+- **Team callsigns stay visible on narrow screens.** On a phone, the callsign column in the [Team Register](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html) had been squeezed to nothing. It now keeps its space, and long callsigns wrap. When the list is narrow, the task count is just the number (**2** rather than **2 Active**), the status is shortened (**Act**, **Stby**, **Alert**, **Rest**, **Down**; hover for the full name) and the team's action buttons move into a **⋮** menu.
+- **The Incident Register fits on a phone.** It no longer runs off the side of the screen. When the list is narrow, the received time and date sit under the incident number, and the status is shortened (**Act (0)**, **Tskd**, **Ack**, **Ref**, **Comp**, **Fin**, **Canc**, **Rej**; hover for the full name). See the [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
+
 ## Team capabilities in LAD
 
 *10 November 2026*
