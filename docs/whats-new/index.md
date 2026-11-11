@@ -18,12 +18,14 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## LAD lists on phones
+## LAD on phones
 
 *11 November 2026*
 
 - **Team callsigns stay visible on narrow screens.** On a phone, the callsign column in the [Team Register](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html) had been squeezed to nothing. It now keeps its space, and long callsigns wrap. When the list is narrow, the task count is just the number (**2** rather than **2 Active**), the status is shortened (**Act**, **Stby**, **Alert**, **Rest**, **Down**; hover for the full name) and the team's action buttons move into a **⋮** menu.
 - **The Incident Register fits on a phone.** It no longer runs off the side of the screen. When the list is narrow, the received time and date sit under the incident number, and the status is shortened (**Act (0)**, **Tskd**, **Ack**, **Ref**, **Comp**, **Fin**, **Canc**, **Rej**; hover for the full name). See the [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
+- **Members beside Team Capabilities.** On a phone or an iPad in portrait, an expanded team shows Members next to Team Capabilities. Collapsing Team Capabilities puts Members next to Matched Assets instead.
+- **The Configuration screen and Trackable Assets Library work on a phone.** Both open full screen and fit without scrolling sideways. In the Configuration screen the sections are one row you swipe along. In the library, each asset's details sit under its callsign, and on an iPad in portrait the library uses the full width.
 
 ## Team capabilities in LAD
 

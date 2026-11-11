@@ -3861,6 +3861,11 @@ overflow: hidden;
   overflow-y: auto;
 }
 
+/* The name can shrink (and truncate) instead of widening the row. */
+.layer-stack-row > .flex-grow-1 {
+  min-width: 0;
+}
+
 .layer-stack-row.layer-stack-off .layer-stack-name {
   opacity: 0.6;
 }
@@ -4159,7 +4164,7 @@ body.dark-mode .config-subaccordion .accordion-button::after {
 
 @media (max-width: 640px) {
   .config-settings {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     /* rail stacks on top here -- let the modal body scroll normally */
     height: auto;
   }
@@ -4189,6 +4194,134 @@ body.dark-mode .config-subaccordion .accordion-button::after {
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+  }
+
+  /* Phone: the sections are one row you swipe along, pinned to the top of
+     the modal body while a page scrolls under it. */
+  .config-rail {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: -1rem; /* the modal body's padding */
+    z-index: 10; /* above the input groups (up to 5) scrolling under it */
+    margin: -1rem -1rem 0.75rem;
+    padding: 0.5rem 1rem;
+    background: #fff;
+  }
+  .config-rail .nav-link {
+    white-space: nowrap;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* No card inside the modal: its border and padding only cost width. */
+  .config-card {
+    margin-top: 0 !important;
+    border: 0;
+    background: transparent;
+  }
+  .config-card > .card-body {
+    padding: 0;
+  }
+
+  /* Map layers: name on its own line, then switch-less controls under it. */
+  .layer-stack-row {
+    flex-wrap: wrap;
+  }
+  .layer-stack-row > .flex-grow-1 {
+    flex-basis: calc(100% - 4.5rem);
+  }
+  .layer-stack-opacity {
+    flex: 1 1 auto;
+    width: auto;
+    margin-left: 3.5rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Full-screen modal: one row of smaller footer buttons. */
+  #configModal .modal-footer {
+    flex-wrap: nowrap;
+    padding: 0.5rem 0.75rem;
+  }
+  #configModal .modal-footer > div {
+    flex-wrap: nowrap !important;
+  }
+  #configModal .modal-footer .btn {
+    white-space: nowrap;
+    --bs-btn-padding-y: 0.25rem;
+    --bs-btn-padding-x: 0.5rem;
+    --bs-btn-font-size: 0.875rem;
+  }
+}
+
+/* === Trackable Assets Library === */
+/* Bootstrap's modal-lg is only 500px wide below lg; use the iPad's width.
+   Phones get the full-screen modal (modal-fullscreen-sm-down). */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .asset-lib-dialog {
+    max-width: min(800px, calc(100vw - 2rem));
+  }
+}
+
+.asset-lib-list {
+  max-height: 400px;
+  overflow-y: auto;
+  container-type: inline-size;
+}
+
+/* Callsign | details | IDs & last seen | show on map */
+.asset-lib-card {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 180px auto;
+  align-items: start;
+}
+.asset-lib-action {
+  align-self: stretch;
+}
+
+/* Narrow card: callsign and the show-on-map button across the top, the
+   details and IDs side by side under them. */
+@container (max-width: 560px) {
+  .asset-lib-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "name action"
+      "details ids";
+    row-gap: 0.4rem;
+  }
+  .asset-lib-name {
+    grid-area: name;
+    text-align: start !important;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 0.5rem;
+  }
+  .asset-lib-name .fs-4 {
+    font-size: 1.25rem !important;
+  }
+  .asset-lib-action {
+    grid-area: action;
+    justify-self: end;
+    border-left: 0 !important;
+  }
+  .asset-lib-details {
+    grid-area: details;
+    padding-left: 0 !important;
+    border-left: 0 !important;
+  }
+  .asset-lib-ids {
+    grid-area: ids;
+    padding-left: 0.5rem !important;
+  }
+}
+
+/* Full-screen on a phone: the modal body scrolls, not a 400px box in it. */
+@media (max-width: 575.98px) {
+  .asset-lib-list {
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -6026,6 +6159,21 @@ input[type='search']::-ms-clear {
   position: static !important; /* override your current sticky-on-th */
   display: block;
   background: transparent;
+}
+
+/* Stacked expanded team (below lg): Members sits beside Team Capabilities.
+   The Members/Assets column steps out of the way so its boxes join the
+   outer row (col-6 / col-12 in tasking.html). */
+@media (max-width: 991.98px) {
+  .team-details-side,
+  .team-details-side > .row {
+    display: contents;
+  }
+  /* ...and lines up with them: the outer row's g-3 gutters, not g-2. */
+  .team-details-side > .row {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+  }
 }
 
 .team-details fieldset {

@@ -423,8 +423,9 @@
                                             <div class="card border-0 mb-0">
                                                 <div class="card-body p-2">
                                                     <div class="row g-3">
-                                                        <!-- full width: capabilities -->
-                                                        <div class="col-12">
+                                                        <!-- capabilities: full width, or beside Members when stacked (below lg);
+                                                             collapsed and stacked, it's a heading across the top and Members sits beside Matched Assets -->
+                                                        <div class="col-lg-12" data-bind="css: { 'col-6': !t.capabilitiesCollapsed(), 'col-12': t.capabilitiesCollapsed() }">
                                                             <fieldset>
                                                                 <legend class="job-details-legend">
                                                                     <button type="button" class="team-capabilities-toggle"
@@ -453,9 +454,10 @@
                                                                 <!-- /ko -->
                                                             </fieldset>
                                                         </div>
-                                                        <div class="col-12 col-lg-3">
+                                                        <div class="col-12 col-lg-3 team-details-side">
                                                             <div class="row g-2">
                                                                 <!-- LEFT: team members + capabilities -->
+                                                                <div class="col-6 col-lg-12">
                                                                 <fieldset>
                                                                     <div
                                                                         class="team-members-header d-flex justify-content-between align-items-center mb-2">
@@ -493,7 +495,9 @@
                                                                         Team has no members assigned.
                                                                     </div>
                                                                 </fieldset>
+                                                                </div>
 
+                                                                <div class="col-lg-12" data-bind="css: { 'col-12': !t.capabilitiesCollapsed(), 'col-6': t.capabilitiesCollapsed() }">
                                                                 <fieldset>
                                                                     <div
                                                                         class="d-flex justify-content-between align-items-center mb-2">
@@ -533,6 +537,7 @@
                                                                         Team has no matching assets.
                                                                     </div>
                                                                 </fieldset>
+                                                                </div>
                                                             </div><!-- /col-md-4 -->
                                                         </div>
                                                         <div class="col-12 col-lg-9">
@@ -1790,7 +1795,7 @@
 
     <!-- Config Modal -->
     <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header py-2 px-3">
 
@@ -1932,7 +1937,7 @@
                                             </div>
 
                                             <div class="row g-3 mt-0">
-                                                <div class="col-6">
+                                                <div class="col-12 col-sm-6">
                                                     <div class="card">
                                                         <div class="card-header py-1 d-flex justify-content-between align-items-center">
                                                             <span class="small fw-semibold">Only Load Teams Attached To:</span>
@@ -1968,7 +1973,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6">
+                                                <div class="col-12 col-sm-6">
                                                     <div class="card">
                                                         <div class="card-header py-1 d-flex justify-content-between align-items-center">
                                                             <span class="small fw-semibold">Only Show Incidents From: </span>
@@ -4719,7 +4724,7 @@
 
     <div class="modal fade" id="trackableAssetsModal" tabindex="-1" aria-labelledby="trackableAssetsModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-fullscreen-sm-down asset-lib-dialog">
             <div class="modal-content" data-bind="with: trackableAssetsModalVM">
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title" id="trackableAssetsModalLabel">Trackable Assets Library</h5>
@@ -4763,17 +4768,17 @@
                         </div>
                     </div>
                     <!-- Asset list -->
-                    <div data-bind="foreach: filteredAssets" style="max-height: 400px; overflow-y: auto;">
+                    <div class="asset-lib-list" data-bind="foreach: filteredAssets">
                         <div class="card mb-2">
-                            <div class="card-body py-2 d-flex">
+                            <div class="card-body py-2 asset-lib-card">
                                 <!-- Column 1: Callsign -->
-                                <div class="flex-shrink-0 text-center" style="width: 160px;">
+                                <div class="asset-lib-name text-center">
                                     <div class="fw-bold fs-4" data-bind="text: name"></div>
                                     <div class="fw-bold fs-7" data-bind="text: entity"></div>
 
                                 </div>
                                 <!-- Column 2: Details -->
-                                <div class="flex-grow-1 ps-3 border-start" style="min-width: 0;">
+                                <div class="asset-lib-details ps-3 border-start">
                                     <div class="small mb-1">
                                         <span class="fw-semibold">Capability:</span>
                                         <span class="text-muted" data-bind="text: capability"></span>
@@ -4792,7 +4797,7 @@
                                     </div>
                                 </div>
                                 <!-- Column 3: IDs & Last Seen -->
-                                <div class="flex-shrink-0 ps-3 border-start text-start" style="width: 180px;">
+                                <div class="asset-lib-ids ps-3 border-start text-start">
                                     <div class="small mb-1" data-bind="visible: radioId() || !isSatellite()">
                                         <span class="fw-semibold">PSN ID:</span>
                                         <span class="text-muted" data-bind="text: radioId"></span>
@@ -4813,7 +4818,7 @@
                                     </div>
                                 </div>
                                 <!-- Column 4: Show on map -->
-                                <div class="flex-shrink-0 ps-3 border-start d-flex align-items-center">
+                                <div class="asset-lib-action ps-3 border-start d-flex align-items-center">
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                         title="Show on map"
                                         data-bind="click: $parent.focusAsset, enable: latLngText">
