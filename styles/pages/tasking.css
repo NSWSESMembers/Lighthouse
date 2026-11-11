@@ -2540,9 +2540,9 @@ body.dark-mode .hq-coverage-watermark.is-visible {
      bare px track, minmax() can still shrink at narrow pane widths instead
      of forcing the row into horizontal scroll. chevron/pin/actions stay
      true fixed widths since they hold buttons, not text. */
-  --team-cols: 30px /* chevron */ 30px /* pin */ 1.35fr /* callsign */ minmax(64px, 90px)
-    /* status */ minmax(40px, 60px) /* HQ */ minmax(96px, 120px) /* task count (+ ETA/ETC chip) */ 1fr
-    /* leader */ 140px; /* actions (fixed) */
+  --team-cols: 30px /* chevron */ 30px /* pin */ 1fr /* callsign */ minmax(64px, 78px)
+    /* status: fits "Stood down" */ minmax(40px, 56px) /* HQ: fits the heading and sort arrow */ minmax(96px, 100px) /* tasking: fits the "ETA +59m" chip */ minmax(110px, 170px)
+    /* members */ 140px; /* actions (fixed) */
 }
 
 /* header */
@@ -2723,6 +2723,51 @@ body.dark-mode .hq-coverage-watermark.is-visible {
 
 .team-member-tags .badge {
   font-size: 0.7rem;
+}
+
+/* Legend button that collapses the box; looks like the plain legend text */
+.team-capabilities-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.team-capabilities-toggle .fa {
+  width: 0.9em;
+  transition: transform 0.15s;
+}
+
+.team-capabilities-toggle__icon--collapsed {
+  transform: rotate(-90deg);
+}
+
+.team-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.team-capability {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px 1px 1px;
+  font-size: 0.72rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 4px;
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+}
+
+.team-capability__count {
+  min-width: 1.3em;
+  padding: 0 3px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 3px;
+  background: var(--bs-secondary-bg);
 }
 
 .team-members-header {

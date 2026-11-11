@@ -11,11 +11,17 @@ import { Enum } from '../utils/enum.js';
 
 import { loadSharedMapping, saveSharedMapping, pushSharedDefault, fetchSharedDefaults } from '../utils/defaultAssetSync.js';
 import { getSingleFetchCooldownMs } from '../signalr/pushMode.js';
+import { teamCapabilityCounts } from '../utils/teamCapabilities.js';
 
 // Shared across all Team instances — single localStorage key
 const _capKey = 'lh_showCapabilities';
 const _showCapabilities = ko.observable(localStorage.getItem(_capKey) === 'true');
 _showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
+
+// Team Capabilities box collapsed, likewise shared by every team card
+const _capBoxKey = 'lh_teamCapabilitiesCollapsed';
+const _capabilitiesCollapsed = ko.observable(localStorage.getItem(_capBoxKey) === 'true');
+_capabilitiesCollapsed.subscribe(v => localStorage.setItem(_capBoxKey, v ? 'true' : 'false'));
 
 // ── Default-asset persistence (shared across all teams) ──
 // Uses the shared mapping (lh_sharedDefaultAssets) backed by Lambda/S3.
@@ -124,6 +130,10 @@ export function Team(data = {}, deps = {}) {
     // capabilities visibility (shared singleton)
     self.showCapabilities = _showCapabilities;
     self.toggleCapabilities = function () { _showCapabilities(!_showCapabilities()); };
+    self.capabilitiesCollapsed = _capabilitiesCollapsed;
+    self.toggleCapabilitiesCollapsed = function () { _capabilitiesCollapsed(!_capabilitiesCollapsed()); };
+    // a string, because the attr binding drops an attribute whose value is false
+    self.capabilitiesAriaExpanded = ko.pureComputed(() => String(!_capabilitiesCollapsed()));
 
     // pinning
     self.isPinned = ko.pureComputed(() => {
@@ -160,6 +170,16 @@ export function Team(data = {}, deps = {}) {
             return 0;
         });
     })
+
+    // Register column: leader first, e.g. "Alex Nguyen + 4".
+    self.membersSummary = ko.pureComputed(() => {
+        const [first, ...others] = self.membersSorted();
+        if (!first) return '-';
+        const name = `${first.Person.FirstName} ${first.Person.LastName}`;
+        return others.length ? `${name} + ${others.length}` : name;
+    });
+
+    self.capabilityCounts = ko.pureComputed(() => teamCapabilityCounts(ko.unwrap(self.members)));
 
     self.statusDate = ko.observable((data.TeamStatusStartDate) ? new Date(data.TeamStatusStartDate) : null);
 

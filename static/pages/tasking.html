@@ -279,9 +279,9 @@
                                 </th>
                                 <th class="sortable" data-sort-key="taskedJobCount" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
-                                    <span class="th-label">Task Count</span> <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Tasking</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="not-sortable" scope="col">Team Leader</th>
+                                <th class="not-sortable" scope="col">Members</th>
                                 <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
@@ -327,7 +327,7 @@
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
-                                            <!-- 5. Task Count (+ ETA/ETC of the tasking that matters most) -->
+                                            <!-- 5. Tasking (+ ETA/ETC of the tasking that matters most) -->
                                             <div class="team-cell team-cell--count">
                                                 <div data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
                                                 <!-- ko with: t.etaInfo -->
@@ -335,8 +335,8 @@
                                                 <!-- /ko -->
                                             </div>
 
-                                            <!-- 6. Team Leader -->
-                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader, flashTextOnChange: t.teamLeader">
+                                            <!-- 6. Members -->
+                                            <div class="team-cell team-cell--leader" data-bind="text: t.membersSummary, flashTextOnChange: t.membersSummary">
                                             </div>
 
                                             <!-- 7. Actions -->
@@ -401,6 +401,36 @@
                                             <div class="card border-0 mb-0">
                                                 <div class="card-body p-2">
                                                     <div class="row g-3">
+                                                        <!-- full width: capabilities -->
+                                                        <div class="col-12">
+                                                            <fieldset>
+                                                                <legend class="job-details-legend">
+                                                                    <button type="button" class="team-capabilities-toggle"
+                                                                        title="Show or hide the team members holding each capability"
+                                                                        data-bind="click: t.toggleCapabilitiesCollapsed, clickBubble: false, attr: { 'aria-expanded': t.capabilitiesAriaExpanded }">
+                                                                        <i class="fa fa-chevron-down small me-1"
+                                                                            data-bind="css: { 'team-capabilities-toggle__icon--collapsed': t.capabilitiesCollapsed }"></i>Team Capabilities
+                                                                    </button>
+                                                                </legend>
+                                                                <!-- ko ifnot: t.capabilitiesCollapsed -->
+                                                                <div class="team-capabilities"
+                                                                    data-bind="foreach: { data: t.capabilityCounts, as: 'c' }">
+                                                                    <span class="team-capability">
+                                                                        <span class="team-capability__count" data-bind="text: c.count"></span>
+                                                                        <span data-bind="text: c.label"></span>
+                                                                    </span>
+                                                                </div>
+                                                                <div class="text-muted"
+                                                                    data-bind="visible: t.members().length === 0">
+                                                                    Team has no members assigned.
+                                                                </div>
+                                                                <div class="text-muted"
+                                                                    data-bind="visible: t.members().length > 0 && t.capabilityCounts().length === 0">
+                                                                    No capabilities recorded.
+                                                                </div>
+                                                                <!-- /ko -->
+                                                            </fieldset>
+                                                        </div>
                                                         <div class="col-12 col-lg-3">
                                                             <div class="row g-2">
                                                                 <!-- LEFT: team members + capabilities -->

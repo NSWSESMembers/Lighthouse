@@ -300,6 +300,7 @@ const SHOTS = {
     run: async (page) => {
       await closeConfigAndLoad(page);
       await page.locator('tr.team-row').first().locator('[data-bind*="toggleAndExpand"]').first().click();
+      await page.mouse.move(5, 995); // off the row, so no countdown tooltip opens
       await settle(page, 800);
     },
     target: (page) => page.locator('#paneTop'),
