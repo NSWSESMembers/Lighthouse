@@ -91,6 +91,35 @@ if (masterViewModel.entityAssignedTo && typeof masterViewModel.entityAssignedTo.
 // categories' names without re-fetching.
 var lastResponseSummary = null;
 
+//   2026 11 13.   New code
+// Alert when the combined accepted/available/conditional response
+// count reaches 4. Only alert once per job page load.
+var responseThreshold = 4;
+var responseThresholdAlerted = false;
+var responseThresholdSound = new Audio(lighthouseUrl + 'sounds/notification.mp3');
+
+function checkResponseThreshold(summary) {
+  if (responseThresholdAlerted || !summary || summary.closed) return;
+
+  var categories = summary.categories || {};
+
+  var total =
+    (categories.ActivationAccepted?.Count || 0) +
+    (categories.Available?.Count || 0) +
+    (categories.Conditional?.Count || 0);
+
+  if (total >= responseThreshold) {
+    responseThresholdAlerted = true;
+
+    responseThresholdSound.play().catch(function (err) {
+      console.warn('Lighthouse: could not play response threshold alert', err);
+    });
+
+    console.log('Lighthouse: response threshold reached:', total);
+  }
+}
+
+
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 
@@ -296,6 +325,7 @@ function lighthouseResponseGems() {
     if (err || !summary) return;
 
     lastResponseSummary = summary;
+    checkResponseThreshold(summary);
 
     var isClosed = !!summary.closed;
     $gemsRow.toggleClass('is-closed', isClosed);
