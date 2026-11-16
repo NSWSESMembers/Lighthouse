@@ -3,6 +3,10 @@
 # Note: GitHub always raises *security* update PRs against the repository's
 # default branch (master), regardless of target-branch, and as soon as an
 # advisory is published rather than on this schedule.
+#
+# Cooldown: version updates only propose releases at least 7 days old, so a
+# hijacked release that gets pulled within days never reaches a PR. Security
+# updates ignore the cooldown.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -15,6 +19,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Australia/Sydney"
+    cooldown:
+      default-days: 7
     groups:
       npm-weekly:
         patterns: ["*"]
@@ -40,6 +46,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Australia/Sydney"
+    cooldown:
+      default-days: 7
     groups:
       actions-weekly:
         patterns: ["*"]
