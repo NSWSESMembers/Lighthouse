@@ -5,6 +5,7 @@ const ALL_KEYS = [
   'lh-taskingConfig',
   'lh.layoutPreset', 'lh.layout.default.sidebarWidthPx', 'sidebar.collapsed', 'legendCollapsed',
   'lh-rainRadar.expanded', 'tasking.teamsInViewOnly', 'tasking.incidentsInViewOnly', 'lh_showCapabilities',
+  'lh_teamCapabilitiesCollapsed',
   'ov.online-bomRadar', 'ov.matched-assets', 'map.base', 'map.incidentsVisible', 'layers.open', 'layers.section',
   'lh-layerPresets',
   'lh_collabLayer_subscriptions',
@@ -39,6 +40,12 @@ describe('keysToReset', () => {
     expect(keysToReset(ALL_KEYS, [])).toHaveLength(6);
   });
 
+  it("only clears this environment's Configuration", () => {
+    const keys = ['lh-taskingConfig', 'lh-taskingConfig.train', 'lh-taskingConfig.dev'];
+    expect(keysToReset(keys, ['settings'], 'lh-taskingConfig.train')).toEqual(['lh-taskingConfig.train']);
+    expect(keysToReset(keys, ['settings'])).toEqual(['lh-taskingConfig']);
+  });
+
   it('only clears the presets when asked', () => {
     expect(keysToReset(ALL_KEYS, ['presets']).filter((k) => !isLadCache(k))).toEqual(['lh-layerPresets']);
   });
@@ -47,7 +54,7 @@ describe('keysToReset', () => {
 describe('RESET_GROUPS', () => {
   it('has no key in two groups', () => {
     for (const k of ALL_KEYS) {
-      expect(RESET_GROUPS.filter((g) => g.match(k)).length).toBeLessThanOrEqual(1);
+      expect(RESET_GROUPS.filter((g) => g.match(k, 'lh-taskingConfig')).length).toBeLessThanOrEqual(1);
     }
   });
 });

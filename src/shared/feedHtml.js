@@ -1,6 +1,9 @@
 export const escapeHtml = (v) =>
   String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
+/** Returns the URL if it is http(s), otherwise an empty string. Still needs escaping for use in markup. */
+export const httpUrl = (v) => (/^https?:\/\//i.test(String(v ?? '').trim()) ? String(v).trim() : '');
+
 // Formatting tags kept from third-party feed HTML; their attributes are always dropped.
 const ALLOWED = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI']);
 // Dropped along with everything inside them.

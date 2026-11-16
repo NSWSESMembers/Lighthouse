@@ -2,10 +2,11 @@ const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const moment = require('moment');
+const { buildVersion } = require('./webpack.version.js');
 
 const packageName = "Lighthouse Development Preview"
 const now = new moment();
-const versionString = now.format('YYYY.M.D.Hm')
+const versionString = buildVersion(now)
 const versionStringShort = now.utcOffset("+10:00").format('YYYY.MM.DD')
 
 // get git info from command line

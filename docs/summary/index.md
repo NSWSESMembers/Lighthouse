@@ -13,7 +13,7 @@ Incident Summary shows how many incidents an HQ has, in big numbers that can be 
 
 ## Opening Incident Summary
 
-- **From the Lighthouse menu in Beacon:** choose **Incident Summary (*your HQ* Today)**. This opens today's incidents for the HQ you're logged in to.
+- **From the Lighthouse menu in Beacon:** choose **Incident Summary (*your HQ* Today)**. This opens today's incidents for your focus HQ.
 - **From Beacon's Jobs screen:** filter the incident list as you want it (HQs and dates), then click **Summary (Filtered)** above the list. Incident Summary opens with the same HQs and date range.
 
 If no HQ is selected, the page covers all of NSW.

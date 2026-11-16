@@ -41,11 +41,15 @@ If you select a zone, you can expand it to include all units under the zone. Thi
 
 To remove a headquarters from a filter, click the cross next to it. To remove all headquarters, click the **Clear** button above the list of selected headquarters.
 
+On Production Beacon, each filter needs at least one headquarters, so LAD doesn't load every unit. If a filter is empty, including after you click **Clear**, LAD uses your Beacon focus unit. On Train and Dev Beacon you can leave a filter empty to load all units.
+
 ![Clear button](images/hq-clear.png)
 
 ### Full Refresh Interval
 
-How often a full reload of data from Beacon occurs. The default is **3 minutes**. With Live Updates on, you shouldn't need to sync more often than that.
+How often a full reload of data from Beacon occurs. The default is **10 minutes**. With Live Updates on, you shouldn't need to sync more often than that.
+
+With Live Updates off, LAD reloads every minute, whatever this is set to. Expanding an incident or team also refreshes it.
 
 ### History
 
@@ -59,7 +63,17 @@ Whether incidents or teams created in the future are synced into LAD. The defaul
 
 When information is updated in Beacon, it is pushed directly into LAD, giving near real-time updates to incidents, teams and tasking statuses. Each register's **Refresh Data** button flashes when an update for it arrives (see [Register Controls](interface.md#register-controls)).
 
-> **Note:** When using Live Updates, keep the Full Refresh Interval between 3 and 5 minutes. The full refresh picks up anything Live Updates missed.
+If the connection drops, a banner says so and LAD keeps trying to reconnect. Once it's back, LAD reloads incidents, teams and tasking to pick up anything it missed.
+
+> **Note:** The full refresh picks up anything Live Updates missed, so it only needs to run occasionally while Live Updates is on.
+
+### Background Tabs
+
+A LAD tab that has been in the background for 30 minutes pauses: it stops loading data and disconnects Live Updates, so a forgotten tab doesn't keep calling Beacon. When you go back to the tab, it asks you to **Reload**, because what's on screen is out of date. Reloading opens the Configuration screen as usual, with your saved settings. Each tab pauses on its own, and a shorter time in the background changes nothing.
+
+If the tab's Beacon login has also expired while it was in the background, reloading wouldn't work, so instead it asks you to open LAD again from the **Lighthouse** menu in Beacon. After that you can reload the paused tab or close it.
+
+[Asset trails](assets.md) aren't recorded while a tab is paused, so they have a gap for that time.
 
 ## Filter Settings
 
@@ -142,6 +156,12 @@ These options only show while **Spread out overlapping asset markers** is on.
 - **Alert when a team has arrived but isn't marked Onsite** (on by default). The [Arrived, not marked Onsite](interface.md#alerts) alert lists *Tasked* or *Enroute* teams whose asset has reported a location in the last 15 minutes close to their incident.
 - **Distance from the incident marker** sets how close the asset must be, from **50 m** to **1 km**. The default is **200 m**. Make it larger for big properties or rural incidents where assets stop well away from the marker.
 
+### Map View
+
+#### Map Zoom
+
+**Zoom in as far as** sets how close you can zoom in on the Situation Map, from **zoom 19** to **zoom 22**. The default is **zoom 20**. Most basemaps run out of detail at zoom 19 or 20. Past that they enlarge their closest imagery, so the map looks softer the further you go.
+
 ## Map Layers
 
 The **Map layers** tab sets the order map layers are drawn in and how see-through each one is.
@@ -152,7 +172,7 @@ It lists every map layer: incident markers, asset markers, routes and measuring,
 
 - **Turn it on or off** with the switch. This is the same as its toggle in the **Layers** menu. Layers on the map are marked **On map**; the rest are marked **Off** and greyed out. Incident and asset markers, and routes and measuring, are always listed as on; hide incidents and assets from the **Layers** menu as before.
 - **Move it** by dragging the grip on the left, or with the up and down arrows (easier in a long list).
-- **Make it see-through** with the slider, from 100% (solid) down to 10%. Layers start at 100%, except **BOM Rain Radar Still** and **BOM Severe Thunderstorm Cells**, which start at 50%, and **RainViewer Animated Rainfall Radar**, **BOM Severe Thunderstorm Warning** and **BOM Sea Surface Temperature (°C)**, which start at 60%, so roads and boundaries show through them.
+- **Make it see-through** with the slider, from 100% (solid) down to 10%. Layers start at 100%, except **BOM Rain Radar Still** and **BOM Severe Thunderstorm Cells**, which start at 50%, and **RainViewer Animated Rainfall Radar**, **BOM Severe Thunderstorm Warning** and **BOM Sea Surface Temperature (°C)**, which start at 60%, and **Elevation (Height Above Sea Level)**, **Hillshade**, **Steepness** and the **Historical Imagery** layers, which start at 70%, so roads and boundaries show through them.
 
 Order and transparency are remembered for layers that are off, and apply when you turn them on. **Reset** puts every layer back in its default position and transparency. By default, from top to bottom:
 
@@ -162,6 +182,7 @@ Order and transparency are remembered for layers that are off, and apply when yo
 4. Routes, measuring & HQ coverage
 5. Other overlays (boundaries, warnings, Transport NSW, HazardWatch and so on)
 6. Weather imagery (radar, satellite and BOM forecast and observation maps), with **BOM Thunderstorm Tracking** above **BOM Rain Radar Still** so storm cells show over the rain
+7. Historical imagery, then the terrain layers, under the weather imagery
 
 Moving a filled overlay above incidents or assets can stop you clicking the markers under it. Lower its transparency or move it back down if that happens.
 
@@ -212,11 +233,13 @@ Set separate weights for **Rescue** and **Standard** (non-rescue) incidents, bal
 
 **Share** generates a code that captures your current filters and settings. Another user can click **Load**, enter the code and click **Go** to apply the same configuration.
 
+Production, Train, Test and Dev Beacon each keep their own Configuration, so changes on one don't affect the others. Loading a code replaces the Configuration for the Beacon you're on.
+
 ![Share and Load buttons](images/config-share-load.png)
 
 ## Restoring Default Settings
 
-**Restore Defaults** lets you pick what to put back to its defaults, then reloads LAD. Click it to open the **Restore Defaults** window, untick anything you want to keep, and click **Reset and reload**. **Cancel** takes you back to the Configuration screen with nothing changed.
+**Restore Defaults** lets you pick what to put back to its defaults, then reloads LAD. Click it to open the **Restore Defaults** window, untick anything you want to keep, and click **Reset and reload**. **Cancel** takes you back to the Configuration screen with nothing changed. **Configuration settings** are only reset for the Beacon you're on.
 
 | Option | What it resets | Ticked to start |
 | --- | --- | --- |

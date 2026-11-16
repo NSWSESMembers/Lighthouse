@@ -110,7 +110,7 @@ export function registerBOMAllFloodLevelsLayer(vm, sourceUrl) {
   const allUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomAll", {
     label: "BOM Flood Levels",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomAllFlood`) || false,
@@ -138,7 +138,7 @@ export function registerBOMRainfallLayer(vm, sourceUrl) {
   const rainfallUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomRainfall", {
     label: "BOM Rainfall (9am)",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRainfall`) || false,
@@ -168,7 +168,7 @@ export function registerBOMRadarLayer(vm, sourceUrl) {
   const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomRadar", {
     label: "BOM Rain Radar Still",
-    menuGroup: "BOM Radar & Satellite",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     defaultOpacity: 50,
     refreshMs: 600000, // 10 min
@@ -196,7 +196,7 @@ export function registerBOMSatTrueColorLayer(vm, sourceUrl) {
   const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomSatTrueColor", {
     label: "BOM Satellite Composite True Colour",
-    menuGroup: "BOM Radar & Satellite",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomSatTrueColor`) || false,
@@ -223,7 +223,7 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
   const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomThunderstormTracking", {
     label: "BOM Thunderstorm Tracking",
-    menuGroup: "BOM Radar & Satellite",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomThunderstormTracking`) || false,
@@ -251,7 +251,7 @@ export function registerBOMWindLayer(vm, sourceUrl) {
   const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomWind", {
     label: "BOM Wind Barbs & Raster",
-    menuGroup: "BOM Forecasts",
+    menuGroup: "Forecasts",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomWind`) || false,
@@ -283,7 +283,7 @@ export function registerBOMMSLPLayer(vm, sourceUrl) {
   const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomMSLP", {
     label: "BOM MSLP Contours",
-    menuGroup: "BOM Forecasts",
+    menuGroup: "Forecasts",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomMSLP`) || false,
@@ -315,7 +315,7 @@ export function registerBOMLightningLayer(vm, sourceUrl) {
   const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomLightning", {
     label: "BOM Lightning Strikes (0-2 hrs ago) Cloud to Ground",
-    menuGroup: "BOM Radar & Satellite",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomLightning`) || false,
@@ -342,7 +342,7 @@ export function registerBOMLightning24hLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomLightning24h", {
     label: "BOM Lightning (2-24 hrs ago) Cloud to Ground",
-    menuGroup: "BOM Radar & Satellite",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomLightning24h`) || false,
@@ -369,7 +369,7 @@ export function registerBOMTsunamiLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomTsunami", {
     label: "BOM Tsunami Warning",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "tiles",
     refreshMs: 300000, // 5 min – critical warning
     visibleByDefault: localStorage.getItem(`ov.bomTsunami`) || false,
@@ -398,7 +398,7 @@ export function registerBOMTropicalCycloneLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomTropicalCyclone", {
     label: "BOM Tropical Cyclone Tracking",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomTropicalCyclone`) || false,
@@ -434,7 +434,7 @@ export function registerBOMFireDangerRatingLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomFireDangerRating", {
     label: "BOM Fire Danger Rating (Today)",
-    menuGroup: "BOM Forecasts",
+    menuGroup: "Forecasts",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomFireDangerRating`) || false,
@@ -464,7 +464,7 @@ export function registerBOMHeatwaveLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomHeatwave", {
     label: "BOM Heatwave Forecast (Days +0 to +2)",
-    menuGroup: "BOM Forecasts",
+    menuGroup: "Forecasts",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHeatwave`) || false,
@@ -494,7 +494,7 @@ export function registerBOMHazardousSurfLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomHazardousSurf", {
     label: "BOM Hazardous Surf Warning (Today)",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHazardousSurf`) || false,
@@ -523,7 +523,7 @@ export function registerBOMCoastalHazardLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomCoastalHazard", {
     label: "BOM Coastal Hazard Warning",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomCoastalHazard`) || false,
@@ -552,7 +552,7 @@ export function registerBOMRoadWeatherLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomRoadWeather", {
     label: "BOM Road Weather Alert (Metro)",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomRoadWeather`) || false,
@@ -581,7 +581,7 @@ export function registerBOMSurfaceGustLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomSurfaceGust", {
     label: "BOM Surface Obs Wind Gust (km/h)",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomSurfaceGust`) || false,
@@ -610,7 +610,7 @@ export function registerBOMSurfaceTempLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomSurfaceTemp", {
     label: "BOM Surface Obs Air Temp (°C)",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomSurfaceTemp`) || false,
@@ -639,7 +639,7 @@ export function registerBOMFireBehaviourIndexLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomFireBehaviourIndex", {
     label: "BOM Fire Behaviour Index (AFDRS)",
-    menuGroup: "BOM Forecasts",
+    menuGroup: "Forecasts",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomFireBehaviourIndex`) || false,
@@ -669,7 +669,7 @@ export function registerBOMHazardousWindLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomHazardousWind", {
     label: "BOM Hazardous Wind Onset (6 hrs)",
-    menuGroup: "BOM Forecasts",
+    menuGroup: "Forecasts",
     stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHazardousWind`) || false,
@@ -699,7 +699,7 @@ export function registerBOMFloodWarningBoundariesLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomFloodWarningBoundaries", {
     label: "BOM Flood Warning Boundaries",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 3600000, // 1 hr – reference data
     visibleByDefault: localStorage.getItem(`ov.bomFloodWarningBoundaries`) || false,
@@ -728,7 +728,7 @@ export function registerBOMFireWeatherDistrictsLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomFireWeatherDistricts", {
     label: "BOM Fire Weather Districts",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     refreshMs: 3600000, // 1 hr – reference data
     visibleByDefault: localStorage.getItem(`ov.bomFireWeatherDistricts`) || false,
@@ -756,7 +756,7 @@ export function registerBOMSevereThunderstormWarningLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomSevereThunderstorm", {
     label: "BOM Severe Thunderstorm Warning",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "vector",
     defaultOpacity: 60,
     refreshMs: 300000, // 5 min – warnings are reissued as storms move
@@ -784,7 +784,7 @@ export function registerBOMSevereThunderstormCellsLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomSevereThunderstormCells", {
     label: "BOM Severe Thunderstorm Cells",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "vector",
     defaultOpacity: 50,
     refreshMs: 300000, // 5 min – warnings are reissued as storms move
@@ -813,7 +813,7 @@ export function registerBOMVolcanicAshLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomVolcanicAsh", {
     label: "BOM Volcanic Ash Advisory",
-    menuGroup: "BOM Warnings",
+    menuGroup: "Warnings",
     stack: "vector",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomVolcanicAsh`) || false,
@@ -849,7 +849,7 @@ export function registerBOMSeaSurfaceTempLayer(vm, sourceUrl) {
   const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomSeaSurfaceTemp", {
     label: "BOM Sea Surface Temperature (°C)",
-    menuGroup: "BOM Observations",
+    menuGroup: "Radar & Observations",
     stack: "tiles",
     defaultOpacity: 60,
     refreshMs: 3600000, // 1 hr – daily analysis

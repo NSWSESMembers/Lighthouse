@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from "knockout";
 import moment from "moment";
+import { tabDormancy } from "../utils/tabDormancy.js";
 import { HistoryEntry } from "../models/HistoryEntry.js";
 import { OpsLogEntry } from "../models/OpsLogEntry.js";
 
@@ -443,6 +444,7 @@ export function JobTimeline(parentVm) {
     self.startAutoRefresh = function () {
         self.stopAutoRefresh();
         self._refreshTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.refreshCurrentJob({ silent: true });
         }, 1000 * 30);
     };

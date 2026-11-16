@@ -18,6 +18,7 @@ import {
     ONSITE_GEOFENCE_DEFAULT_METRES, ONSITE_GEOFENCE_MIN_METRES, ONSITE_GEOFENCE_MAX_METRES,
 } from '../utils/onsiteGeofence.js';
 import { RESET_GROUPS, keysToReset } from '../utils/resetGroups.js';
+import { taskingConfigKey } from '../utils/taskingConfigStorage.js';
 import { defaultLayoutPreset, splitLayoutPreset, joinLayoutPreset } from '../utils/layoutPreset.js';
 
 
@@ -320,6 +321,8 @@ function makeHqPicker(searchEntities, initial = null) {
 
 
 
+export const DEFAULT_MAP_MAX_ZOOM = 20;
+
 export function ConfigVM(root, deps) {
     const self = this;
 
@@ -477,7 +480,7 @@ export function ConfigVM(root, deps) {
         const overlays = root.mapVM?.stackOverlays?.() || [];
         const byId = new Map(overlays.map(o => [o.id, o]));
         for (const o of overlays) {
-            if (!stackIds.includes(o.id)) stackIds = insertStackId(stackIds, o.id, o.stack, id => byId.get(id)?.stack);
+            if (!stackIds.includes(o.id)) stackIds = insertStackId(stackIds, o.id, o.stack, id => byId.get(id)?.stack, o.stackAbove);
         }
         const rows = stackIds
             .filter(id => !id.startsWith('ov:') || byId.has(id))
@@ -548,7 +551,7 @@ export function ConfigVM(root, deps) {
 
     // Other settings
     self.signalrEnabled = ko.observable(true);
-    self.refreshInterval = ko.observable(180);
+    self.refreshInterval = ko.observable(600);
     // Guard for an aggressively short full-refresh interval. Slower is always
     // safe, so only prompt when the new value drops below this many seconds --
     // that's where every open copy of LAD starts hammering Beacon.
@@ -787,7 +790,7 @@ export function ConfigVM(root, deps) {
     if (deps.defaultHqId) {
         Promise.resolve(deps.entity(deps.defaultHqId)).then(entity => {
             if (!entity?.Id) return;
-            const hq = { id: String(entity.Id), name: entity.Name || String(entity.Id) };
+            const hq = { id: String(entity.Id), name: entity.Name || String(entity.Id), entityType: entity.EntityTypeId ?? 0 };
             self.defaultHq(hq);
             self.newLayerHqPicker.reset(hq);
             self.discoverHqPicker.reset(hq);
@@ -1252,12 +1255,12 @@ export function ConfigVM(root, deps) {
     // The full refresh means different things depending on whether live updates
     // are carrying the load -- spell it out so nobody sets it wrong.
     self.fullRefreshHint = ko.pureComputed(() => (self.signalrEnabled()
-        ? 'A full reload from Beacon. With live updates on it is only a backstop — every 3–5 min is plenty.'
-        : 'A full reload from Beacon. With live updates off this is the only thing refreshing the board — keep it short, 1–2 min.'
+        ? 'A full reload from Beacon. With live updates on it is only a backstop — every 10 min is plenty.'
+        : 'With live updates off, LAD reloads from Beacon every minute, whatever this is set to. Expanding an incident or team also refreshes it.'
     ));
     self.dataReadoutNote = ko.pureComputed(() => (self.signalrEnabled()
         ? 'Live updates keep the board current; the full refresh is a backstop.'
-        : 'No live updates — the board is only as fresh as the full refresh.'
+        : 'No live updates — the board reloads every minute, and expanding an incident or team refreshes it.'
     ));
 
     // Data pane -- one-tap presets for the values these are actually set to.
@@ -1451,6 +1454,8 @@ export function ConfigVM(root, deps) {
         minZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
         allowLines: !!self.assetPinAllowLines(),
     });
+    // How close the map can zoom in (19-22).
+    self.mapMaxZoom = ko.observable(DEFAULT_MAP_MAX_ZOOM);
     self.alertsCollapsibleRules = ko.observable(true);
     // Low-priority alert when a Tasked/Enroute team's radio is within this
     // many metres of its incident (utils/onsiteGeofence.js).
@@ -1567,10 +1572,9 @@ export function ConfigVM(root, deps) {
 
     // Build the current config payload (used by save + share)
     const buildConfig = () => ({
-        // Renamed from refreshInterval so existing saved configs (which
-        // only have the old key) fall through to the new default instead
-        // of carrying forward the old 60s value.
-        refreshIntervalV2: Number(self.refreshInterval()),
+        // Versioned key so saved configs on an old default move to the new
+        // one -- see the load path below.
+        refreshIntervalV3: Number(self.refreshInterval()),
         signalrEnabled: !!self.signalrEnabled(),
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
@@ -1604,6 +1608,7 @@ export function ConfigVM(root, deps) {
         assetPinDeclutter: !!self.assetPinDeclutter(),
         assetPinDeclutterMinZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
         assetPinAllowLines: !!self.assetPinAllowLines(),
+        mapMaxZoom: Number(self.mapMaxZoom()) || DEFAULT_MAP_MAX_ZOOM,
         assetTrails: !!self.assetTrails(),
         showAssetCapabilityCodes: !!self.showAssetCapabilityCodes(),
         assetTrailMinutes: Number(self.assetTrailMinutes()) || 30,
@@ -1639,15 +1644,59 @@ export function ConfigVM(root, deps) {
         return r;
     }
 
+    // Production Beacon must not load every unit's teams and incidents, so
+    // there an empty HQ list falls back to the focus unit (?hq=<id>). This
+    // has to happen synchronously: loadShared fetches straight after loading,
+    // before a deferred subscriber would run. The fallback is never saved
+    // (see self.save), so an empty list keeps following whichever focus unit
+    // LAD was opened with; it's identified by being this exact object.
+    const requireHqFilter = !!deps.requireHqFilter;
+    const focusHqId = requireHqFilter ? parseInt(deps.defaultHqId, 10) : NaN;
+    let focusUnitFilter = focusHqId > 0 ? { id: focusHqId, name: 'Your focus unit', entityType: 0 } : null;
+
+    const fillEmptyHqFilters = () => {
+        if (!focusUnitFilter) return;
+        [self.teamFilters, self.incidentFilters].forEach((arr) => {
+            if (arr().length === 0) arr([focusUnitFilter]);
+        });
+    };
+
+    // The name arrives after the filter is already in use.
+    self.defaultHq.subscribe((hq) => {
+        if (!focusUnitFilter || !hq) return;
+        const placeholder = focusUnitFilter;
+        focusUnitFilter = { ...placeholder, name: hq.name, entityType: hq.entityType };
+        [self.teamFilters, self.incidentFilters].forEach((arr) => {
+            if (arr().includes(placeholder)) arr(arr().map(f => (f === placeholder ? focusUnitFilter : f)));
+        });
+    });
+
+    const hqFiltersForStorage = (filters) =>
+        (filters.length === 1 && filters[0] === focusUnitFilter ? [] : ko.toJS(filters));
+
+    // Only when Production Beacon has no focus unit to fall back on.
+    self.hqFilterMissing = ko.pureComputed(() =>
+        requireHqFilter && (self.teamFilters().length === 0 || self.incidentFilters().length === 0));
+    self.teamsEmptyHint = requireHqFilter
+        ? 'Choose at least one headquarters - Production Beacon can\'t load teams from all units'
+        : 'No Filters Applied - Teams from all units will be fetched';
+    self.incidentsEmptyHint = requireHqFilter
+        ? 'Choose at least one headquarters - Production Beacon can\'t load incidents from all units'
+        : 'No Filters Applied - Incidents from all units will be fetched';
+
     const upsert = (arr, item) => {
         const exists = arr().some(x => x.id === item.id);
         if (!exists) arr.push(item);
         if (exists) arr.remove(x => x.id === item.id);
+        fillEmptyHqFilters();
     };
-    const removeById = (arr, id) => arr.remove(x => x.id === id);
+    const removeById = (arr, id) => {
+        arr.remove(x => x.id === id);
+        fillEmptyHqFilters();
+    };
 
-    self.clearTeams = () => { self.teamFilters.removeAll(); self.teamsExpanded(false); };
-    self.clearIncidents = () => { self.incidentFilters.removeAll(); self.incidentsExpanded(false); };
+    self.clearTeams = () => { self.teamFilters.removeAll(); fillEmptyHqFilters(); self.teamsExpanded(false); };
+    self.clearIncidents = () => { self.incidentFilters.removeAll(); fillEmptyHqFilters(); self.incidentsExpanded(false); };
     self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
@@ -1772,16 +1821,21 @@ export function ConfigVM(root, deps) {
 
 
     // Persistence
-    const STORAGE_KEY = 'lh-taskingConfig';
+    const STORAGE_KEY = taskingConfigKey(deps.beaconEnvironment);
 
     self.save = () => {
         const cfg = buildConfig();
+        cfg.locationFilters = {
+            teams: hqFiltersForStorage(self.teamFilters()),
+            incidents: hqFiltersForStorage(self.incidentFilters())
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
 
     };
 
     self.saveAndCloseAndLoad = () => {
-        
+        if (self.hqFilterMissing()) return;
+
         self.save();
 
         root.UserPressedSaveOnTheConfigModal()
@@ -1815,12 +1869,13 @@ export function ConfigVM(root, deps) {
             cfg = JSON.parse(saved);
         } catch (e) {
             console.warn('Failed to parse lh-taskingConfig:', e);
+            fillEmptyHqFilters();
             return;
         }
         if (!cfg) {
             cfg = {}
             console.log('Using defaults.');
-            cfg.refreshIntervalV2 = self.refreshInterval();
+            cfg.refreshIntervalV3 = self.refreshInterval();
             cfg.signalrEnabled = self.signalrEnabled();
             cfg.fetchPeriod = self.fetchPeriod();
             cfg.fetchForward = self.fetchForward();
@@ -1852,14 +1907,15 @@ export function ConfigVM(root, deps) {
             }
         }
         // scalar settings
-        // refreshIntervalV2 (renamed from refreshInterval) -- existing saved
-        // configs only have the old key, so this is undefined for them and
-        // self.refreshInterval just keeps its constructor default (180).
-        // Only someone who saves again under the new build will persist a
-        // value here, at which point it's their own deliberate choice again.
-        if (typeof cfg.refreshIntervalV2 === 'number') {
-            self.refreshInterval(cfg.refreshIntervalV2);
-            lastRefreshInterval = cfg.refreshIntervalV2;
+        // refreshIntervalV3 -- a saved V2 of 180 was the old default, so it
+        // falls through to the constructor default (600); any other V2 was
+        // someone's own choice and carries over. Keys before V2 are ignored.
+        const savedRefreshInterval = typeof cfg.refreshIntervalV3 === 'number'
+            ? cfg.refreshIntervalV3
+            : (cfg.refreshIntervalV2 === 180 ? undefined : cfg.refreshIntervalV2);
+        if (typeof savedRefreshInterval === 'number') {
+            self.refreshInterval(savedRefreshInterval);
+            lastRefreshInterval = savedRefreshInterval;
         }
         if (typeof cfg.signalrEnabled === 'boolean') {
             self.signalrEnabled(cfg.signalrEnabled);
@@ -1897,6 +1953,7 @@ export function ConfigVM(root, deps) {
             self.teamFilters(cfg.locationFilters.teams || []);
             self.incidentFilters(cfg.locationFilters.incidents || []);
         }
+        fillEmptyHqFilters();
 
 
         // status filters (arrays of status names to show)
@@ -1952,6 +2009,9 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.assetPinAllowLines === 'boolean') {
             self.assetPinAllowLines(cfg.assetPinAllowLines);
+        }
+        if (Number.isInteger(cfg.mapMaxZoom) && cfg.mapMaxZoom >= 19 && cfg.mapMaxZoom <= 22) {
+            self.mapMaxZoom(cfg.mapMaxZoom);
         }
         if (typeof cfg.assetTrails === 'boolean') {
             self.assetTrails(cfg.assetTrails);
@@ -2072,9 +2132,11 @@ export function ConfigVM(root, deps) {
             self.loadFromStorage();
 
             // Refresh data based on new filters
-            root.fetchAllTeamData();
-            root.fetchAllJobsData();
-            root.fetchAllTrackableAssets();
+            if (!self.hqFilterMissing()) {
+                root.fetchAllTeamData();
+                root.fetchAllJobsData();
+                root.fetchAllTrackableAssets();
+            }
 
             self.shareId(id);
             self.shareKeyInput(id);
@@ -2121,6 +2183,7 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
         root.mapVM?.applyAssetPinDeclutter?.(!!self.assetPinDeclutter());
         root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        root.mapVM?.applyMapMaxZoom?.(Number(self.mapMaxZoom()) || DEFAULT_MAP_MAX_ZOOM);
         root.mapVM?.applyAssetTrailMinutes?.(Number(self.assetTrailMinutes()) || 30);
         root.mapVM?.applyAssetTrails?.(!!self.assetTrails());
         root.mapVM?.applyAssetCapabilityCodes?.(!!self.showAssetCapabilityCodes());
@@ -2190,6 +2253,11 @@ export function ConfigVM(root, deps) {
 
     self.assetPinDeclutter.subscribe((v) => {
         root.mapVM?.applyAssetPinDeclutter?.(!!v);
+        self.save();
+    })
+
+    self.mapMaxZoom.subscribe((v) => {
+        root.mapVM?.applyMapMaxZoom?.(Number(v) || DEFAULT_MAP_MAX_ZOOM);
         self.save();
     })
 
@@ -2294,7 +2362,7 @@ export function ConfigVM(root, deps) {
         if (ids.includes('trails')) root.mapVM?.assetTrails?.discardPendingSave?.();
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
-        keysToReset(keys, ids).forEach(k => localStorage.removeItem(k));
+        keysToReset(keys, ids, STORAGE_KEY).forEach(k => localStorage.removeItem(k));
         location.reload();
     };
 

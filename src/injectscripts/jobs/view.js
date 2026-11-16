@@ -821,7 +821,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
               let name = hq.properties.HQNAME;
               let code = hq.properties.UNIT_CODE;
               let details = `<div id='lhqPopUp' style="width:250px">\
-                      <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${name} (${code})</div>\
+                      <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${_.escape(name)} (${_.escape(code)})</div>\
                       <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
                       <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
@@ -874,9 +874,9 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                             .find('#lhqContacts')
                             .append(
                               '<tr><td style="word-wrap:break-word; white-space:normal;">' +
-                              v.Description.replace('Phone', '').replace('Number', '') +
+                              _.escape(v.Description.replace('Phone', '').replace('Number', '')) +
                               '</td><td>' +
-                              v.Detail +
+                              _.escape(v.Detail) +
                               '</td></tr>',
                             );
                         } else {
@@ -884,9 +884,9 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                             .find('#lhqContacts')
                             .append(
                               '<tr style="background-color:#e8e8e8"><td>' +
-                              v.Description.replace('Phone', '').replace('Number', '') +
+                              _.escape(v.Description.replace('Phone', '').replace('Number', '')) +
                               '</td><td>' +
-                              v.Detail +
+                              _.escape(v.Detail) +
                               '</td></tr>',
                             );
                         }
@@ -896,7 +896,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                     if (hqdeets.acred.length > 0) {
                       //fill otherwise placeholder
                       $.each(hqdeets.acred, function (k, v) {
-                        toolTip.find('#lhqacred').append('<tr><td>' + v + '</td></tr>');
+                        toolTip.find('#lhqacred').append('<tr><td>' + _.escape(v) + '</td></tr>');
                       });
                     } else {
                       toolTip.find('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
@@ -1040,12 +1040,11 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
 
                 row = $(`
            <tr style="${moment().diff(v.lastSeen, 'days') > 1 ? 'font-style: italic;' : ''}  cursor: pointer;">
-        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.entity != "N/A" ? v.entity + "'s" : ''} ${v.capability} ${v.resourceType
-                  }">${v.name}</div></th>
+        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${_.escape(`${v.entity != "N/A" ? v.entity + "'s" : ''} ${v.capability} ${v.resourceType}`)}">${_.escape(v.name)}</div></th>
         <td><div id="locate" style="background:${uniqueColor}"></div></td>
-        <td>${v.entity}</td>
+        <td>${_.escape(v.entity)}</td>
         <td>${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}</td>
-        <td>${v.talkGroup != null ? v.talkGroup : 'Unknown'}</td>
+        <td>${v.talkGroup != null ? _.escape(v.talkGroup) : 'Unknown'}</td>
         <td ${moment().diff(v.lastSeen, 'days') > 1 ? 'style=color:red' : ''}>${moment(v.lastSeen).fromNow()}</td>
         </tr>
            `);
@@ -1168,7 +1167,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
             } else {
               error = 'Error talking to routing server... try again soon';
             }
-            $('#asset-route-warning').html(`Error Routing<br>${error}`);
+            $('#asset-route-warning').html(`Error Routing<br>${_.escape(error)}`);
 
             setTimeout(function () {
               $('#asset-route-warning')
@@ -1215,8 +1214,8 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 assetMap,
               ); //opacity may be set to zero
               _distanceMarkerRoute.bindTooltip(
-                `<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.name}${name ? ' ' : ''
-                }${name ? name : ''}</strong><br><strong>${(distance / 1000).toFixed(
+                `<div style="text-align: center;"><strong style="color:${uniqueColor}">${_.escape(v.name)}${name ? ' ' : ''
+                }${name ? _.escape(name) : ''}</strong><br><strong>${(distance / 1000).toFixed(
                   1,
                 )} km - ${timeText}</strong></div>`,
                 { permanent: true, offset: [0, 0] },
@@ -1415,7 +1414,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
   cb();
 }
     }).catch(function (error) {
-  $('#map-errors').html(assetMapErrorText(error));
+  $('#map-errors').text(assetMapErrorText(error));
   $('#map-errors').css('visibility', 'unset');
   if (error && typeof error === 'object' && 'lighthouseSimulation' in error) {
     trackMapSimulation(error.lighthouseSimulation);
@@ -1599,7 +1598,7 @@ function assetLocationButtonFiltered(bypassUI) {
         $('#assetFilterListAll')
           .val()
           .forEach(function (s) {
-            let option = $(`<option value="${s}">${s}</option>`);
+            let option = $(`<option value="${_.escape(s)}">${_.escape(s)}</option>`);
 
             //click handler for unselecting
             option.dblclick(function (x) {
@@ -1691,7 +1690,7 @@ function assetLocationButtonFiltered(bypassUI) {
     $('#assetFilterListSelected').empty();
     let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [];
     loadIn.forEach(function (i) {
-      $('#assetFilterListSelected').append(`<option value="${i}">${i}</option>`);
+      $('#assetFilterListSelected').append(`<option value="${_.escape(i)}">${_.escape(i)}</option>`);
     });
 
     $('#assetFilterListAll').empty();
@@ -1714,7 +1713,7 @@ function assetLocationButtonFiltered(bypassUI) {
             `<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length
               ? "style='display:none' "
               : ''
-            }value="${v}">${v}</option>`,
+            }value="${_.escape(v)}">${_.escape(v)}</option>`,
           );
         });
 
@@ -1723,7 +1722,7 @@ function assetLocationButtonFiltered(bypassUI) {
         $('#assetFilterListAll option')
           .unbind()
           .dblclick(function (x) {
-            let option = $(`<option value="${x.target.value}">${x.target.value}</option>`);
+            let option = $(`<option value="${_.escape(x.target.value)}">${_.escape(x.target.value)}</option>`);
             //click handler for unselecting
             option.dblclick(function (x) {
               if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1) {

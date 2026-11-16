@@ -3,6 +3,8 @@
 // page shares one localStorage, so anything not matched here (Radio Console,
 // Incident Statistics, Summary, the export pages) is never touched.
 
+import { TASKING_CONFIG_KEY } from './taskingConfigStorage.js';
+
 /**
  * Groups shown as checkboxes, in order. `checked` is the default: settings
  * the user would expect a reset to cover are ticked; things they built or
@@ -14,16 +16,17 @@ export const RESET_GROUPS = [
     label: 'Configuration settings',
     detail: 'Filters, refresh, map markers, layer order and transparency, pinned teams and incidents',
     checked: true,
-    match: (k) => k === 'lh-taskingConfig',
+    match: (k, configKey) => k === configKey,
   },
   {
     id: 'layout',
     label: 'Layout',
-    detail: 'Page layout and pane sizes, collapsed side drawer and Legend, radar bar, view filters, capability icons',
+    detail: 'Page layout and pane sizes, collapsed side drawer and Legend, radar bar, view filters, capability icons, collapsed Team Capabilities',
     checked: true,
     match: (k) => k === 'lh.layoutPreset' || k.startsWith('lh.layout.')
       || ['sidebar.collapsed', 'legendCollapsed', 'lh-rainRadar.expanded',
-        'tasking.teamsInViewOnly', 'tasking.incidentsInViewOnly', 'lh_showCapabilities'].includes(k),
+        'tasking.teamsInViewOnly', 'tasking.incidentsInViewOnly', 'lh_showCapabilities',
+        'lh_teamCapabilitiesCollapsed'].includes(k),
   },
   {
     id: 'layers',
@@ -68,9 +71,11 @@ export function isLadCache(k) {
  * The keys to remove for the chosen groups, plus LAD's caches.
  * @param {string[]} keys - every key in localStorage
  * @param {Iterable<string>} groupIds
+ * @param {string} [configKey] - this Beacon environment's Configuration key;
+ *   the other environments' Configurations are left alone
  */
-export function keysToReset(keys, groupIds) {
+export function keysToReset(keys, groupIds, configKey = TASKING_CONFIG_KEY) {
   const groups = RESET_GROUPS.filter((g) => new Set(groupIds).has(g.id));
   return keys.filter((k) => typeof k === 'string'
-    && (isLadCache(k) || groups.some((g) => g.match(k))));
+    && (isLadCache(k) || groups.some((g) => g.match(k, configKey))));
 }

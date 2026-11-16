@@ -120,7 +120,7 @@ export function teamMatchesConfigFilters(tm, config) {
     const status = tm.teamStatusType()?.Name;
     const teamHqId = String(tm.assignedTo().id());
     const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
-    if (status == null) {
+    if (tm.isDeleted() || status == null) {
         return false;
     }
 

@@ -155,7 +155,7 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
   function lambda(route, url) {
     const method = route.request().method();
     // Shared default assets, collab map layers, share/load config, geocode,
-    // routing: nothing shared in the demo.
+    // routing: nothing shared in the demo. Power outages: a few made-up ones.
     log(`[mock] lambda ${method} ${url.pathname} (empty)`);
     if (/geocode/.test(url.pathname)) {
       // Reverse lookups (?lat=&lon=, e.g. Drive time's "Near ...") get an
@@ -168,6 +168,7 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
       }] });
     }
     if (/\/route$/.test(url.pathname) && method === 'POST') return json(route, fakeRoute(route.request().postDataJSON()));
+    if (/\/power-outages$/.test(url.pathname)) return json(route, scenario.powerOutages);
     return json(route, method === 'GET' ? [] : {});
   }
 

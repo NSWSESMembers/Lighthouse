@@ -47,6 +47,17 @@ export function knownBeaconEnvironment(host, source) {
   return match ? match.env : null;
 }
 
+/**
+ * The environment of a Beacon site origin (the `source` param), or null.
+ *
+ * @param {string} source
+ * @returns {'production'|'train'|'test'|'dev'|null}
+ */
+export function beaconSiteEnvironment(source) {
+  const site = trimSlash(source);
+  return ENVIRONMENTS.find((e) => e.site === site)?.env ?? null;
+}
+
 /** True when `url` is on one of Beacon's SignalR hubs (https only). */
 export function isKnownSignalRHub(url) {
   try {

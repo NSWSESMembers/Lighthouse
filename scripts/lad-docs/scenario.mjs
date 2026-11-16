@@ -244,6 +244,33 @@ function person(i) {
   };
 }
 
+// Accreditations for team members, a repeating mix so teams differ. Same shape
+// as Beacon's PersonCapabilityTags; the ids are invented.
+const CAPABILITY_TAGS = {
+  'SWDH-ACC': 'Storm and Water Damage (Heights) Operator',
+  'SWDG-ACC': 'Storm and Water Damage (Ground) Operator',
+  'CL1-ACC': 'Chainsaw Level 1 (Cross cut) Operator',
+  'DRL1-ACC': 'Driver Authorisation Level 1',
+  'FRL1-ACC': 'Land based Flood Rescue Operator (FRL1)',
+  'FTL-ACC': 'Field Team leader',
+};
+const MEMBER_CAPABILITIES = [
+  ['FTL-ACC', 'SWDH-ACC', 'SWDG-ACC', 'CL1-ACC', 'DRL1-ACC'],
+  ['SWDG-ACC', 'DRL1-ACC'],
+  ['SWDH-ACC', 'SWDG-ACC', 'FRL1-ACC'],
+  ['SWDG-ACC', 'CL1-ACC'],
+  [],
+];
+const memberPerson = (i) => ({
+  ...person(i),
+  PersonCapabilityTags: MEMBER_CAPABILITIES[i % MEMBER_CAPABILITIES.length].map((Name) => ({
+    Id: 9000 + Object.keys(CAPABILITY_TAGS).indexOf(Name),
+    Name,
+    TagGroupId: 49,
+    Description: CAPABILITY_TAGS[Name],
+  })),
+});
+
 const OPERATOR = person(17);
 const fakePhone = (i) => `0491 570 ${String(100 + i).slice(-3)}`; // ACMA fictional-use range
 
@@ -432,7 +459,7 @@ export function buildScenario(now = new Date(), { jobCount = JOB_SPECS.length } 
     TeamType: TEAM_TYPE_FIELD,
     // NOTE: the captured sample team had no members, so this element shape
     // (TeamLeader + Person) is taken from models/Team.js, not from Beacon.
-    Members: Array.from({ length: memberCount }, (_, m) => ({ TeamLeader: m === 0, Person: person(memberSeq++) })),
+    Members: Array.from({ length: memberCount }, (_, m) => ({ TeamLeader: m === 0, Person: memberPerson(memberSeq++) })),
     Resources: [],
     Tags: [],
     Capabilities: [],
@@ -662,6 +689,53 @@ export function buildScenario(now = new Date(), { jobCount = JOB_SPECS.length } 
 
   return {
     hq: HQ, jobs, leanJobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
+    powerOutages: powerOutages(now),
     createTasking, createOpsLogEntry,
+  };
+}
+
+// Power outages, in the shape the power-outages Lambda returns
+// (lambda/power-outages-v2): two unplanned and one planned near the HQ.
+function powerOutages(now) {
+  const iso = (hours) => new Date(now.getTime() + hours * 3600 * 1000).toISOString();
+  const box = (lat, lng, d) => ({
+    type: 'Polygon',
+    coordinates: [[[lng - d, lat - d], [lng + d, lat - d], [lng + d, lat + d], [lng - d, lat + d], [lng - d, lat - d]]],
+  });
+  const outage = (provider, id, type, lat, lng, extra, area = null) => ({
+    type: 'Feature',
+    geometry: area || { type: 'Point', coordinates: [lng, lat] },
+    properties: {
+      provider, id, type, status: '', customers: null, cause: '', suburbs: '', streets: '',
+      start: null, estRestore: null, updated: iso(-0.2), lat, lng, ...extra,
+    },
+  });
+  const lat = HQ.Latitude;
+  const lng = HQ.Longitude;
+  const fetched = iso(-0.05);
+  return {
+    type: 'FeatureCollection',
+    features: [
+      outage('endeavour', 'SP 0000000101', 'unplanned', lat + 0.012, lng - 0.018, {
+        status: 'Despatched', customers: 214, cause: 'Fallen tree on powerlines', suburbs: 'DEMOVILLE',
+        start: iso(-1.5), estRestore: iso(2),
+      }, box(lat + 0.012, lng - 0.018, 0.004)),
+      outage('ausgrid', '900101', 'unplanned', lat - 0.016, lng + 0.021, {
+        status: 'In progress', customers: 37, cause: 'Damaged equipment', suburbs: 'Sample Park',
+        streets: 'Example St, Mock Rd', start: iso(-0.7), estRestore: iso(1.5),
+      }),
+      outage('endeavour', 'SP 0000000102', 'planned', lat + 0.022, lng + 0.011, {
+        status: 'Prepared', customers: 96, cause: 'Maintenance Work', suburbs: 'TESTFORD',
+        start: iso(18), estRestore: iso(24),
+      }, box(lat + 0.022, lng + 0.011, 0.003)),
+    ],
+    meta: {
+      generatedAt: fetched,
+      providers: Object.fromEntries(
+        [['ausgrid', 'Ausgrid', 1], ['endeavour', 'Endeavour Energy', 2], ['essential', 'Essential Energy', 0]].map(
+          ([key, name, count]) => [key, { name, ok: true, fetchedAt: fetched, lastGoodAt: fetched, count }],
+        ),
+      ),
+    },
   };
 }

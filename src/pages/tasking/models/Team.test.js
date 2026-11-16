@@ -36,6 +36,36 @@ describe('teamLeader / membersSorted', () => {
     expect(t.teamLeader()).toBe('-');
   });
 
+  it('membersSummary is the leader plus how many others', () => {
+    const t = new Team({
+      Members: [
+        { Person: { FirstName: 'A', LastName: 'One' }, TeamLeader: false },
+        { Person: { FirstName: 'B', LastName: 'Two' }, TeamLeader: true },
+        { Person: { FirstName: 'C', LastName: 'Three' }, TeamLeader: false },
+      ],
+    });
+    expect(t.membersSummary()).toBe('B Two + 2');
+  });
+
+  it('membersSummary is just the name for a team of one', () => {
+    const t = new Team({ Members: [{ Person: { FirstName: 'A', LastName: 'One' }, TeamLeader: true }] });
+    expect(t.membersSummary()).toBe('A One');
+  });
+
+  it('membersSummary starts with the first member when there is no leader', () => {
+    const t = new Team({
+      Members: [
+        { Person: { FirstName: 'A', LastName: 'One' }, TeamLeader: false },
+        { Person: { FirstName: 'B', LastName: 'Two' }, TeamLeader: false },
+      ],
+    });
+    expect(t.membersSummary()).toBe('A One + 1');
+  });
+
+  it('membersSummary is "-" for a team with no members', () => {
+    expect(new Team({ Members: [] }).membersSummary()).toBe('-');
+  });
+
   it('membersSorted puts the leader first', () => {
     const t = new Team({
       Members: [
@@ -524,6 +554,16 @@ describe('showCapabilities (shared singleton)', () => {
     expect(t2.showCapabilities()).toBe(!before); // shared singleton
     t1.toggleCapabilities(); // restore, so other tests in this file aren't affected
   });
+
+  it('collapsing the Team Capabilities box applies to every team and is remembered', () => {
+    const t1 = new Team({});
+    const t2 = new Team({});
+    const before = t1.capabilitiesCollapsed();
+    t1.toggleCapabilitiesCollapsed();
+    expect(t2.capabilitiesCollapsed()).toBe(!before);
+    expect(localStorage.getItem('lh_teamCapabilitiesCollapsed')).toBe(String(!before));
+    t1.toggleCapabilitiesCollapsed();
+  });
 });
 
 describe('updateFromJson', () => {
@@ -532,6 +572,18 @@ describe('updateFromJson', () => {
     t.updateFromJson({ Callsign: 'RESCUE2', TaskedJobCount: 3 });
     expect(t.callsign()).toBe('RESCUE2');
     expect(t.taskedJobCount()).toBe(3);
+  });
+
+  it('tracks IsDeleted, and leaves it alone when a payload omits it', () => {
+    const t = new Team({ Id: 'team1' });
+    expect(t.isDeleted()).toBe(false);
+    t.updateFromJson({ IsDeleted: true });
+    expect(t.isDeleted()).toBe(true);
+    t.updateFromJson({ Callsign: 'RESCUE2' });
+    expect(t.isDeleted()).toBe(true);
+    expect(new Team({ IsDeleted: true }).isDeleted()).toBe(true);
+    t.updateFromJson({ IsDeleted: false });
+    expect(t.isDeleted()).toBe(false);
   });
 
   it('resolves a reduced {Id}-only TeamStatusType via the enum', () => {

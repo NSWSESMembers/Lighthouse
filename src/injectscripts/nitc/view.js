@@ -11,7 +11,7 @@ whenVmIsReady(function () {
   console.log('Total Hrs:' + totalhrs);
 
   var hrDisplay = $(
-    '#content > div:nth-child(2) > div.col-xs-7 > div > div.widget-header > div:nth-child(2) > span',
+    '#content > div:nth-child(2) > div.col-sm-7 > div > div.widget-header > div:nth-child(2) > span',
   );
 
   totalhrs = totalhrs.toFixed(2) + '';

@@ -26,6 +26,7 @@ const pagesScripts = [
   './src/pages/tasking/main.js',
   './src/pages/stats/main.js',
   './src/pages/summary/main.js',
+  './src/pages/teamsummary/main.js',
   './src/pages/advexport/main.js',
   './src/pages/nitcexport/main.js',
   './src/pages/simulatedexercise/main.js',

@@ -15,6 +15,12 @@ import { InstantTaskViewModel } from '../viewmodels/InstantTask.js';
 import { Enum } from "../utils/enum.js";
 import { getSingleFetchCooldownMs } from "../signalr/pushMode.js";
 
+// Incident status (Enum.JobStatusType Name) -> short form for a narrow Incident Register.
+const STATUS_SHORT = {
+    Active: 'Act', Tasked: 'Tskd', Acknowledged: 'Ack', Referred: 'Ref', Complete: 'Comp',
+    Finalised: 'Fin', Cancelled: 'Canc', Rejected: 'Rej', New: 'New',
+};
+
 // The bulk search's lean model (ViewModelType=2) carries combined
 // CallerName/CallerNumber/ContactName/ContactNumber where the full model has
 // split First/Last/PhoneNumber fields. Map lean payloads onto the full field
@@ -242,7 +248,11 @@ export function Job(data = {}, deps = {}) {
     self.priorityId = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Id) || null);
     self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
     self.statusId = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Id) || null);
-    self.statusNameAndCount = ko.pureComputed(() => {
+    self.statusNameAndCount = ko.pureComputed(() => statusWithCount(self.statusName()));
+    // Short form for the Incident Register when the list is narrow.
+    self.statusShortAndCount = ko.pureComputed(() => statusWithCount(STATUS_SHORT[self.statusName()] || self.statusName()));
+
+    function statusWithCount(label) {
         const statusName = self.statusName();
         if (statusName === "Active" || statusName === "Tasked") {
             const activeOnly = deps.config?.taskingCountActiveOnly?.();
@@ -253,10 +263,10 @@ export function Job(data = {}, deps = {}) {
                     return s === "Tasked" || s === "Enroute" || s === "Onsite";
                   }).length
                 : taskings.length;
-            return `${statusName} (${count})`;
+            return `${label} (${count})`;
         }
-        return statusName;
-    });
+        return label;
+    }
 
 
     //possible status actions for this job

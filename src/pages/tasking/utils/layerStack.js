@@ -36,25 +36,34 @@ export const defaultStackIds = () => STACK_PANES.map(p => p.id);
  * Insert a newly seen overlay id at its default slot.
  *  - 'collab': just above asset markers (where collaborative layer markers
  *    sat before overlays were ordered one by one)
- *  - 'tiles' (radar, satellite, forecast imagery): at the bottom
- *  - anything else (vector overlays): above the first tile overlay, else at
- *    the bottom
+ *  - 'ground' (terrain and past flood imagery, under the weather) and 'tiles'
+ *    (radar, satellite, forecast imagery): above the first ground overlay,
+ *    else at the bottom, so later ground layers draw over earlier ones
+ *  - anything else (vector overlays): above the first tile or ground overlay,
+ *    else at the bottom
+ *  - `aboveId`, when given and already in the order, overrides all of these:
+ *    directly above that row. Saved orders hold every older overlay, so
+ *    this is how a new overlay gets above one registered before it.
  *
  * @param {string[]} ids        current order, top -> bottom
  * @param {string} id           the id to insert (not already in ids)
- * @param {string} [stack]      'collab' | 'tiles' | 'vector'
+ * @param {string} [stack]      'collab' | 'tiles' | 'ground' | 'vector'
  * @param {(id: string) => string|undefined} kindOf  stack kind of a known id
+ * @param {string} [aboveId]    row to sit directly above
  * @returns {string[]}
  */
-export function insertStackId(ids, id, stack, kindOf) {
+export function insertStackId(ids, id, stack, kindOf, aboveId) {
     const out = ids.slice();
     let at = out.length;
-    if (stack === 'collab') {
+    if (aboveId && out.includes(aboveId)) {
+        at = out.indexOf(aboveId);
+    } else if (stack === 'collab') {
         const assets = out.indexOf('pane-top');
         if (assets >= 0) at = assets;
-    } else if (stack !== 'tiles') {
-        const firstTiles = out.findIndex(x => kindOf(x) === 'tiles');
-        if (firstTiles >= 0) at = firstTiles;
+    } else {
+        const below = stack === 'tiles' || stack === 'ground' ? ['ground'] : ['tiles', 'ground'];
+        const first = out.findIndex(x => below.includes(kindOf(x)));
+        if (first >= 0) at = first;
     }
     out.splice(at, 0, id);
     return out;

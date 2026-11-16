@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
-import { blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
+import { beaconSiteEnvironment, blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import BeaconClient from '../../shared/BeaconClient.js';
 import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
-import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus, messageReceived } from './signalr/connection.js';
+import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, connectionRecovered, getConnectionStatus, messageReceived } from './signalr/connection.js';
+import { createCatchUpScheduler } from './signalr/catchUp.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
+import { tabDormancy } from './utils/tabDormancy.js';
 import { getSubject } from './signalr/subjects.js';
 
 require('../lib/shared_chrome_code.js'); // side-effect
@@ -67,7 +69,7 @@ import { decodeJwtSub } from './utils/jwt.js';
 import { debounce } from './utils/debounce.js';
 import { parseSearchParams } from './utils/urlParams.js';
 
-import { ConfigVM } from './viewmodels/Config.js';
+import { ConfigVM, DEFAULT_MAP_MAX_ZOOM } from './viewmodels/Config.js';
 import { initHqCoverageMap } from './components/hqCoverageMap.js';
 
 import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
@@ -83,6 +85,7 @@ import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
 import "./bindings/fitInPane.js";    // registers ko.bindingHandlers.fitInPane
 import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
+import "./bindings/compactBelow.js";  // registers ko.bindingHandlers.compactBelow
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
@@ -93,6 +96,7 @@ import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
+import { registerPowerOutagesLayers } from "./mapLayers/powerOutages.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
@@ -105,6 +109,8 @@ import {
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
+import { registerTerrainLayers } from "./mapLayers/terrain.js";
+import { registerPastFloodLayers } from "./mapLayers/pastFloods.js";
 import { registerCollabLayers, getWritableCollabLayers, startAddMarkerFlow } from "./mapLayers/collabLayer.js";
 import {
     registerBOMRainfallLayer,
@@ -175,7 +181,6 @@ import '../../../styles/pages/darkmode.css';
 
 
 let token = '';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let tokenExp = '';
 
 let resolveTokenReady;
@@ -303,6 +308,7 @@ if (params.source === "https://devbeacon.ses.nsw.gov.au") {
 const map = L.map('map', {
     zoomControl: true, // 1 / 10th of the original zoom step
     zoomSnap: .5,
+    maxZoom: DEFAULT_MAP_MAX_ZOOM, // The "Zoom in as far as" config option replaces this
     // Faster debounce time while zooming
     wheelDebounceTime: 50,
     // Long-press opens the map context menu on touch. Leaflet only turns this
@@ -423,8 +429,25 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
 
 
+// Font Awesome icon for each section of the Layers menu.
+const OVERLAY_GROUP_ICONS = {
+    "Collaborative Layers": "fa-users",
+    "Forecasts": "fa-cloud-sun",
+    "Historical Imagery": "fa-history",
+    "Infrastructure": "fa-city",
+    "NSW SES Geoservices": "fa-map-marked-alt",
+    "Radar & Observations": "fa-satellite-dish",
+    "Terrain": "fa-mountain",
+    "Markers": "fa-map-marker-alt",
+    "Warnings": "fa-exclamation-triangle",
+};
+
 // Tile rows kept loaded beyond each edge of the map, by device memory.
 const BASEMAP_KEEP_BUFFER = basemapKeepBuffer(navigator.deviceMemory);
+
+// Closest any basemap can draw, by scaling up its last real tiles. The map's
+// own maxZoom (a config option) sets how much of this is reachable.
+const BASEMAP_MAX_ZOOM = 22;
 
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
@@ -440,7 +463,7 @@ function buildBasemapLayer(key) {
         // marker cluster grid rebuild (MapVM.ensureClusterGridCompatibility)
         // never ends. Register its limits the way GridLayer does.
         layer.options.minZoom = 0;
-        layer.options.maxZoom = 20;
+        layer.options.maxZoom = BASEMAP_MAX_ZOOM;
         const { onAdd, onRemove } = layer;
         layer.onAdd = function (map) {
             onAdd.call(this, map);
@@ -458,7 +481,8 @@ function buildBasemapLayer(key) {
         return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
             {
-                maxZoom: 20,
+                maxNativeZoom: 19,
+                maxZoom: BASEMAP_MAX_ZOOM,
                 keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
@@ -469,7 +493,8 @@ function buildBasemapLayer(key) {
         return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
             {
-                maxZoom: 20,
+                maxNativeZoom: 20,
+                maxZoom: BASEMAP_MAX_ZOOM,
                 keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
@@ -477,8 +502,8 @@ function buildBasemapLayer(key) {
     }
 
     // --- EXISTING ESRI BASEMAPS ---
-    // Dark and Gray only have tiles to zoom 16. Keep zoom 19 on every
-    // basemap by scaling up their last tiles rather than capping the map.
+    // Reach the same zoom on every basemap by scaling up their last tiles
+    // (zoom 16 on Dark and Gray) rather than capping the map.
     // (esri merges these options into its shared config, so read
     // maxNativeZoom first to keep repeat calls the same.)
     const tiles = esri.BasemapLayer.TILES[key]?.options;
@@ -486,7 +511,7 @@ function buildBasemapLayer(key) {
     return withEdgeBuffer(esri.basemapLayer(key, {
         ignoreDeprecationWarning: true,
         keepBuffer: BASEMAP_KEEP_BUFFER,
-        ...(nativeMax < 19 ? { maxNativeZoom: nativeMax, maxZoom: 19 } : {}),
+        ...(tiles ? { maxNativeZoom: nativeMax, maxZoom: BASEMAP_MAX_ZOOM } : {}),
     }));
 }
 
@@ -1274,7 +1299,9 @@ function VM() {
         let team = self.teamsById.get(teamJson.Id);
         if (team) { //existing team
             //if the team is from tasking, ignore as dont want to overwrite with old data
+            //the exception is a delete, which an older copy can report but never undo
             if (source === 'tasking') {
+                if (teamJson.IsDeleted === true) team.isDeleted(true);
                 return team;
             }
             const prevCallsign = team.callsign?.();
@@ -1358,6 +1385,10 @@ function VM() {
         // must be attached to an HQ (Config.js), and the layer list defaults
         // to showing just this HQ's layers, both seeded from this id.
         defaultHqId: params.hq || null,
+        // Production Beacon must always load against at least one HQ.
+        requireHqFilter: beaconSiteEnvironment(params.source) === 'production',
+        // Each Beacon environment keeps its own saved Configuration.
+        beaconEnvironment: beaconSiteEnvironment(params.source),
         // Collaborative-layer actions (create/delete layer) are attributed
         // (for display/audit only) using the same identity as every
         // marker/comment op on that layer (markerActorId, i.e.
@@ -2517,7 +2548,10 @@ function VM() {
             } else {
                 cb(false);
             }
-        } catch (_err) {
+        } catch (err) {
+            // Beacon no longer has this team -- same outcome as IsDeleted, and
+            // a later payload clears it if the team is restored.
+            if (err?.status === 404) self.teamsById.get(teamId)?.isDeleted(true);
             cb(false);
         }
     }
@@ -2537,12 +2571,16 @@ function VM() {
     // ---- BATCH TASKING REFRESH ----
     // Collects all filtered-in jobs whose tasking data is stale
     // (older than the configured refresh interval) and fetches
-    // them in a single API call.
+    // them together (BeaconClient splits a long list into several requests).
 
-    self.fetchBatchJobTasking = async function () {
-        const staleMs = Number(self.config.refreshInterval() || 60) * 1000;
+    self.fetchBatchJobTasking = async function ({ force = false } = {}) {
+        // Just under the timer's own interval: jobs are stamped when the
+        // response lands, after the timer fired, so comparing against the full
+        // interval finds nothing stale and skips every second cycle.
+        const staleMs = effectiveRefreshIntervalMs() * 0.9;
         const now = Date.now();
         const staleJobs = self.filteredJobs().filter(job => {
+            if (force) return true;
             const last = job.lastTaskingDataUpdate?.getTime?.() ?? 0;
             return (now - last) > staleMs;
         });
@@ -2571,7 +2609,7 @@ function VM() {
         }
     };
 
-    // refreshInterval's default (180s) assumes SignalR push is covering
+    // refreshInterval's default (600s) assumes SignalR push is covering
     // freshness in between polls. With push disabled there's nothing else
     // keeping data current, so fall back to the old 60s cadence regardless
     // of what refreshInterval is set to.
@@ -2586,6 +2624,7 @@ function VM() {
         if (batchTaskingTimer) clearInterval(batchTaskingTimer);
         const interval = effectiveRefreshIntervalMs();
         batchTaskingTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchBatchJobTasking();
         }, interval);
         console.log('[batch-tasking] Timer started:', interval, 'ms');
@@ -2619,6 +2658,7 @@ function VM() {
     }
 
     self.fetchAllTrackableAssets = async function () {
+        if (tabDormancy.isDormant()) return;
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
             // With a simulated exercise chosen the radio half of the feed
@@ -2837,6 +2877,7 @@ function VM() {
     function startAssetDataRefreshTimer() {
         if (assetDataRefreshTimer) clearInterval(assetDataRefreshTimer);
         assetDataRefreshTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllTrackableAssets()
         }, 30000);
     };
@@ -2863,12 +2904,33 @@ function VM() {
         const interval = effectiveRefreshIntervalMs();
 
         jobsTeamsTimer = setInterval(() => {
+            if (tabDormancy.isDormant()) return;
             self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
             self.fetchAllTeamData();
         }, interval);
 
         console.log("Jobs/Teams refresh timer started:", interval, "ms");
     }
+
+    // ---------------- CATCH UP AFTER LIVE UPDATES RECONNECT -----------------
+    // Pushes sent while the connection was down are gone. Re-fetch what they
+    // would have updated rather than leaving it to the next poll: everything
+    // the poll covers, plus tasking (its batch skips recently fetched jobs)
+    // and ICEMS data (which has no poll at all).
+    self.catchUpAfterReconnect = async function () {
+        console.log('[SignalR] catching up on anything missed while disconnected');
+        // This is the poll, so start the interval again from here.
+        startJobsTeamsTimer();
+        startBatchTaskingTimer();
+        self.fetchAllTeamData();
+        // Jobs first, so incidents created during the gap get tasking too.
+        await self.fetchAllJobsData();
+        self.fetchBatchJobTasking({ force: true });
+        self.filteredJobs().forEach(job => job.refreshIcemsIncident({ force: true }));
+
+        const modalVisible = document.getElementById('jobTimelineModal')?.classList.contains('show');
+        if (modalVisible && self.jobTimelineVM?.job()) self.jobTimelineVM.refreshCurrentJob({ silent: true });
+    };
 
     // ---------------- DROP INCIDENTS NOBODY NEEDS -----------------
     // Polling and push only ever add incidents; one that completes (or
@@ -2956,7 +3018,69 @@ function VM() {
 
 
 
+    // ---------------- DORMANT WHILE FORGOTTEN IN THE BACKGROUND -----------------
+    // See utils/tabDormancy.js. A dormant tab has missed too much to patch up,
+    // so it stays stopped and the user reloads it.
+
+    self.tabDormancy = tabDormancy;
+    self.tabPaused = ko.observable(false);
+    // 'checking' | 'ok' | 'expired'. A reload starts from the stored token, so
+    // with an expired one it would load nothing; only opening LAD again from
+    // Beacon's Lighthouse menu stores a fresh one.
+    self.pausedLogin = ko.observable('checking');
+    self.pausedLoginChecking = ko.pureComputed(() => self.pausedLogin() === 'checking');
+    self.pausedLoginOk = ko.pureComputed(() => self.pausedLogin() === 'ok');
+    self.pausedLoginExpired = ko.pureComputed(() => self.pausedLogin() === 'expired');
+    let dataLoadStarted = false;
+
+    self.reloadPage = function () {
+        window.location.reload();
+    };
+    const showPausedLoginOk = () => {
+        self.pausedLogin('ok');
+        ko.tasks.runEarly(); // it has to be showing to take focus
+        document.querySelector('#tab-paused button')?.focus();
+    };
+    // Called with each token this page is handed, so a paused tab whose login
+    // had expired offers Reload once a Beacon tab or another Lighthouse page
+    // stores a fresh token.
+    self.recheckPausedLogin = function () {
+        if (self.pausedLoginExpired() && !BeaconToken.nearExpiry(tokenExp)) showPausedLoginOk();
+    };
+    const checkPausedLogin = async () => {
+        // Renewed by now unless the tab was frozen past expiry. One more try:
+        // another tab may have stored a newer token, or a renewal may work.
+        if (BeaconToken.nearExpiry(tokenExp)) await refreshCadenceToken();
+        if (BeaconToken.nearExpiry(tokenExp)) self.pausedLogin('expired');
+        else showPausedLoginOk();
+    };
+    tabDormancy.onDormant = () => {
+        stopBeaconSignalRConnection();
+    };
+    tabDormancy.onReturn = () => {
+        // Nothing has loaded behind the config modal yet, so nothing is stale.
+        if (!dataLoadStarted) {
+            tabDormancy.reset();
+            return;
+        }
+        if (self.tabPaused()) return;
+        // Also here: a frozen tab's dormant timer may never have run.
+        stopBeaconSignalRConnection();
+        // Dialogs sit outside .app, and their hotkeys would still submit them
+        // from stale data. The browser's own handling of a key (Enter on
+        // Reload, Tab, reload shortcuts) isn't affected by stopping listeners.
+        Array.from(document.body.children).forEach((el) => {
+            if (el.id !== 'tab-paused') el.inert = true;
+        });
+        ['keydown', 'keyup'].forEach((type) => {
+            window.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
+        });
+        self.tabPaused(true);
+        checkPausedLogin();
+    };
+
     self.UserPressedSaveOnTheConfigModal = function () {
+        dataLoadStarted = true;
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
@@ -2980,9 +3104,12 @@ function VM() {
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
     registerPowerBoundariesGridLayer(self, map);
+    registerPowerOutagesLayers(self, getToken);
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
+    registerTerrainLayers(self, map);
+    registerPastFloodLayers(self);
     registerBOMLandWarningsLayer(self, sourceUrl);
     registerBOMSevereThunderstormWarningLayer(self, sourceUrl);
     registerBOMSevereThunderstormCellsLayer(self, sourceUrl);
@@ -3229,14 +3356,17 @@ function VM() {
 
             // --- Overlays: group by def.group ---
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
-            const groups = new Map();
+            const byGroup = new Map();
             overlayDefs.forEach((def) => {
                 const g = def.group || "";
-                if (!groups.has(g)) groups.set(g, []);
-                groups.get(g).push(def);
+                if (!byGroup.has(g)) byGroup.set(g, []);
+                byGroup.get(g).push(def);
             });
 
             const groupTitle = (k) => (k && String(k).trim() ? k : "Other");
+
+            // Alphabetical: registration order sets the draw order, not this.
+            const groups = new Map([...byGroup].sort((a, b) => groupTitle(a[0]).localeCompare(groupTitle(b[0]))));
 
             // --- Build a cell per group; _applyView shows the selected section ---
             const grid = c.querySelector(".ld-grid");
@@ -3259,8 +3389,8 @@ function VM() {
                 const body = document.createElement("div");
                 body.className = "ld-group-body";
 
-                // If this is the Visibility group, add Incidents toggle first
-                if (groupKey === 'Visibility') {
+                // If this is the Markers group, add Incidents toggle first
+                if (groupKey === 'Markers') {
                     const incidentsBtn = document.createElement("button");
                     incidentsBtn.type = "button";
                     const isIncidentsOn = self.incidentsVisible();
@@ -3727,7 +3857,7 @@ function VM() {
             this._presetBar?.render(this._presets, (p) => presetState(p, isOn).state, (k) => labelOf(k));
         },
 
-        /** Rail of sections: Basemap, On the map, Presets, then one per overlay group. */
+        /** Rail of sections: Basemap, Markers, On the map, Presets, then one per other overlay group. */
         _renderRail(groupNames) {
             const rail = this._container.querySelector(".ld-rail");
             const item = (section, label, icon = "") => `
@@ -3736,15 +3866,21 @@ function VM() {
                     <span class="ld-rail-label">${label}${section === "__base" ? `<span class="ld-rail-sub"></span>` : ""}</span>
                     <span class="ld-rail-count"></span>
                 </button>`;
+            const groupItems = (names) => names.map((g) => item(g, g, OVERLAY_GROUP_ICONS[g] || "fa-layer-group")).join("");
+            // Markers is a core control, so it sits above the list, under Basemap.
+            const pinned = groupNames.filter((g) => g === "Markers");
+            const listed = groupNames.filter((g) => g !== "Markers");
             rail.innerHTML = item("__base", "Basemap", "fa-map")
+                + groupItems(pinned)
                 + item("__on", "On the map", "fa-eye")
                 + item("__presets", "Presets", "fa-bookmark")
                 + `<div class="ld-rail-sep"></div>`
-                + groupNames.map((g) => item(g, g)).join("");
+                + groupItems(listed);
             const fixed = ["__base", "__on", "__presets"];
+            const sections = [fixed[0], ...pinned, ...fixed.slice(1), ...listed];
             rail.querySelectorAll(".ld-rail-item").forEach((btn, i) => {
                 // dataset holds the unescaped group name; the template only used it for markup
-                btn.dataset.section = i < fixed.length ? btn.dataset.section : groupNames[i - fixed.length];
+                btn.dataset.section = sections[i];
                 btn.addEventListener("click", () => {
                     this._section = btn.dataset.section;
                     localStorage.setItem("layers.section", this._section);
@@ -4291,6 +4427,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
+            myViewModel?.recheckPausedLogin();
         }
     );
 
@@ -4328,6 +4465,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // than fail silently.
         myViewModel.signalrStatus = ko.observable(getConnectionStatus());
         connectionStatus.subscribe((status) => myViewModel.signalrStatus(status));
+        connectionRecovered.subscribe(createCatchUpScheduler(() => myViewModel.catchUpAfterReconnect()));
         // True once we've actually kicked off a connection attempt (i.e. the
         // config modal has been closed at least once with live updates on).
         // Before that the connection isn't *meant* to be up yet, so a
@@ -4578,6 +4716,7 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel.signalrNeedsPermission(false);
             await getToken();
             if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
+            if (tabDormancy.isDormant()) return; // went dormant while waiting for the token
             // Closure over the module-level `token` var (kept current by
             // setToken() on every renewal), so each reconnect/negotiate
             // re-authenticates with whatever token is live at that moment.
@@ -4635,7 +4774,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // above. Fires on the initial on-load modal too, so nothing connects
         // until the user dismisses it.
         configModalEl.addEventListener('hidden.bs.modal', reconcileSignalRToConfig);
-        bootstrap.Modal.getOrCreateInstance(configModalEl).show();
+        const configModal = bootstrap.Modal.getOrCreateInstance(configModalEl);
+        // Esc mustn't get past a headquarters Production Beacon still needs.
+        // Close and the X are stopped by saveAndCloseAndLoad; hide.bs.modal
+        // can't be used, as Restore Defaults has to hide it too.
+        ko.computed(() => { configModal._config.keyboard = !myViewModel.config.hqFilterMissing(); });
+        configModal.show();
 
         // reveal the page now that bindings are applied and the modal is open,
         // so we don't flash unbound placeholder content beforehand

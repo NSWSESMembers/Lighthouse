@@ -17,9 +17,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install modules
-        run: npm install
+        run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Test
+        run: npm test
       - name: Build package
         run: npm run dev
       - name: Chrome extension upload action
@@ -33,3 +35,10 @@ jobs:
           refresh-token: ${{ secrets.CHROMESTORE_REFRESH_TOKEN }}
           publish: true
           glob: true
+
+  # The preview docs go live with the store build, from the same commit.
+  sync-docs:
+    name: Sync preview docs
+    needs: lintandpublish
+    uses: ./.github/workflows/sync_website_docs.yml
+    secrets: inherit

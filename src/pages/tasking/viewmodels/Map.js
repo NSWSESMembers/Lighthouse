@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 var ko = require('knockout');
 var L = require('leaflet');
+import { tabDormancy } from '../utils/tabDormancy.js';
 import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
@@ -316,6 +317,11 @@ export function MapVM(Lmap, root) {
   /** Its options: { minZoom, allowLines }. */
   self.applyAssetPinDeclutterOptions = function (opts) {
     self.assetPinLayout.setOptions(opts);
+  };
+
+  /** "Zoom in as far as" config option. */
+  self.applyMapMaxZoom = function (zoom) {
+    self.map.setMaxZoom(zoom);
   };
 
   /** "Show recent travel (breadcrumbs)" config option. */
@@ -710,7 +716,7 @@ export function MapVM(Lmap, root) {
    *   label: string,
    *   refreshMs?: number,
    *   visibleByDefault?: boolean,
-   *   stack?: 'vector'|'tiles'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
+   *   stack?: 'vector'|'tiles'|'ground'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
    *   defaultOpacity?: number,  // default opacity in the layer order, percent (100 if unset)
    *   fetchFn: () => Promise<any>,
    *   drawFn: (layerGroup: L.LayerGroup, data: any) => void
@@ -796,6 +802,7 @@ export function MapVM(Lmap, root) {
       label: entry.label,
       menuGroup: entry.menuGroup,
       stack: opts.stack || 'vector',
+      stackAbove: opts.stackAbove ? overlayStackId(opts.stackAbove) : null, // overlay key to sit directly above
       defaultOpacity: clampOpacityPct(opts.defaultOpacity ?? 100),
       layerGroup,
       visible: ko.observable(!!entry.visibleByDefault),
@@ -809,7 +816,9 @@ export function MapVM(Lmap, root) {
 
     // Periodic refreshes – but still only fetch if visible
     if (entry.refreshMs > 0) {
-      entry.timerId = setInterval(refreshIfVisible, entry.refreshMs);
+      entry.timerId = setInterval(() => {
+        if (!tabDormancy.isDormant()) refreshIfVisible();
+      }, entry.refreshMs);
     }
 
     return entry;
@@ -847,7 +856,7 @@ export function MapVM(Lmap, root) {
         key: 'matched-assets',
         label: 'Assets Matched against Teams',
         layer: self.assetLayer,
-        group: 'Visibility',
+        group: 'Markers',
         visibleByDefault: true,
       });
     }
@@ -859,7 +868,7 @@ export function MapVM(Lmap, root) {
         key: 'unmatched-assets',
         label: 'Assets Unmatched against Teams',
         layer: self.unmatchedAssetLayer,
-        group: 'Visibility',
+        group: 'Markers',
         visibleByDefault: false,
       });
     }

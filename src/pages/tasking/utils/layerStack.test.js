@@ -25,6 +25,14 @@ describe('insertStackId', () => {
             .toEqual(['pane-tippy-top', 'ov:c1', 'ov:c2', 'pane-top', 'ov:zones']);
     });
 
+    it('puts a layer directly above the row it asks for, when that row exists', () => {
+        const ids = ['pane-tippy-top', 'pane-top', 'ov:a', 'ov:zones', 'ov:b', 'ov:radar'];
+        expect(insertStackId(ids, 'ov:new', 'vector', kindOf, 'ov:zones'))
+            .toEqual(['pane-tippy-top', 'pane-top', 'ov:a', 'ov:new', 'ov:zones', 'ov:b', 'ov:radar']);
+        expect(insertStackId(ids, 'ov:new', 'vector', kindOf, 'ov:missing'))
+            .toEqual(['pane-tippy-top', 'pane-top', 'ov:a', 'ov:zones', 'ov:b', 'ov:new', 'ov:radar']);
+    });
+
     it('puts tile layers at the bottom', () => {
         expect(insertStackId(defaultStackIds(), 'ov:radar', 'tiles', kindOf))
             .toEqual(['pane-tippy-top', 'pane-top', 'lh-drawn', 'ov:radar']);
@@ -34,6 +42,21 @@ describe('insertStackId', () => {
         const ids = ['pane-tippy-top', 'pane-top', 'ov:zones', 'ov:radar', 'ov:sat'];
         expect(insertStackId(ids, 'ov:power', 'vector', kindOf))
             .toEqual(['pane-tippy-top', 'pane-top', 'ov:zones', 'ov:power', 'ov:radar', 'ov:sat']);
+    });
+
+    it('keeps ground layers under tile and vector layers registered after them', () => {
+        const groundKinds = { ...kinds, 'ov:height': 'ground' };
+        const groundKindOf = (id) => groundKinds[id];
+        let ids = insertStackId(defaultStackIds(), 'ov:height', 'ground', groundKindOf);
+        ids = insertStackId(ids, 'ov:radar', 'tiles', groundKindOf);
+        ids = insertStackId(ids, 'ov:zones', 'vector', groundKindOf);
+        expect(ids).toEqual(['pane-tippy-top', 'pane-top', 'lh-drawn', 'ov:zones', 'ov:radar', 'ov:height']);
+    });
+
+    it('draws later ground layers over earlier ones', () => {
+        const groundKindOf = (id) => ({ 'ov:height': 'ground', 'ov:floods': 'ground' }[id]);
+        const ids = insertStackId(defaultStackIds().concat('ov:height'), 'ov:floods', 'ground', groundKindOf);
+        expect(ids.slice(-2)).toEqual(['ov:floods', 'ov:height']);
     });
 });
 

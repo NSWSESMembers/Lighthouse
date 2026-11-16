@@ -21,7 +21,7 @@ function styleByClass(cls) {
 export function registerWaterNSWBoundariesLayer(vm) {
   vm.mapVM.registerPollingLayer("waternswBoundaries", {
     label: "WaterNSW Special & Controlled Areas",
-    menuGroup: "Public Service",
+    menuGroup: "Infrastructure",
     refreshMs: 0, // static data – no auto-refresh
     visibleByDefault: localStorage.getItem(`ov.waternswBoundaries`) || false,
     fetchFn: async () => {
@@ -62,7 +62,7 @@ export function registerWaterNSWBoundariesLayer(vm) {
 export function registerEPAContaminationSitesLayer(vm) {
   vm.mapVM.registerPollingLayer("epaContamination", {
     label: "EPA Contamination Sites",
-    menuGroup: "Public Service",
+    menuGroup: "Infrastructure",
     refreshMs: 0, // updated monthly server-side – no client poll
     visibleByDefault: localStorage.getItem(`ov.epaContamination`) || false,
     fetchFn: async () => {

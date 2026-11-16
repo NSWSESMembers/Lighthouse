@@ -34,6 +34,7 @@ function makeJob(overrides = {}) {
 function makeTeam(overrides = {}) {
     const now = new Date();
     return {
+        isDeleted: () => false,
         teamStatusType: () => ({ Name: 'Active' }),
         assignedTo: () => ({ id: () => 'hq1' }),
         teamType: () => ({ Name: 'Field' }),
@@ -129,6 +130,10 @@ describe('teamMatchesConfigFilters', () => {
 
     it('rejects a team with no status', () => {
         expect(teamMatchesConfigFilters(makeTeam({ teamStatusType: () => null }), makeConfig())).toBe(false);
+    });
+
+    it('rejects a deleted team', () => {
+        expect(teamMatchesConfigFilters(makeTeam({ isDeleted: () => true }), makeConfig())).toBe(false);
     });
 
     it('filters by team status allow-list', () => {
