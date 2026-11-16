@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // The default Knockout binding provider parses data-bind strings with
   // `new Function`, which MV3's CSP (script-src 'self', no unsafe-eval)
   // blocks. knockout-secure-binding parses the same syntax without eval --
-  // same setup as teamsummary.js/tasking's main.js.
+  // same setup as tasking's main.js and src/pages/shared/pageSetup.js.
   require(['knockout', 'knockout-secure-binding'], function (komod, ksb) {
     var ko = komod;
 

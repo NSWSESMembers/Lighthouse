@@ -6,7 +6,7 @@
   list has a stable order.
 
   Field shape (Identifier/Address.PrettyAddress/JobType.Name) is confirmed
-  from job.get()'s response (see teamsummary.js's job popup); job.search()
+  from job.get()'s response (see teamsummary/data/incident.js); job.search()
   uses a different ViewModelType and hasn't been confirmed to return exactly
   the same shape -- guarded with optional chaining everywhere so a missing
   field degrades to "not shown", never a crash.

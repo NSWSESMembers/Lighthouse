@@ -18,6 +18,15 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## New Team Summary page
+
+*15 November 2026*
+
+- **Team Summary has been rebuilt.** It works as before: the same team cards and Team Filter, with the activated field teams shown when it opens. It's now easier to read across a room, with dark mode and a heading coloured by the Beacon you opened it from (orange, green for Train, blue for Dev). Open it from **Team Summary** in the Lighthouse menu, or **Summary Screen** on Beacon's Teams screen. See the new [Team Summary guide](https://lighthouse.ses.nsw.gov.au/guides/teams/).
+- **Your Team Filter options are remembered.** Which parts of each card to show, automatic display of activated teams and the grid width are now saved in your browser, instead of resetting each time the page opens. Colours are in the new Settings (the gear in the footer).
+- **Clearer when Beacon doesn't answer.** The page says why a load failed, keeps the teams on screen and tries again after 30 seconds. A team whose history can't be loaded says so on its card.
+- **Works on a phone or tablet.** Narrow windows show fewer teams across, down to one on a phone.
+
 ## LAD on phones
 
 *11 November 2026*
