@@ -4,8 +4,9 @@ Chrome extension for NSW SES Beacon. Most active work is the LAD (tasking)
 page in `src/pages/tasking/`; the Incident Statistics page (`stats.html`) is
 `src/pages/stats/`, the Incident Summary page (`summary.html`) is
 `src/pages/summary/`, the Incident Export page (`advexport.html`) is
-`src/pages/advexport/` and the NITC Export page (`nitcexport.html`) is
-`src/pages/nitcexport/`, all built the same way (Bootstrap 5,
+`src/pages/advexport/`, the NITC Export page (`nitcexport.html`) is
+`src/pages/nitcexport/` and the Team Summary page (`teamsummary.html`) is
+`src/pages/teamsummary/`, all built the same way (Bootstrap 5,
 knockout-secure-binding, BeaconClient), with code shared between them in
 `src/pages/shared/` (params, page setup, load ring, CSV, dates) and
 `styles/pages/include/lighthouse-page.css`; shared Beacon API code is in
@@ -115,6 +116,21 @@ npm run nitcexport:demo                                 # headed Chrome window
 npm run nitcexport:shots -- --out docs/nitc/images      # guide screenshots
 ```
 
+## Running Team Summary without Beacon: `scripts/teamsummary-docs`
+
+Same idea for `teamsummary.html` (fake teams, members and team history in
+`scripts/teamsummary-docs/scenario.mjs`). Opened from the Lighthouse menu and
+the Teams screen's "Summary Screen" button (`src/injectscripts/teams/teams.js`).
+`teamsummary:check` is an end-to-end check in Chrome; run it after changing
+the page. Details in `scripts/teamsummary-docs/README.md`.
+
+```sh
+npm run dev && npm run teamsummary:check                # end-to-end checks
+npm run teamsummary:demo                                # headed Chrome window
+npm run teamsummary:shots -- --out docs/teams/images    # guide screenshots
+```
+
+
 ### Fixture data rules
 
 `scenario.mjs` copies the _structure_ of real Beacon responses, but every
@@ -150,10 +166,12 @@ emulates a dark OS colour scheme.
 
 The LAD user guide (`docs/lad/`), the Incident Statistics guide
 (`docs/stats/`), the Incident Summary guide (`docs/summary/`), the Incident
-Export guide (`docs/export/`), the NITC Export guide (`docs/nitc/`) and What's New
+Export guide (`docs/export/`), the NITC Export guide (`docs/nitc/`), the Team
+Summary guide (`docs/teams/`) and What's New
 (`docs/whats-new/index.md`) are synced to the website when a store build is published: `publish_prod.yml`
 (`master`) updates the stable copy, `publish_dev.yml` (`master-dev`) the Development
 Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
 `npm run lad:shots` / `npm run stats:shots` / `npm run summary:shots` /
-`npm run advexport:shots` / `npm run nitcexport:shots` for guide screenshots.
+`npm run advexport:shots` / `npm run nitcexport:shots` /
+`npm run teamsummary:shots` for guide screenshots.

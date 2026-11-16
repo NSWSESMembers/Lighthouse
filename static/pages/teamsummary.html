@@ -1,271 +1,306 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <title>Beacon Stats</title>
-  <style>
-    body {
-      opacity: 0;
-    }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Team Summary</title>
 </head>
 
-<body>
-  <div id="loading">
-    <div id="loadmiddle">
-      <div id="loadinner">
-        <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-        <div class="progress">
-          <div id="loadprogress" class="progress-bar" role="progressbar"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="loadinginline">
-    <div id="loadmiddleinline">
-      <div id="loadinnerinline">
-        Updating<span class="dots"><span>.</span><span>.</span><span>.</span></span>
-      </div>
-    </div>
-  </div>
-  <div>
-    <div class="container-fluid" id="pageContent">
-      <div class="row">
-        <div class="col-12 text-center">
-          <h2 data-bind="text: bannerTitle"></h2>
-          <h4 data-bind="text: filterStartTime + ' to ' + filterEndTime"></h4>
-          <h4 class="teamFilters">Displayed Members: <a data-bind="text: membersShown"></a> | Displayed Teams: <a data-bind="text: teamsShown"></a> | Hidden Teams: <a data-bind="text: teamsHidden"></a></h4>
-        </div>
-      </div>
-      <!-- ko foreach: rows -->
-      <div class="row team-row" data-bind="foreach: $data">
-        <div class="col-team" data-bind="class: $root.boxFlexWidth">
-          <div class="team" data-bind="css: statusStyle()">
-            <div class="row">
-              <div class="team-callsign text-center col-12"><a target="_blank" data-bind="text: callsign, attr: { href: $root.source+'/Teams/'+id+'/Edit', title: 'Edit Team' }"></a></div>
-            </div>
-            <div class="team-status-summary row">
-              <div class="team-status text-left col-5" data-bind="text: type"></div>
-              <div class="team-buttons text-left col-2"><a target="_blank" data-bind="attr: { href: $root.source + '/Messages/Create?lhquickrecipient=' + teamMemberPersonIds}"><i data-toggle="tooltip" title="SMS all team members"
-                    class="fas fa-envelope" data-bind="css: { fa-disabled: teamMemberCount == 0 }"></i></a>
-              </div>
-              <div class="team-time col-5 text-right"><i class="far fa-clock"></i> <a data-bind="text: ' ' + statusTimePretty"></a></div>
-            </div>
-            <!-- ko if: $root.setShowTeamSummary() == true -->
-            <div class="team-summary row">
-              <div class="team-job-count-active col-6 text-left" data-bind="text: 'Active Jobs: ' + activeJobs, css: {team-stat-warning: activeJobs == 1, team-stat-hazard: activeJobs == 0 }"></i></div>
-              <div class="team-status-for col-6 text-right" data-bind="text: status + ' For ' + statusTimeSince + ' hrs', css: {team-stat-warning: statusTimeSince >= 10 & statusTimeSince <= 12,team-stat-hazard: statusTimeSince > 12 }"></i></div>
-            </div>
-            <!-- /ko -->
-            <!-- ko if: sector -->
-            <div class="sector-summary row">
-              <div class="col-12 text-center" data-bind="text: sector + ' Sector'"></div>
-            </div>
-            <!-- /ko -->
-            <!-- ko if: $root.setShowTeamResources() == true -->
-            <div class="row team-resources">
-              <!-- ko if: teamResources().length > 0 -->
-              <div class="col-12 text-center" data-bind="text: teamResources"></div>
-              <!-- /ko -->
-              <!-- ko ifnot: teamResources().length > 0 -->
-              <div class="col-12 text-center">
-                <i>No Resources Attached</i>
-              </div>
-              <!-- /ko -->
-            </div>
-            <!-- /ko -->
-            <!-- ko if: $root.setShowTeamMembers() == true -->
-            <div class="row team-members">
-              <!-- ko if: teamMembers().length > 0 -->
-              <div class="col-12 text-center" data-bind="foreach: teamMembers">
-                <span class="team-member" data-toggle="tooltip" title=""
-                  data-bind="text: fullName, css: {team-leader: isTeamLeader, team-stat-warning: timeOnSince >= 10 & timeOnSince <= 12,team-stat-hazard: timeOnSince > 12 }, attr: { title: fullName + ' has been ' + $parent.status + ' for ' + timeOnSince + 'hrs'  }"></span>
-              </div>
-              <!-- /ko -->
-              <!-- ko ifnot: teamMembers().length > 0 -->
-              <div class="col-12 text-center">
-                <i>No Team Members Attached</i>
-              </div>
-              <!-- /ko -->
-            </div>
-            <!-- /ko -->
-            <!-- ko if: $root.setShowTeamLocation() == true -->
-            <!-- ko if: teamLocation -->
-            <div class="row team-location">
-              <div class="col-12 text-center" data-bind="html: teamLocation"></div>
-            </div>
-            <!-- /ko -->
-            <!-- /ko -->
-            <div class="row team-history">
-              <div class="col-12 text-center" data-bind="visible: loadingHistory">
-                <i class="fas fa-spinner fa-spin"></i>
-              </div>
-              <div class="container" data-bind="foreach: filteredTeamHistory, css: {team-history-loading: loadingHistory}">
-                <!-- ko if: type() == 'job' -->
-                <div class="row team-history-row" data-bind="click: jobPop">
-                  <div class="team-history col-8 history-job"><strong class="history-job-number" data-bind="text: trimmedName"></strong><br><small data-bind="text: trimmedDesc"></small>
-                  </div>
-                  <div class="team-job col-4 text-center" data-bind="text: timeStampPretty"></div>
-                </div>
-                <!-- /ko -->
-                <!-- ko ifnot: type() == 'job' -->
-                <div class="row team-history-row">
-                  <div class="team-history col-8"><strong data-bind="text: name"></strong><br><small data-bind="text: trimmedDesc"></small>
-                  </div>
-                  <div class="team-job col-4 text-center" data-bind="text: timeStampPretty"></div>
-                </div>
-                <!-- /ko -->
-              </div>
-            </div>
-            <div class="row team-history-view">
-              <div class="col-12 text-center"><a target="_blank" data-bind="attr: { href: $root.source+'/Teams/History/'+id, title: 'Edit Team' }">View full team history</a></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- /ko -->
-    </div>
-  </div>
-  <div class="modal fade" id="filtermodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Team Filter</h4>
-          <button type="button" class="close" data-dismiss="modal">×</button>
-        </div>
-        <div class="modal-body">
-          <span class="float-left">Select teams to display:</span>
-          <div style="margin-left: 5px;margin-bottom:5px;text-align: right">
-            <button type="button" class="btn btn-secondary btn-sm" id="selectAllfilters" style="font-size: 0.6em;">Select All</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="selectAllActivatedfilters" style="font-size: 0.6em;">Select Activated</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="unselectAllfilters" style="font-size: 0.6em;">Unselect All</button>
-          </div>
-          <hr>
-          </hr>
-          <!-- ko if: $root.teams().length > 0 -->
-          <ul class="list-group" id="teamFilterList" data-bind="foreach: teams">
-            <li class="list-group-item" data-bind="click: toggleHide, css: { active: hidden == false}">
-              <div>
-                <div class="float-right" data-bind="text: type"></div>
-                <div data-bind="text: callsign"></div>
-                <div>
-                  <small data-bind="text: status + ' - ' + statusTimePretty"></small>
-                </div>
-              </div>
-            </li>
-          </ul>
-          <!-- /ko -->
-          <!-- ko if: $root.teams().length == 0 -->
-          <ul class="list-group" id="teamFilterList">
-            <li class="list-group-item">
-              <i>Beacon returned no teams</i>
-            </li>
-          </ul>
-          <!-- /ko -->
-          <hr>
-          </hr>
-          <div class="row form-row">
-            <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="hideTeamSummary">Show team summary:</label>
-            </div>
-            <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="hideTeamSummary" data-bind="checked: setShowTeamSummary">
-            </div>
-          </div>
-          <div class="row form-row">
-            <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="hideTeamResources">Show team resources:</label>
-            </div>
-            <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="hideTeamResources" data-bind="checked: setShowTeamResources">
-            </div>
-          </div>
-          <div class="row form-row">
-            <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="hideTeamMembers">Show team members:</label>
-            </div>
-            <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="hideTeamMembers" data-bind="checked: setShowTeamMembers">
-            </div>
-          </div>
-          <div class="row form-row">
-            <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="hideTeamLocation">Show team location:</label>
-            </div>
-            <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="hideTeamLocation" data-bind="checked: setShowTeamLocation">
-            </div>
-          </div>
-          <div class="row form-row">
-            <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="hideTeamMemberChanges">Show team member history:</label>
-            </div>
-            <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="hideTeamMemberChanges" data-bind="checked: setShowTeamMemberChanges">
-            </div>
-          </div>
-          <div class="row form-row">
-            <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="autoShowNewTeams">Automatically display activated teams:</label>
-            </div>
-            <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="autoShowNewTeams" data-bind="checked: setDefaultAdd">
-            </div>
-          </div>
-          <div class="form-group gridWidth">
-            <label for="sel1">Grid width:</label>
-            <select class="form-control" data-bind="value: setColWidth">
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
-          </div>
+<body style="opacity:0; transition: opacity .25s ease;">
 
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-          </div>
+    <!-- First load: the ring (src/pages/shared/loadRing.js) if Beacon takes a moment, or the error that stopped it -->
+    <div class="lh-page-loading px-3" id="teams-loading" data-bind="visible: showLoader">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- ko ifnot: error -->
+                <div data-bind="component: { name: 'load-ring', params: { view: loader, label: 'Loading the teams', shorter: loadShorterRange } }"></div>
+                <!-- /ko -->
+                <!-- ko if: error -->
+                <div class="alert alert-danger mb-2" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <span data-bind="text: error"></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-bind="click: retry">
+                        <i class="fa-solid fa-rotate-right me-1"></i>Try again
+                    </button>
+                    <span class="small text-body-secondary" id="retry-countdown" data-bind="text: retryText"></span>
+                </div>
+                <!-- /ko -->
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-  <div class="footer">
-    <form>
-      Override time frame with<br>
-      <label>
-        <input id="radio1" name="slide" type="radio" value="24">
-        Last 24Hrs
-      </label>
-      <label>
-        <input id="radio2" name="slide" type="radio" value="48">
-        Last 48hrs
-      </label>
-      <label>
-        <input id="radio3" name="slide" type="radio" value="72">
-        Last 72 Hrs
-      </label>
-      <label>
-        <input id="radio3" name="slide" type="radio" value="reset">
-        Reset
-      </label>
-    </form>
-    Designed &amp; developed by volunteers of the NSW SES.
-    <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank">Lighthouse</a>
-    is distributed under an
-    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license" target="_blank">MIT Licence</a>.
-    <div style="float:right;">
-      <a href="#" id="refresh">
-        <i class="fas fa-sync"></i>
-        <span id="time">00:00</span>
-      </a>
+
+    <div class="teams-page" data-bind="visible: !loading()" style="display:none">
+        <!-- The old page's heading: who, when, and how many teams are on screen (click for the Team Filter). Colour = which Beacon. -->
+        <header class="ts-header">
+            <h1 class="ts-heading" data-bind="text: bannerTitle"></h1>
+            <div class="ts-range" data-bind="text: rangeText"></div>
+            <button type="button" class="ts-counts" id="counts-button" title="Filter teams" data-bind="click: openTeams">
+                Displayed Members: <span id="count-members" data-bind="text: membersText"></span>
+                | Displayed Teams: <span id="count-shown" data-bind="text: shownText"></span>
+                | Hidden Teams: <span id="count-hidden" data-bind="text: hiddenText"></span>
+            </button>
+        </header>
+
+        <!-- ko if: noTeams -->
+        <div class="ts-empty" role="status">Beacon found no teams for this range.</div>
+        <!-- /ko -->
+        <!-- ko if: allHidden -->
+        <div class="ts-empty" role="status">
+            No teams shown.
+            <button type="button" class="btn btn-sm btn-link p-0 align-baseline" data-bind="click: openTeams">Filter teams</button>
+        </div>
+        <!-- /ko -->
+
+        <div data-bind="attr: { class: gridClass }, foreach: shownTeams">
+            <article data-bind="attr: { class: cardClass, id: 'team-' + id }">
+                <h2 class="team-callsign">
+                    <a target="_blank" rel="noopener" title="Open the team in Beacon" data-bind="text: callsign, attr: { href: editUrl }"></a>
+                </h2>
+                <div class="team-row team-meta">
+                    <span class="team-type" data-bind="text: typeName"></span>
+                    <a class="team-sms" target="_blank" rel="noopener" data-bind="attr: { href: messageUrl, title: messageTitle }, css: { disabled: !hasMembers() }">
+                        <i class="fa-solid fa-envelope" aria-hidden="true"></i><span class="visually-hidden">Message the team</span>
+                    </a>
+                    <span class="team-time" title="When the team's status last changed">
+                        <i class="fa-regular fa-clock" aria-hidden="true"></i> <span data-bind="text: statusTime"></span>
+                    </span>
+                </div>
+                <!-- ko if: $root.showSummary -->
+                <div class="team-row team-summary">
+                    <span class="team-tasked" data-bind="text: taskedText, css: taskedClass"></span>
+                    <span class="team-status-for" data-bind="text: statusForText, css: statusForClass"></span>
+                </div>
+                <!-- /ko -->
+                <!-- ko if: hasSector -->
+                <div class="team-row team-sector" data-bind="text: sectorText"></div>
+                <!-- /ko -->
+                <!-- ko if: $root.showResources -->
+                <div class="team-row team-resources">
+                    <!-- ko if: hasResources -->
+                    <span data-bind="text: resourcesText"></span>
+                    <!-- /ko -->
+                    <!-- ko ifnot: hasResources -->
+                    <span class="team-none">No Resources Attached</span>
+                    <!-- /ko -->
+                </div>
+                <!-- /ko -->
+                <!-- ko if: $root.showMembers -->
+                <div class="team-row team-members">
+                    <!-- ko if: hasMembers -->
+                    <span class="member-list" data-bind="foreach: members"><span class="team-member" data-bind="text: memberName, css: memberClass, attr: { title: memberTitle }"></span></span>
+                    <!-- /ko -->
+                    <!-- ko ifnot: hasMembers -->
+                    <span class="team-none">No Team Members Attached</span>
+                    <!-- /ko -->
+                </div>
+                <!-- /ko -->
+                <!-- ko if: $root.showPosition() && hasPosition() -->
+                <div class="team-row team-position" title="The team's latest move, from its history">
+                    <div class="position-status" data-bind="text: positionText"></div>
+                    <div class="position-address" data-bind="text: positionAddress"></div>
+                </div>
+                <!-- /ko -->
+                <div class="team-history" data-bind="css: { 'is-loading': historyLoading }">
+                    <!-- ko if: historyFirstLoad -->
+                    <div class="team-none"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Loading history…</div>
+                    <!-- /ko -->
+                    <!-- ko if: historyError -->
+                    <div class="history-error" data-bind="text: historyError"></div>
+                    <!-- /ko -->
+                    <!-- ko if: noHistory -->
+                    <div class="team-none">No history</div>
+                    <!-- /ko -->
+                    <ol class="history-list" data-bind="foreach: entries">
+                        <li class="history-entry">
+                            <!-- ko if: isIncident -->
+                            <button type="button" class="history-main history-incident" data-bind="click: $root.openIncident">
+                                <span class="history-title" data-bind="text: entryTitle"></span>
+                                <span class="history-detail" data-bind="text: entryDetail"></span>
+                            </button>
+                            <!-- /ko -->
+                            <!-- ko ifnot: isIncident -->
+                            <div class="history-main">
+                                <span class="history-title" data-bind="text: entryTitle"></span>
+                                <span class="history-detail" data-bind="text: entryDetail"></span>
+                            </div>
+                            <!-- /ko -->
+                            <span class="history-time" data-bind="text: entryTime"></span>
+                        </li>
+                    </ol>
+                </div>
+                <a class="team-history-link" target="_blank" rel="noopener" data-bind="attr: { href: historyUrl }">View full team history</a>
+            </article>
+        </div>
+
+        <!-- ko if: error -->
+        <div class="alert alert-warning py-1 px-2 mx-2 mb-2 d-flex align-items-center gap-2" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Couldn't refresh: <span data-bind="text: error"></span></span>
+            <button type="button" class="btn btn-sm btn-outline-dark ms-auto py-0" data-bind="click: retry">Try again</button>
+        </div>
+        <!-- /ko -->
+
+        <!-- The old footer: teams and settings on the left, time range in the middle, refresh on the right. -->
+        <footer class="ts-footer">
+            <div class="footer-left">
+                <button type="button" class="btn btn-sm btn-link footer-icon" id="settings-button" title="Settings: colours and the guide"
+                    data-bind="click: openSettings">
+                    <i class="fa-solid fa-gear"></i><span class="visually-hidden">Settings</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-link footer-icon" id="teams-button" title="Choose the teams to show, and what each shows" data-bind="click: openTeams">
+                    <i class="fa-solid fa-filter me-1"></i>Filter Teams
+                </button>
+            </div>
+            <div class="footer-middle">
+                <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                    <span>Time frame</span>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Time range" data-bind="foreach: rangeChoices">
+                        <input type="radio" class="btn-check" name="range" autocomplete="off"
+                            data-bind="attr: { id: id }, checkedValue: value, checked: $parent.rangeChoice">
+                        <label class="btn btn-outline-secondary" data-bind="attr: { for: id }, text: label"></label>
+                    </div>
+                </div>
+                <div class="footer-credit">
+                    Designed &amp; developed by volunteers of the NSW SES.
+                    <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank" rel="noopener">Lighthouse</a>
+                    is distributed under an
+                    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license noopener" target="_blank">MIT Licence</a>.
+                </div>
+            </div>
+            <div class="footer-refresh">
+                <span class="small" data-bind="text: updatedText"></span>
+                <span class="spinner-border spinner-border-sm" role="status" data-bind="visible: refreshing() || historyLoading()" title="Updating"></span>
+                <button type="button" class="btn btn-sm btn-link footer-icon" title="Refresh now (refreshes automatically)"
+                    data-bind="click: refreshNow, disable: refreshing">
+                    <i class="fa-solid fa-rotate me-1"></i><span data-bind="text: countdownText"></span>
+                </button>
+            </div>
+        </footer>
     </div>
-    <div style="float:left;margin-left: 5px;margin-bottom:5px">
-      <a class="teamFilters" id="filters">
-        <i style="vertical-align:middle;" class="fas fa-filter"></i> Filter Teams
-      </a>
+
+    <!-- Moved into a popover by the history entry clicked (main.js incidentPopup). -->
+    <div id="incident-popup" class="incident-popup" hidden data-bind="with: incident">
+        <!-- ko if: loading -->
+        <div class="incident-loading"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Loading <span data-bind="text: number"></span>…</div>
+        <!-- /ko -->
+        <!-- ko if: failed -->
+        <div class="incident-failed" data-bind="text: failed"></div>
+        <!-- /ko -->
+        <!-- ko with: details -->
+        <div data-bind="attr: { class: 'incident-head priority-' + priorityKey }">
+            <div class="incident-number" data-bind="text: number"></div>
+            <div data-bind="text: typeName + ' - ' + statusName"></div>
+            <div class="incident-priority" data-bind="text: priority"></div>
+        </div>
+        <div class="incident-address" data-bind="text: address"></div>
+        <!-- ko if: situation -->
+        <p class="incident-situation" data-bind="text: situation"></p>
+        <!-- /ko -->
+        <!-- ko ifnot: situation -->
+        <p class="incident-situation fst-italic">No situation on scene available.</p>
+        <!-- /ko -->
+        <!-- ko if: tags -->
+        <div class="incident-tags" data-bind="text: tags"></div>
+        <!-- /ko -->
+        <!-- ko ifnot: tags -->
+        <div class="incident-tags">No Tags</div>
+        <!-- /ko -->
+        <a class="incident-link" target="_blank" rel="noopener" data-bind="attr: { href: beaconUrl }">View Incident Details</a>
+        <div class="incident-meta">
+            <div>Incident received at <span data-bind="text: received"></span></div>
+            <div data-bind="text: hq"></div>
+        </div>
+        <!-- /ko -->
     </div>
-  </div>
-  <script src="teamsummary.js" type="text/javascript"></script>
+
+    <!-- The old page's Team Filter: which teams to show, then what each card shows. Opens once the teams first load. -->
+    <div class="modal fade" id="teams-modal" tabindex="-1" aria-labelledby="teams-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="teams-title">Team Filter</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                        <span class="me-auto">Select teams to display:</span>
+                        <button type="button" class="btn btn-sm btn-secondary filter-button" id="show-all" data-bind="click: showAll">Select All</button>
+                        <button type="button" class="btn btn-sm btn-secondary filter-button" id="show-activated" data-bind="click: showActivated">Select Activated</button>
+                        <button type="button" class="btn btn-sm btn-secondary filter-button" id="show-none" data-bind="click: showNone">Unselect All</button>
+                    </div>
+                    <hr>
+                    <!-- ko if: teams().length > 0 -->
+                    <div class="list-group team-picker" data-bind="foreach: teams">
+                        <button type="button" class="list-group-item list-group-item-action" data-bind="click: toggle, css: { active: shown }, attr: { id: chooserId }">
+                            <span class="float-end" data-bind="text: typeName"></span>
+                            <span class="d-block" data-bind="text: callsign"></span>
+                            <small class="d-block" data-bind="text: chooserText"></small>
+                        </button>
+                    </div>
+                    <!-- /ko -->
+                    <!-- ko if: teams().length === 0 -->
+                    <div class="list-group team-picker">
+                        <div class="list-group-item fst-italic">Beacon returned no teams</div>
+                    </div>
+                    <!-- /ko -->
+                    <hr>
+                    <!-- ko foreach: sections -->
+                    <div class="filter-option">
+                        <label class="form-check-label" data-bind="attr: { for: sectionId }, text: sectionLabel"></label>
+                        <input class="form-check-input" type="checkbox" data-bind="checked: on, attr: { id: sectionId }">
+                    </div>
+                    <!-- /ko -->
+                    <div class="filter-option">
+                        <label class="form-check-label" for="auto-show">Automatically display activated teams:</label>
+                        <input class="form-check-input" type="checkbox" id="auto-show" data-bind="checked: autoShow">
+                    </div>
+                    <div class="filter-option">
+                        <label for="columns-select">Grid width:</label>
+                        <select class="form-select w-50" id="columns-select"
+                            data-bind="options: columnChoices, optionsText: 'label', optionsValue: 'value', value: columns"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="settings-modal" tabindex="-1" aria-labelledby="settings-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="settings-title">Settings</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <fieldset>
+                        <legend class="form-label fs-6 fw-semibold">Colours</legend>
+                        <!-- ko foreach: themes -->
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="theme"
+                                data-bind="attr: { id: id }, checkedValue: value, checked: $parent.theme">
+                            <label class="form-check-label" data-bind="attr: { for: id }, text: label"></label>
+                        </div>
+                        <!-- /ko -->
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-outline-secondary me-auto guide-link" target="_blank" rel="noopener" href="https://lighthouse.ses.nsw.gov.au/guides/teams/"
+                        data-bind="attr: { href: guideUrl }">
+                        <i class="fa-regular fa-circle-question me-1" aria-hidden="true"></i>Guide
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="teamsummary/main.js" type="text/javascript"></script>
 </body>
 
 </html>

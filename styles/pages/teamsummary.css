@@ -1,304 +1,559 @@
-@import url("include/common.css");
+@import url('include/lighthouse-page.css');
+@import url('~@fontsource-variable/atkinson-hyperlegible-next/index.css');
 
-body.fade-in {
-  opacity: 1;
-  transition: 1s opacity;
-  background-color: #fafafa;
+/*
+  Team Summary page (src/pages/teamsummary/). The old page's layout: a
+  heading, then a card per team with a callsign band in the team's status
+  colour (green when Activated) and ruled rows under it. Tidied up with
+  Incident Summary's type and colours; the heading takes the Beacon colour
+  (orange, or green / blue for Train / Dev Beacon). Ring and Beacon colour
+  variables: include/lighthouse-page.css.
+*/
+
+:root,
+[data-bs-theme="light"] {
+  --ts-page-bg: #eef0f2;
+  --ts-card-bg: #ffffff;
+  --ts-text: #1f2229;
+  --ts-muted: #5b6273;
+  --ts-rule: rgba(31, 34, 41, .1);
+  --ts-zebra: rgba(31, 34, 41, .035);
+  --ts-shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 4px 14px rgba(16, 24, 40, .07);
+  --ts-link: #0b5cad;
+  --ts-amber: #a35a00;
+  --ts-red: #c0262d;
+  /* Team status colours, as on the old page */
+  --ts-activated: #a5c663;
+  --ts-standby: #a9a9a9;
+  --ts-alert: #c4c4c4;
+  --ts-rest: #d3d3d3;
+  --ts-other: #c9ced6;
 }
 
-.popover {
-  background: #eee;
+[data-bs-theme="dark"] {
+  --ts-page-bg: #1d2026;
+  --ts-card-bg: #252830;
+  --ts-text: #f3f4f6;
+  --ts-muted: #a2a9b8;
+  --ts-rule: rgba(255, 255, 255, .09);
+  --ts-zebra: rgba(255, 255, 255, .035);
+  --ts-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+  --ts-link: #8cc4ff;
+  --ts-amber: #ffb547;
+  --ts-red: #ff7a7f;
+  --ts-activated: #8fb04f;
+  --ts-standby: #8d8f94;
+  --ts-alert: #a3a5aa;
+  --ts-rest: #b4b6ba;
+  --ts-other: #9aa0aa;
 }
 
-.popover-body {
-  box-shadow: 20px 20px 20px grey;
+body {
+  /* Designed for low-vision readers: 1/l/I, 0/O, 5/S stay distinct across a room. */
+  font-family: 'Atkinson Hyperlegible Next Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--ts-page-bg);
+  color: var(--ts-text);
+  -webkit-font-smoothing: antialiased;
 }
 
-#container {
-  min-height: 100%;
-  position: relative;
-}
-
-.footer {
-  background-color: white;
-  width: 100%;
-  height: 55px;
-  font-size: 12px;
-  text-align: center;
-  bottom: 0;
-}
-
-#loadinginline {
-  display: none;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  background: red;
-}
-
-#loadmiddleinline {
-  margin: 0 auto;
-  display: table;
-  font-size: 20px;
-}
-
-#loadinnerinline>p {
-  font-size: 20px;
-}
-
-#sessionList {
-  max-height: 500px;
-  margin-bottom: 10px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 2px;
-}
-
-.list-group {
-  max-height: 300px;
-  overflow-y: scroll;
-  overflow-x: hidden;
-}
-
-.list-group-item {
-  margin: 0 10px 10px 0;
-  border-top-left-radius: 0.25rem;
-  border-top-right-radius: 0.25rem;
-  border-bottom-left-radius: 0.25rem;
-  border-bottom-right-radius: 0.25rem;
-}
-
-.list-group-item:not(.active) {
-  background-color: lightgrey;
-  border-color: lightgrey;
-}
-
-.row.display-flex {
+.teams-page {
+  padding: 4px;
+  /* At least a screen tall, so the footer sits at the bottom of the window. */
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---- heading --------------------------------------------------------- */
+
+/* The old page's centred heading: title, range, then the counts. */
+.ts-header {
+  margin: 8px;
+  padding: 10px 18px 12px;
+  border-radius: 14px;
+  background: var(--lh-env-color);
+  color: #1f2229; /* dark text: white on these colours is too faint */
+  text-align: center;
+  box-shadow: var(--ts-shadow);
+}
+
+.ts-heading {
+  margin: 0;
+  font-size: clamp(1.5rem, min(2.4vw, 4.6vh), 2.8rem);
+  font-weight: 800;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.ts-range {
+  margin-top: .2em;
+  font-weight: 600;
+  font-size: clamp(1rem, min(1.4vw, 2.6vh), 1.6rem);
+}
+
+.ts-counts {
+  margin-top: .2em;
+  border: 0;
+  border-radius: 8px;
+  padding: .05em .5em;
+  background: transparent;
+  color: inherit;
+  font-size: clamp(1rem, min(1.4vw, 2.6vh), 1.6rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ts-counts:hover,
+.ts-counts:focus-visible {
+  background: rgba(255, 255, 255, .35);
+}
+
+.ts-counts span {
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+.ts-empty {
+  margin: 1rem 8px;
+  text-align: center;
+  color: var(--ts-muted);
+}
+
+/* ---- the grid of teams ----------------------------------------------- */
+
+.team-grid {
+  display: grid;
+  gap: 16px;
+  padding: 8px;
+  align-items: stretch;
+}
+
+.team-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.team-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.team-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 1199.98px) {
+  .team-grid.cols-3,
+  .team-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767.98px) {
+  .team-grid.team-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- a team ---------------------------------------------------------- */
+
+.team-card {
+  --status: var(--ts-other);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--ts-card-bg);
+  border: 4px solid var(--status);
+  border-radius: 12px;
+  box-shadow: var(--ts-shadow);
+  overflow: hidden;
+  font-size: clamp(.85rem, min(.95vmax, 1.9vh), 1.15rem);
+}
+
+.team-card.status-activated { --status: var(--ts-activated); }
+.team-card.status-standby { --status: var(--ts-standby); }
+.team-card.status-alert { --status: var(--ts-alert); }
+.team-card.status-rest { --status: var(--ts-rest); }
+
+.team-callsign {
+  margin: 0;
+  padding: .3em .5em .35em;
+  background: var(--status);
+  text-align: center;
+  font-size: clamp(1.25rem, min(2vmax, 3.6vh), 2.75rem);
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.team-callsign a {
+  color: #1f2229; /* on the status colour, light or dark mode */
+  text-decoration: none;
+}
+
+.team-callsign a:hover {
+  text-decoration: underline;
 }
 
 .team-row {
-  justify-content: center;
+  padding: .45em .75em;
+  border-bottom: 1px solid var(--ts-rule);
+  text-align: center;
+  line-height: 1.35;
 }
 
-.row.display-flex>[class*='col-'] {
+.team-meta,
+.team-summary {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5em;
+  text-align: left;
 }
 
-.col-team {
-  margin-top: 30px;
+.team-meta .team-type {
+  flex: 1 1 0;
+  color: var(--ts-muted);
+  font-weight: 600;
 }
 
-.team {
-  padding: 0 15px 15px;
-  height: 100%;
-  border-radius: 10px;
-  background-color: #fff;
+.team-meta .team-time {
+  flex: 1 1 0;
+  text-align: right;
+  white-space: nowrap;
 }
 
-.team-status-summary {
-  padding: 0.3em;
-  border-bottom: solid 1px #ccc;
+.team-sms {
+  color: var(--ts-text);
+  padding: 0 .4em;
 }
 
-.team-buttons>a {
-  text-decoration: none;
-  color: inherit;
+.team-sms:hover {
+  color: var(--ts-link);
 }
 
-.team a {
-  text-decoration: underline;
-}
-
-.team-active {
-  border: solid 4px #A5C663;
-}
-
-.team-warning {
-  border: solid 4px #FAA;
-}
-
-.team-alert {
-  border: solid 4px grey;
-}
-
-.team-standby {
-  border: solid 4px darkgray;
-}
-
-.team-rest {
-  border: solid 4px lightgrey;
-}
-
-.team-callsign {
-  font-size: 2vmax;
-  text-transform: uppercase;
-  padding: 0.5em;
-}
-
-.team-leader {
-  font-weight: bold;
-}
-
-.team-active .team-callsign {
-  background: #A5C663;
-  color: black;
-}
-
-.team-warning .team-callsign {
-  background: #FAA;
-  color: black;
-}
-
-.team-alert .team-callsign {
-  background: grey;
-  color: black;
-}
-
-.team-standby .team-callsign {
-  background: darkgray;
-  color: black;
-}
-
-.team-rest .team-callsign {
-  background: lightgrey;
-  color: black;
-}
-
-.team-active .team-callsign a,
-.team-standby .team-callsign a,
-.team-rest .team-callsign a,
-.team-alert .team-callsign a {
-  color: inherit;
-  text-decoration: none;
+.team-sms.disabled {
+  opacity: .4;
+  pointer-events: none;
 }
 
 .team-summary {
-  padding: 0.3em;
-  border-bottom: solid 1px #ccc;
+  font-weight: 600;
 }
 
-.sector-summary {
-  padding: 0.3em;
-  border-bottom: solid 1px #ccc;
+.team-sector {
+  font-weight: 600;
 }
 
-.team-job-count-active,
-.team-status,
-.team-status-for,
-.team-time {
-  font-size: 1vmax;
-  padding: 0.2em;
+.team-none {
+  color: var(--ts-muted);
+  font-style: italic;
 }
 
-.team-member:not(:last-child):after {
+.team-member.is-leader {
+  font-weight: 700;
+}
+
+.team-member:not(:last-child)::after {
   content: ", ";
+  color: var(--ts-text);
+  font-weight: 400;
 }
 
-.team-stat-warning {
-  color: orange;
-  -webkit-animation: pulsate 3s ease-out;
-  -webkit-animation-iteration-count: infinite;
-  opacity: 0.5;
+/* Long on, or few incidents: amber, then red (TeamVM / data/teams.js). */
+.level-amber {
+  color: var(--ts-amber);
 }
 
-.team-stat-hazard {
-  color: red;
-  -webkit-animation: pulsate 3s ease-out;
-  -webkit-animation-iteration-count: infinite;
-  opacity: 0.5;
+.level-red {
+  color: var(--ts-red);
+  animation: ts-pulse 3s ease-out infinite;
 }
 
-@-webkit-keyframes pulsate {
-  0% {
-    opacity: 0.5;
-  }
-
-  50% {
-    opacity: 1.0;
-  }
-
-  100% {
-    opacity: 0.5;
-  }
+@keyframes ts-pulse {
+  0%, 100% { opacity: .6; }
+  50% { opacity: 1; }
 }
 
-.gridWidth>label {
-  width: auto;
-  padding-top: 0.375rem;
-  display: inline-block;
+.team-position .position-status {
+  font-weight: 600;
 }
 
-.gridWidth>select {
-  display: inline-block;
-  float: right;
-  width: 50%;
+.team-position .position-address {
+  color: var(--ts-muted);
 }
 
-.team-resources {
-  padding: 0.3em;
-  border-bottom: solid 1px #ccc;
+/* ---- history ----------------------------------------------------------- */
+
+.team-history {
+  flex: 1 1 auto;
+  font-size: .9em;
+  transition: opacity .2s;
 }
 
-.team-history-view {
-  padding: 0.3em;
+.team-history.is-loading .history-list {
+  opacity: .55;
 }
 
-.team-history-loading {
-  opacity: 0.5;
+.team-history > .team-none,
+.history-error {
+  padding: .5em .75em;
+  text-align: center;
 }
 
-.team-history-view>div {
-  font-size: 0.6em;
-  font-weight: bold;
-  position: absolute;
-  bottom: 0;
-  margin-bottom: 5px;
-  width: 100%;
+.history-error {
+  color: var(--ts-red);
+  font-size: .9em;
 }
 
-.team-history-view>div>a {
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: .5em;
+  padding: .3em .75em;
+}
+
+.history-entry:nth-child(even) {
+  background: var(--ts-zebra);
+}
+
+.history-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.history-title {
+  font-weight: 700;
+}
+
+.history-detail {
+  color: var(--ts-muted);
+  font-size: .85em;
+}
+
+button.history-incident {
+  border: 0;
+  padding: 0;
+  background: none;
   color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.history-incident .history-title {
+  color: var(--ts-link);
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+.history-time {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  color: var(--ts-muted);
+}
+
+.team-history-link {
+  margin-top: auto;
+  padding: .4em .75em .5em;
+  text-align: center;
+  font-size: .75em;
+  font-weight: 700;
+  color: var(--ts-muted);
   text-decoration: none;
 }
 
-.team-members {
-  padding: 0.3em;
-  border-bottom: solid 1px #ccc;
-}
-
-.team-location {
-  padding: 0.3em;
-  border-bottom: solid 1px #ccc;
-}
-
-.team-history {}
-
-.team-history {
-  font-size: 0.9em;
-}
-
-.team-history-row:nth-child(even) {
-  background: #cccccc30;
-}
-
-.history-job:hover {
-  cursor: pointer;
-}
-
-.history-job-number {
+.team-history-link:hover {
+  color: var(--ts-link);
   text-decoration: underline;
-  color: #007bff;
 }
 
-.fa-disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ---- incident popup -------------------------------------------------- */
+
+.incident-popover {
+  --bs-popover-max-width: 320px;
+  --bs-popover-body-padding-x: 0;
+  --bs-popover-body-padding-y: 0;
+  font-family: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+  box-shadow: var(--ts-shadow);
 }
 
-.teamFilters:hover {
-  cursor: pointer;
+.incident-popup {
+  min-width: 260px;
+  padding-bottom: .6rem;
+  text-align: center;
+  font-size: .9rem;
+}
+
+.incident-loading,
+.incident-failed {
+  padding: .75rem;
+}
+
+.incident-failed {
+  color: var(--ts-red);
+}
+
+.incident-head {
+  padding: .5rem .75rem;
+  border-radius: var(--bs-popover-inner-border-radius) var(--bs-popover-inner-border-radius) 0 0;
+  background: var(--bs-secondary-bg);
+  font-weight: 600;
+}
+
+/* Priority colours, as on the old popup. */
+.incident-head.priority-rescue { background: #d32f2f; color: #fff; }
+.incident-head.priority-priority { background: #f59c1a; color: #1f2229; }
+.incident-head.priority-immediate { background: #4f92ff; color: #fff; }
+
+.incident-number {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.incident-address {
+  margin: .6rem .75rem 0;
+  font-weight: 700;
+}
+
+.incident-situation {
+  margin: .4rem .75rem 0;
+}
+
+.incident-tags {
+  margin: .4rem .75rem 0;
+  color: var(--bs-secondary-color);
+}
+
+.incident-meta {
+  margin: .5rem .75rem 0;
+  padding-top: .4rem;
+  border-top: 1px solid var(--bs-border-color);
+  font-size: .8rem;
+  color: var(--bs-secondary-color);
+}
+
+.incident-link {
+  display: inline-block;
+  margin-top: .4rem;
+  font-weight: 600;
+}
+
+/* ---- footer ---------------------------------------------------------- */
+
+.ts-footer {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .75rem;
+  padding: 4px 12px 8px;
+  font-size: 12px;
+  color: var(--ts-muted);
+}
+
+.ts-footer a {
+  color: inherit;
+}
+
+.ts-footer .btn-group .btn {
+  border-color: var(--ts-rule);
+  color: var(--ts-text);
+  background: var(--ts-card-bg);
+  font-weight: 500;
+}
+
+.ts-footer .btn-check:checked + .btn {
+  background: var(--ts-text);
+  border-color: var(--ts-text);
+  color: var(--ts-page-bg);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+
+.footer-middle {
+  text-align: center;
+}
+
+.footer-credit {
+  margin-top: .35rem;
+  opacity: .85;
+}
+
+.footer-refresh {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.footer-icon {
+  /* Fixed-width digits so the countdown doesn't jitter. */
+  color: var(--ts-text);
+  text-decoration: none;
+  font-size: .95rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer-icon:hover {
+  color: var(--ts-text);
+  opacity: .75;
+}
+
+@media (max-width: 767.98px) {
+  .ts-footer {
+    grid-template-columns: 1fr auto;
+  }
+
+  .footer-middle {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* ---- Team Filter dialog ------------------------------------------------ */
+
+.filter-button {
+  font-size: .75rem;
+}
+
+/* The old list: shown teams highlighted, hidden ones grey. */
+.team-picker {
+  max-height: 300px;
+  overflow-y: auto;
+  gap: 8px;
+}
+
+.team-picker .list-group-item {
+  border-radius: var(--bs-border-radius);
+  border-width: 1px;
+}
+
+.team-picker .list-group-item:not(.active) {
+  background: var(--bs-secondary-bg);
+  border-color: var(--bs-secondary-bg);
+}
+
+.team-picker .list-group-item.active small {
+  color: inherit;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .4rem 0;
+}
+
+.filter-option .form-check-input {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-red {
+    animation: none;
+  }
+
+  .team-history {
+    transition: none;
+  }
 }
