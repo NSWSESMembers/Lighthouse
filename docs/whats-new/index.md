@@ -18,97 +18,54 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## New Team Summary page
+## Team Summary, terrain and power outages
 
-*15 November 2026*
+*16 November 2026 · [v2026.11.16](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.16)*
+
+### Team Summary
 
 - **Team Summary has been rebuilt.** It works as before: the same team cards and Team Filter, with the activated field teams shown when it opens. It's now easier to read across a room, with dark mode and a heading coloured by the Beacon you opened it from (orange, green for Train, blue for Dev). Open it from **Team Summary** in the Lighthouse menu, or **Summary Screen** on Beacon's Teams screen. See the new [Team Summary guide](https://lighthouse.ses.nsw.gov.au/guides/teams/).
 - **Your Team Filter options are remembered.** Which parts of each card to show, automatic display of activated teams and the grid width are now saved in your browser, instead of resetting each time the page opens. Colours are in the new Settings (the gear in the footer).
 - **Clearer when Beacon doesn't answer.** The page says why a load failed, keeps the teams on screen and tries again after 30 seconds. A team whose history can't be loaded says so on its card.
 - **Works on a phone or tablet.** Narrow windows show fewer teams across, down to one on a phone.
 
-## LAD on phones
-
-*11 November 2026*
-
-- **Team callsigns stay visible on narrow screens.** On a phone, the callsign column in the [Team Register](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html) had been squeezed to nothing. It now keeps its space, and long callsigns wrap. When the list is narrow, the task count is just the number (**2** rather than **2 Active**), the status is shortened (**Act**, **Stby**, **Alert**, **Rest**, **Down**; hover for the full name) and the team's action buttons move into a **⋮** menu.
-- **The Incident Register fits on a phone.** It no longer runs off the side of the screen. When the list is narrow, the received time and date sit under the incident number, and the status is shortened (**Act (0)**, **Tskd**, **Ack**, **Ref**, **Comp**, **Fin**, **Canc**, **Rej**; hover for the full name). See the [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
-- **Members beside Team Capabilities.** On a phone or an iPad in portrait, an expanded team shows Members next to Team Capabilities. Collapsing Team Capabilities puts Members next to Matched Assets instead.
-- **The Configuration screen and Trackable Assets Library work on a phone.** Both open full screen and fit without scrolling sideways. In the Configuration screen the sections are one row you swipe along. In the library, each asset's details sit under its callsign, and on an iPad in portrait the library uses the full width.
-
-## Team capabilities in LAD
-
-*10 November 2026*
-
-- **See what a team can do at a glance.** Expanding a team in the Team Register now shows a [Team Capabilities](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-capabilities) box counting how many members hold each capability. Each member counts at their highest level, so a count such as **Storm Ground only** leaves out anyone with Storm Heights.
-- **Members column in the Team Register.** The Team Leader column is now Members and shows the team leader and how many others are on the team, such as Alex Nguyen + 4.
-
-## Non-Incident Task Card hours
-
-*10 November 2026*
-
-- **Summed hours are back on Non-Incident Task Cards.** The total of all participants' hours shows beside the duration at the top of a task card again. It had stopped appearing after a change to Beacon's page layout.
-
-## Closer map zoom in LAD
-
-*9 November 2026*
-
-- **Zoom in closer on the Situation Map.** Every basemap now zooms in to at least zoom 20, and you can go as far as zoom 22 with [Zoom in as far as](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#map-zoom) in the Configuration screen. Past a basemap's closest imagery, the map enlarges it instead of going blank.
-
-## Power outages in LAD
-
-*9 November 2026*
-
-- **New Power Outages overlays.** Current Ausgrid, Endeavour Energy and Essential Energy outages, with the area affected, customers, cause and estimated restore time. Unplanned and planned outages (next 48 hours) are separate overlays under **Infrastructure** in the **Layers** menu. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
-- **Power outages on the Lighthouse map in Beacon work again.** Ausgrid and Endeavour Energy outages had stopped showing after both companies changed their websites. **All Power Outages** is now two buttons, **Unplanned Power Outages** and **Planned Power Outages (next 48 hrs)**.
-
-## LAD settings for each Beacon
-
-*9 November 2026*
-
-- **LAD always loads at least one headquarters on Production Beacon.** An empty Teams or Incidents filter, including after **Clear**, now uses your Beacon focus unit instead of loading every unit. Train and Dev Beacon can still load all units. See [Clearing Headquarters](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#clearing-headquarters).
-- **Each Beacon keeps its own LAD Configuration.** Changes on Train or Dev Beacon no longer carry over to Production Beacon, or the other way around. Train and Dev go back to the default settings the first time you open them after this update.
-
-## Terrain and historical imagery in LAD
-
-*9 November 2026*
+### LAD map
 
 - **New Elevation overlay.** Colours the ground by height across NSW, so low ground and floodplains stand out on the map. Find it under **Terrain** in the **Layers** menu. Heights are indicative. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
 - **New Hillshade and Steepness overlays**, also under **Terrain**, show the shape of the land and how steep it is.
 - **New Historical Imagery section.** Aerial photos of floods from 2012 to 2022 in the places where they were taken, including Lismore, Grafton, Forbes and the Hawkesbury-Nepean.
 - **A shorter Layers menu.** Layers are now grouped by what they show, in fewer sections, listed alphabetically with an icon each: **Forecasts**, **Historical Imagery**, **Infrastructure**, **NSW SES Geoservices**, **Radar & Observations**, **Terrain** and **Warnings**. **Visibility** is now called **Markers** and sits just below **Basemap**. Your layers and presets are unchanged.
+- **New Power Outages overlays.** Current Ausgrid, Endeavour Energy and Essential Energy outages, with the area affected, customers, cause and estimated restore time. Unplanned and planned outages (next 48 hours) are separate overlays under **Infrastructure** in the **Layers** menu. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
+- **Zoom in closer on the Situation Map.** Every basemap now zooms in to at least zoom 20, and you can go as far as zoom 22 with [Zoom in as far as](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#map-zoom) in the Configuration screen. Past a basemap's closest imagery, the map enlarges it instead of going blank.
 
-## Lighter LAD refreshes
+### LAD teams and phones
 
-*7 November 2026*
+- **See what a team can do at a glance.** Expanding a team in the Team Register now shows a [Team Capabilities](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html#team-capabilities) box counting how many members hold each capability. Each member counts at their highest level, so a count such as **Storm Ground only** leaves out anyone with Storm Heights.
+- **Members column in the Team Register.** The Team Leader column is now Members and shows the team leader and how many others are on the team, such as Alex Nguyen + 4.
+- **Team callsigns stay visible on narrow screens.** On a phone, the callsign column in the [Team Register](https://lighthouse.ses.nsw.gov.au/guides/lad/team-register.html) had been squeezed to nothing. It now keeps its space, and long callsigns wrap. When the list is narrow, the task count is just the number (**2** rather than **2 Active**), the status is shortened (**Act**, **Stby**, **Alert**, **Rest**, **Down**; hover for the full name) and the team's action buttons move into a **⋮** menu.
+- **The Incident Register fits on a phone.** It no longer runs off the side of the screen. When the list is narrow, the received time and date sit under the incident number, and the status is shortened (**Act (0)**, **Tskd**, **Ack**, **Ref**, **Comp**, **Fin**, **Canc**, **Rej**; hover for the full name). See the [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
+- **Members beside Team Capabilities.** On a phone or an iPad in portrait, an expanded team shows Members next to Team Capabilities. Collapsing Team Capabilities puts Members next to Matched Assets instead.
+- **The Configuration screen and Trackable Assets Library work on a phone.** Both open full screen and fit without scrolling sideways. In the Configuration screen the sections are one row you swipe along. In the library, each asset's details sit under its callsign, and on an iPad in portrait the library uses the full width.
+
+### LAD refreshes and background tabs
 
 - **The full refresh now defaults to 10 minutes.** With Live Updates on, changes already arrive as they happen, so LAD doesn't need to reload as often. If you were on the old 3-minute default you move to 10 minutes, and any other value you picked stays as it was. See [Full Refresh Interval](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#full-refresh-interval).
 - **Clearer wording with Live Updates off.** The Configuration screen now says what happens: LAD reloads every minute, and expanding an incident or team refreshes it.
 - **Tasking keeps up with the full refresh.** It could skip every second refresh, and with Live Updates off it followed the Full Refresh setting instead of reloading every minute.
-
-## Live Updates catch up after a dropout
-
-*7 November 2026*
-
 - **LAD catches up when Live Updates reconnect.** Changes made in Beacon while the connection was down used to be missing until the next full refresh. LAD now reloads incidents, teams and tasking as soon as it reconnects. See [Live Updates](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#live-updates).
-
-## Forgotten LAD tabs pause
-
-*7 November 2026*
-
 - **LAD pauses after 30 minutes in the background.** A forgotten tab stops calling Beacon. When you go back to it, it asks you to reload, because what's on screen is out of date. If its Beacon login has expired too, it asks you to open LAD again from Beacon's Lighthouse menu first. See [Background Tabs](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration/#background-tabs).
-
-## Tasking in large events
-
-*7 November 2026*
-
 - **Tasking keeps refreshing in large events.** With more than about 180 incidents showing, the regular tasking refresh could fail without any message, leaving the teams shown on incidents out of date or missing. LAD now splits large refreshes into several smaller requests.
-
-## Deleted teams hidden in LAD
-
-*6 November 2026*
-
 - **A team deleted in Beacon now disappears from LAD** without a page reload, whatever your team filters are set to. Taskings it had on an incident still show its callsign, and it comes back if the team is restored.
+
+### LAD on Production Beacon
+
+- **LAD always loads at least one headquarters on Production Beacon.** An empty Teams or Incidents filter, including after **Clear**, now uses your Beacon focus unit instead of loading every unit. Train and Dev Beacon can still load all units. See [Clearing Headquarters](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#clearing-headquarters).
+- **Each Beacon keeps its own LAD Configuration.** Changes on Train or Dev Beacon no longer carry over to Production Beacon, or the other way around. Train and Dev go back to the default settings the first time you open them after this update.
+
+### Beacon
+
+- **Power outages on the Lighthouse map in Beacon work again.** Ausgrid and Endeavour Energy outages had stopped showing after both companies changed their websites. **All Power Outages** is now two buttons, **Unplanned Power Outages** and **Planned Power Outages (next 48 hrs)**.
+- **Summed hours are back on Non-Incident Task Cards.** The total of all participants' hours shows beside the duration at the top of a task card again. It had stopped appearing after a change to Beacon's page layout.
 
 ## New Statistics, Summary and Export pages
 
