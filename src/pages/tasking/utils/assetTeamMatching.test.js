@@ -3,7 +3,7 @@ import ko from 'knockout';
 import {
     normAssetName, splitTeamCallsignIntoParts, tokenVariantsFromPart,
     extractTeamTokens, scoreFuzzy, computeMatchedAssetsForTeam,
-    teamHqId, assetIsForTeamHq, setTeamAssets, unlinkTeam, isAssetUnmatched,
+    teamHqId, assetIsForTeamHq, setTeamAssets, unlinkTeam, unlinkAsset, isAssetUnmatched,
 } from './assetTeamMatching.js';
 
 describe('normAssetName', () => {
@@ -297,5 +297,28 @@ describe('isAssetUnmatched', () => {
         setTeamAssets(hidden, new Set([a]));
         setTeamAssets(shown, new Set([a]));
         expect(isAssetUnmatched(a, new Set([shown]))).toBe(false);
+    });
+});
+
+describe('unlinkAsset', () => {
+    it('removes the asset from every team it was on, and clears its teams', () => {
+        // matchingTeams is a Knockout observable array (a function, not an
+        // array), as on a real Asset.
+        const t1 = linkedTeam('PAR33');
+        const t2 = linkedTeam('PAR33 + PAR56');
+        const a = linkedAsset('PAR33');
+        const other = linkedAsset('PAR56');
+        setTeamAssets(t1, new Set([a]));
+        setTeamAssets(t2, new Set([a, other]));
+        unlinkAsset(a);
+        expect(a.matchingTeams()).toEqual([]);
+        expect(t1.trackableAssets()).toEqual([]);
+        expect(t2.trackableAssets()).toEqual([other]);
+    });
+
+    it('does nothing for an asset with no teams', () => {
+        const a = linkedAsset('PAR33');
+        unlinkAsset(a);
+        expect(a.matchingTeams()).toEqual([]);
     });
 });

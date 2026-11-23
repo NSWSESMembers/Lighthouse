@@ -56,7 +56,7 @@ import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
-import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam, isAssetUnmatched } from './utils/assetTeamMatching.js';
+import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam, unlinkAsset, isAssetUnmatched } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
 import { buildJobSuggestionPool, buildTeamSuggestionPool, filterJobsBySearchTerm, filterTeamsBySearchTerm } from './utils/searchMatching.js';
 import { createSearchSuggest } from './utils/searchSuggest.js';
@@ -2675,13 +2675,7 @@ function VM() {
                 assetsToRemove.forEach(id => {
                     const asset = self.assetsById.get(id);
                     if (!asset) return;
-                    // Unlink from matching teams
-                    if (Array.isArray(asset.matchingTeams)) {
-                        asset.matchingTeams.slice().forEach(team => {
-                            if (team.trackableAssets) team.trackableAssets.remove(asset);
-                            asset.matchingTeams.remove(team);
-                        });
-                    }
+                    unlinkAsset(asset);
                     // Remove from observable array and registry
                     self.trackableAssets.remove(asset);
                     self.assetsById.delete(id);

@@ -138,6 +138,15 @@ export function unlinkTeam(team) {
     setTeamAssets(team, new Set());
 }
 
+// Drop every team link of an asset that's left the feed.
+export function unlinkAsset(asset) {
+    const teams = (typeof asset?.matchingTeams === 'function') ? asset.matchingTeams() : [];
+    (teams || []).slice().forEach(team => {
+        team?.trackableAssets?.remove?.(asset);
+        asset.matchingTeams.remove(team);
+    });
+}
+
 // True when none of the asset's teams is one LAD shows (`shownTeams`, a Set
 // of the teams passing the config filters). Teams outside the filters stay
 // in LAD's team list -- ones only known from an incident's taskings (another
