@@ -180,6 +180,32 @@ check('a pushed team inside the filters still takes the asset', async () => {
   }
 });
 
+// The case seen on live Beacon: an Operations team created while the type
+// filter is the default Field only. Inside the filters on everything else.
+check('a pushed Operations team with the Field-only type filter does not take the asset', async () => {
+  const { browser, page } = await launch();
+  try {
+    const asset = await pickUnmatched(page);
+    const fields = await visibleTeamFields(page);
+    const typeFilter = await page.evaluate(() => ko.dataFor(document.body).config.teamTypeFilter());
+    assert(JSON.stringify(typeFilter) === '["Field"]', `type filter ${JSON.stringify(typeFilter)}, expected the Field-only default`);
+    await page.evaluate(({ json }) => {
+      const vm = ko.dataFor(document.body);
+      const team = vm.getOrCreateTeam(json);
+      if (!vm.teamMatchesConfigFilters(team)) {
+        vm.teamsById.delete(team.id());
+        vm.teams.remove(team);
+      }
+    }, { json: { ...teamJson(987654323, asset.name, fields), TeamType: { Id: 2, Name: 'Operations' } } });
+    await wait(page, 1000);
+    assertOnePinAtAsset(await assetState(page, asset.id), 'after the push');
+    await poll(page);
+    assertOnePinAtAsset(await assetState(page, asset.id), 'after the next poll');
+  } finally {
+    await browser.close();
+  }
+});
+
 // ── 2. Teams known only from an incident's taskings ──
 
 for (const [label, team] of [
