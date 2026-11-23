@@ -18,6 +18,14 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Asset pins stay on the map
+
+*23 November 2026*
+
+- **Asset pins no longer disappear when a hidden team is created or tasked.** If a team your filters hide was created or tasked with a callsign matching a radio (another unit's team, a stood-down team, or an Operations team when you only show Field teams), that radio's pin vanished from both asset layers until you reloaded LAD. It now stays on the map, on the **Unmatched against Teams** layer unless a team you can see matches it. See [Asset Layers](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#asset-layers).
+- **No more frozen duplicate pins.** A radio that briefly dropped out of the feed, often while LAD was in a background tab, could leave an old pin stuck where it was next to the live one.
+- **Pins no longer jump off the map when a radio has no position.** They stay at the last known position, and a new radio gets its pin as soon as it reports one.
+
 ## Team Summary, terrain and power outages
 
 *16 November 2026 · [v2026.11.16](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.16)*

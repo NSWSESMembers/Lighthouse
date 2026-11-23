@@ -114,6 +114,50 @@ export function assetIsForTeamHq(asset, hqId) {
     return String(exerciseHqId) === hqId;
 }
 
+// Make a team's asset list exactly `desired` (a Set of assets), keeping each
+// asset's matchingTeams in step with it.
+export function setTeamAssets(team, desired) {
+    (team.trackableAssets() || []).slice().forEach(a => {
+        if (!desired.has(a)) {
+            a?.matchingTeams?.remove?.(team);
+            team.trackableAssets.remove(a);
+        }
+    });
+    for (const a of desired) {
+        if (!(team.trackableAssets() || []).includes(a)) {
+            team.trackableAssets.push(a);
+            a?.matchingTeams?.push?.(team);
+        }
+    }
+}
+
+// Drop every asset link of a team LAD no longer tracks. Nothing re-matches
+// a team once it's out of the team list, so a link left on it would keep
+// the asset off the unmatched layer for good.
+export function unlinkTeam(team) {
+    setTeamAssets(team, new Set());
+}
+
+// Drop every team link of an asset that's left the feed.
+export function unlinkAsset(asset) {
+    const teams = (typeof asset?.matchingTeams === 'function') ? asset.matchingTeams() : [];
+    (teams || []).slice().forEach(team => {
+        team?.trackableAssets?.remove?.(asset);
+        asset.matchingTeams.remove(team);
+    });
+}
+
+// True when none of the asset's teams is one LAD shows (`shownTeams`, a Set
+// of the teams passing the config filters). Teams outside the filters stay
+// in LAD's team list -- ones only known from an incident's taskings (another
+// unit's, or stood down), or ones that have left the team feed -- and are
+// still matched to assets, but drawn nowhere, so their assets go on the
+// unmatched layer rather than neither.
+export function isAssetUnmatched(asset, shownTeams) {
+    const teams = (typeof asset?.matchingTeams === 'function') ? asset.matchingTeams() : [];
+    return !(teams || []).some(t => shownTeams.has(t));
+}
+
 export function computeMatchedAssetsForTeam(team, allAssets) {
     const tokens = extractTeamTokens(team);
     if (!tokens.length) return new Set();

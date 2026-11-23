@@ -56,7 +56,7 @@ import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
-import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
+import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam, unlinkAsset, isAssetUnmatched } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
 import { buildJobSuggestionPool, buildTeamSuggestionPool, filterJobsBySearchTerm, filterTeamsBySearchTerm } from './utils/searchMatching.js';
 import { createSearchSuggest } from './utils/searchSuggest.js';
@@ -1043,10 +1043,8 @@ function VM() {
 
     self.unmatchedTrackableAssets = ko.pureComputed(() => {
         const all = self.trackableAssets?.() || [];
-        return all.filter(a => {
-            const mt = (typeof a.matchingTeams === 'function') ? a.matchingTeams() : [];
-            return !mt || mt.length === 0;
-        });
+        const shownTeams = new Set(self.filteredTeamsAgainstConfig());
+        return all.filter(a => isAssetUnmatched(a, shownTeams));
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     self.sectorsLoading = ko.observable(false);
@@ -1646,8 +1644,10 @@ function VM() {
     // layer; everything else is only drawable on the unmatched layer, so that
     // layer is switched on (and persisted, like a manual toggle) if needed.
     self.focusTrackableAsset = function (asset) {
-        const lat = +asset?.latitude?.();
-        const lng = +asset?.longitude?.();
+        // No position yet (null): +null is 0, so check before converting.
+        if (asset?.latitude?.() == null || asset?.longitude?.() == null) return;
+        const lat = +asset.latitude();
+        const lng = +asset.longitude();
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
         const mapVM = self.mapVM;
@@ -1748,25 +1748,16 @@ function VM() {
 
         // Defer execution to avoid blocking UI thread
         setTimeout(() => {
-            const all = self.trackableAssets?.() || [];
-            const desired = computeMatchedAssetsForTeam(team, all); // Set<Asset>
-
-            // Remove no-longer-matching
-            (team.trackableAssets() || []).slice().forEach(a => {
-                if (!desired.has(a)) {
-                    a?.matchingTeams?.remove?.(team);
-                    team.trackableAssets.remove(a);
-                }
-            });
-
-            // Add new matches
-            for (const a of desired) {
-                const has = (team.trackableAssets() || []).includes(a);
-                if (!has) {
-                    team.trackableAssets.push(a);
-                    a?.matchingTeams?.push?.(team);
-                }
+            // The team can be dropped before this runs (a pushed team outside
+            // the config filters is added then removed straight away). Match
+            // it now and nothing would ever re-check it, so its assets would
+            // be off both asset layers until a reload.
+            if (self.teamsById.get(team.id()) !== team) {
+                unlinkTeam(team);
+                return;
             }
+            const all = self.trackableAssets?.() || [];
+            setTeamAssets(team, computeMatchedAssetsForTeam(team, all));
         }, 0);
     };
 
@@ -2657,72 +2648,86 @@ function VM() {
         return true;
     }
 
-    self.fetchAllTrackableAssets = async function () {
-        if (tabDormancy.isDormant()) return;
-        if (!assetDataRefreshInterlock) {
-            const t = await getToken();   // blocks here until token is ready
-            // With a simulated exercise chosen the radio half of the feed
-            // comes from the exercise, so the first fetch waits until the
-            // choice has been read. Note which selection this request is
-            // for: if it changes while the request is in flight, the change
-            // has already started a fresh fetch, so this response is dropped
-            // rather than drawn over it.
-            const simulatedExercise = self.simulatedExercise;
-            await simulatedExercise.ready;
-            const simulation = simulatedExercise.feedSelection();
-            const simulationGeneration = simulatedExercise.generation();
+    // One asset fetch at a time: two at once could land in either order, an
+    // older (or failed) one undoing a newer one. A call while a fetch is
+    // running isn't dropped -- one more fetch runs when it finishes, so a
+    // simulated exercise chosen mid-fetch still gets a fetch of its own.
+    let assetFetchInFlight = null;
+    let assetFetchAgain = false;
+    self.fetchAllTrackableAssets = function () {
+        if (tabDormancy.isDormant()) return Promise.resolve();
+        if (assetFetchInFlight) {
+            assetFetchAgain = true;
+            return assetFetchInFlight;
+        }
+        assetFetchInFlight = (async () => {
             try {
-                const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken }));
-                if (simulationGeneration !== simulatedExercise.generation()) return;
-                if (simulation) {
-                    simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);
-                }
-                assets.forEach(function (a) {
-                    myViewModel.getOrCreateAsset(a);
-                })
-                const fetchedAssetIds = new Set((assets || []).map(a => a.properties.id));
-                const existingAssetIds = self.assetsById.keys();
-                const assetsToRemove = [...existingAssetIds].filter(id => !fetchedAssetIds.has(id));
-                assetsToRemove.forEach(id => {
-                    const asset = self.assetsById.get(id);
-                    if (!asset) return;
-                    // Unlink from matching teams
-                    if (Array.isArray(asset.matchingTeams)) {
-                        asset.matchingTeams.slice().forEach(team => {
-                            if (team.trackableAssets) team.trackableAssets.remove(asset);
-                            asset.matchingTeams.remove(team);
-                        });
-                    }
-                    // Remove from observable array and registry
-                    self.trackableAssets.remove(asset);
-                    self.assetsById.delete(id);
-                    self.mapVM?.assetTrails?.untrack(asset);
-                });
-                //Update Asset/Team mappings only once after all changes
-                self._attachAssetsToMatchingTeams();
-
-                // Fetch shared default-asset mappings (runs after matching
-                // so we know which teams have multiple assets)
-                self._fetchSharedDefaultAssets();
-
-                myViewModel._markInitialFetchDone();
-            } catch (err) {
-                if (simulationGeneration !== simulatedExercise.generation()) return;
-                if (simulation && isSimulationUnavailable(err)) {
-                    // The exercise backend refused this Beacon sign-in: go back
-                    // to the real feed everywhere (endHere() refetches and
-                    // tells the user).
-                    console.warn("Simulated exercise feed unavailable, returning to the real feed:", err);
-                    simulatedExercise.endHere('unavailable');
-                    return;
-                }
-                console.error("Error fetching trackable assets:", err);
-                showAlert(simulation
-                    ? 'Failed to fetch the simulated exercise positions. Showing the last positions received.'
-                    : 'Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
+                do {
+                    assetFetchAgain = false;
+                    await fetchTrackableAssetsOnce();
+                } while (assetFetchAgain && !tabDormancy.isDormant());
             } finally {
-                assetDataRefreshInterlock = false;
+                assetFetchInFlight = null;
             }
+        })();
+        return assetFetchInFlight;
+    };
+
+    async function fetchTrackableAssetsOnce() {
+        const t = await getToken();   // blocks here until token is ready
+        // With a simulated exercise chosen the radio half of the feed
+        // comes from the exercise, so the first fetch waits until the
+        // choice has been read. Note which selection this request is
+        // for: if it changes while the request is in flight, the change
+        // has asked for a fresh fetch (run straight after this one), so
+        // this response is dropped rather than drawn over it.
+        const simulatedExercise = self.simulatedExercise;
+        await simulatedExercise.ready;
+        const simulation = simulatedExercise.feedSelection();
+        const simulationGeneration = simulatedExercise.generation();
+        try {
+            const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken }));
+            if (simulationGeneration !== simulatedExercise.generation()) return;
+            if (simulation) {
+                simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);
+            }
+            assets.forEach(function (a) {
+                myViewModel.getOrCreateAsset(a);
+            })
+            const fetchedAssetIds = new Set((assets || []).map(a => a.properties.id));
+            const existingAssetIds = self.assetsById.keys();
+            const assetsToRemove = [...existingAssetIds].filter(id => !fetchedAssetIds.has(id));
+            assetsToRemove.forEach(id => {
+                const asset = self.assetsById.get(id);
+                if (!asset) return;
+                unlinkAsset(asset);
+                // Remove from observable array and registry
+                self.trackableAssets.remove(asset);
+                self.assetsById.delete(id);
+                self.mapVM?.assetTrails?.untrack(asset);
+            });
+            //Update Asset/Team mappings only once after all changes
+            self._attachAssetsToMatchingTeams();
+
+            // Fetch shared default-asset mappings (runs after matching
+            // so we know which teams have multiple assets)
+            self._fetchSharedDefaultAssets();
+
+            myViewModel._markInitialFetchDone();
+        } catch (err) {
+            if (simulationGeneration !== simulatedExercise.generation()) return;
+            if (simulation && isSimulationUnavailable(err)) {
+                // The exercise backend refused this Beacon sign-in: go back
+                // to the real feed everywhere (endHere() refetches and
+                // tells the user).
+                console.warn("Simulated exercise feed unavailable, returning to the real feed:", err);
+                simulatedExercise.endHere('unavailable');
+                return;
+            }
+            console.error("Error fetching trackable assets:", err);
+            showAlert(simulation
+                ? 'Failed to fetch the simulated exercise positions. Showing the last positions received.'
+                : 'Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
         }
     }
 
@@ -2869,8 +2874,6 @@ function VM() {
             myViewModel.teamsLoading(false);
         }
     }
-
-    var assetDataRefreshInterlock = false
 
     var assetDataRefreshTimer = null
 
@@ -4595,6 +4598,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!alreadyTracked && !myViewModel.teamMatchesConfigFilters(team)) {
                 myViewModel.teamsById.delete(team.id());
                 myViewModel.teams.remove(team);
+                unlinkTeam(team);
             }
         };
         getSubject('teamCreated').subscribe(admitTeamIfInFilter);

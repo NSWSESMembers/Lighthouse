@@ -32,6 +32,12 @@ describe('construction', () => {
     expect(a.longitude()).toBeNull();
   });
 
+  it('has no position when constructed with null coordinates', () => {
+    const a = new Asset(assetData({ geometry: { coordinates: [null, null] } }), deps());
+    expect(a.latitude()).toBeNull();
+    expect(a.longitude()).toBeNull();
+  });
+
   it('defaults licensePlate to "-"', () => {
     const a = new Asset({ properties: {} }, deps());
     expect(a.licensePlate()).toBe('-');
@@ -117,6 +123,26 @@ describe('updateFromJson', () => {
     a.updateFromJson({ geometry: { coordinates: [999, undefined] } });
     expect(a.longitude()).toBe(999);
     expect(a.latitude()).toBe(-33.8); // preserved from construction
+  });
+
+  it('keeps the last position when the feed sends null coordinates', () => {
+    const a = new Asset(assetData(), deps());
+    a.updateFromJson({ geometry: { coordinates: [null, null] } });
+    expect(a.latitude()).toBe(-33.8);
+    expect(a.longitude()).toBe(151.2);
+  });
+
+  it('ignores a non-numeric axis and keeps the other', () => {
+    const a = new Asset(assetData(), deps());
+    a.updateFromJson({ geometry: { coordinates: [150.9, 'n/a'] } });
+    expect(a.longitude()).toBe(150.9);
+    expect(a.latitude()).toBe(-33.8);
+  });
+
+  it('handles a null geometry without throwing', () => {
+    const a = new Asset(assetData(), deps());
+    expect(() => a.updateFromJson({ geometry: null })).not.toThrow();
+    expect(a.latitude()).toBe(-33.8);
   });
 
   it('updates lastSeen', () => {

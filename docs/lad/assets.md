@@ -96,7 +96,7 @@ Click the **Show on map** button <img class="icon" src="images/icon-show-on-map.
 Assets are shown on two layers, under **Assets** in the map's **Layers** menu (see [Overlays](situation-map.md#overlays)):
 
 - **Matched against Teams**: radios and satellite trackers matched to a team in the Team Register. Only those that have reported a location in the last 24 hours are shown.
-- **Unmatched against Teams**: radios and satellite trackers not matched to a team, shown with grey text. Icons are faded if the asset hasn't reported in the last hour.
+- **Unmatched against Teams**: radios and satellite trackers not matched to a team in the Team Register, shown with grey text. This includes ones matched only to teams your filters hide, such as another unit's team, a stood-down team, or an Operations team when you only show Field teams. Icons are faded if the asset hasn't reported in the last hour.
   - This layer can slow LAD down, so turn it off again when you've finished with it.
 
 The register *focus* buttons can only zoom to teams that are on the map.
