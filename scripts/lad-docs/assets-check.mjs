@@ -372,13 +372,45 @@ check('asset fetches do not overlap, and a failed one does not block the next', 
   const { browser, page, feed } = await launch();
   try {
     feed.delayMs = 1000;
-    const start = feed.requests;
-    await page.evaluate(async () => {
+    // Count the page's own radio fetch() calls in flight at once. (Counting
+    // network requests would miss an overlap: Chrome holds back an
+    // identical GET while one is in flight.) Three calls while the first
+    // is running: one runs now, the other two fold into a single fetch
+    // straight after it. The 20 s asset cache is off for this, or the
+    // follow-up would read the first fetch's copy instead.
+    const counts = await page.evaluate(async () => {
       Object.keys(localStorage).filter((k) => k.includes('LighthouseFetched')).forEach((k) => localStorage.removeItem(k));
-      const vm = ko.dataFor(document.body);
-      await Promise.all([vm.fetchAllTrackableAssets(), vm.fetchAllTrackableAssets()]);
+      const setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) { if (!String(k).includes('LighthouseFetched')) setItem.call(this, k, v); };
+      const realFetch = window.fetch;
+      let inFlight = 0;
+      let maxInFlight = 0;
+      let total = 0;
+      window.fetch = async (...args) => {
+        if (!String(args[0]?.url || args[0]).includes('ResourceLocations/Radio')) return realFetch(...args);
+        total += 1;
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        try {
+          return await realFetch(...args);
+        } finally {
+          inFlight -= 1;
+        }
+      };
+      try {
+        const vm = ko.dataFor(document.body);
+        const calls = [vm.fetchAllTrackableAssets()];
+        await new Promise((r) => setTimeout(r, 100));
+        calls.push(vm.fetchAllTrackableAssets(), vm.fetchAllTrackableAssets());
+        await Promise.all(calls);
+      } finally {
+        Storage.prototype.setItem = setItem;
+        window.fetch = realFetch;
+      }
+      return { maxInFlight, total };
     });
-    assert(feed.requests - start === 1, `${feed.requests - start} radio requests for two overlapping fetches`);
+    assert(counts.maxInFlight === 1, `${counts.maxInFlight} radio fetches at once`);
+    assert(counts.total === 2, `${counts.total} radio fetches for three overlapping calls, expected 2`);
     feed.delayMs = 0;
     feed.mode = 'fail';
     await poll(page);
