@@ -56,7 +56,7 @@ import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
-import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
+import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
 import { buildJobSuggestionPool, buildTeamSuggestionPool, filterJobsBySearchTerm, filterTeamsBySearchTerm } from './utils/searchMatching.js';
 import { createSearchSuggest } from './utils/searchSuggest.js';
@@ -1748,25 +1748,16 @@ function VM() {
 
         // Defer execution to avoid blocking UI thread
         setTimeout(() => {
-            const all = self.trackableAssets?.() || [];
-            const desired = computeMatchedAssetsForTeam(team, all); // Set<Asset>
-
-            // Remove no-longer-matching
-            (team.trackableAssets() || []).slice().forEach(a => {
-                if (!desired.has(a)) {
-                    a?.matchingTeams?.remove?.(team);
-                    team.trackableAssets.remove(a);
-                }
-            });
-
-            // Add new matches
-            for (const a of desired) {
-                const has = (team.trackableAssets() || []).includes(a);
-                if (!has) {
-                    team.trackableAssets.push(a);
-                    a?.matchingTeams?.push?.(team);
-                }
+            // The team can be dropped before this runs (a pushed team outside
+            // the config filters is added then removed straight away). Match
+            // it now and nothing would ever re-check it, so its assets would
+            // be off both asset layers until a reload.
+            if (self.teamsById.get(team.id()) !== team) {
+                unlinkTeam(team);
+                return;
             }
+            const all = self.trackableAssets?.() || [];
+            setTeamAssets(team, computeMatchedAssetsForTeam(team, all));
         }, 0);
     };
 
@@ -4595,6 +4586,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!alreadyTracked && !myViewModel.teamMatchesConfigFilters(team)) {
                 myViewModel.teamsById.delete(team.id());
                 myViewModel.teams.remove(team);
+                unlinkTeam(team);
             }
         };
         getSubject('teamCreated').subscribe(admitTeamIfInFilter);

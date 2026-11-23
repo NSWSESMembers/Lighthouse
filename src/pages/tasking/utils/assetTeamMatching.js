@@ -114,6 +114,30 @@ export function assetIsForTeamHq(asset, hqId) {
     return String(exerciseHqId) === hqId;
 }
 
+// Make a team's asset list exactly `desired` (a Set of assets), keeping each
+// asset's matchingTeams in step with it.
+export function setTeamAssets(team, desired) {
+    (team.trackableAssets() || []).slice().forEach(a => {
+        if (!desired.has(a)) {
+            a?.matchingTeams?.remove?.(team);
+            team.trackableAssets.remove(a);
+        }
+    });
+    for (const a of desired) {
+        if (!(team.trackableAssets() || []).includes(a)) {
+            team.trackableAssets.push(a);
+            a?.matchingTeams?.push?.(team);
+        }
+    }
+}
+
+// Drop every asset link of a team LAD no longer tracks. Nothing re-matches
+// a team once it's out of the team list, so a link left on it would keep
+// the asset off the unmatched layer for good.
+export function unlinkTeam(team) {
+    setTeamAssets(team, new Set());
+}
+
 export function computeMatchedAssetsForTeam(team, allAssets) {
     const tokens = extractTeamTokens(team);
     if (!tokens.length) return new Set();
