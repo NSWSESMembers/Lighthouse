@@ -36,7 +36,7 @@ describe('createMarkerBatcher', () => {
         expect(addFn).toHaveBeenCalledWith(item2); // latest wins
     });
 
-    it('a scheduleRemove after a pending scheduleAdd for the same id cancels the add', () => {
+    it('a scheduleRemove after a pending scheduleAdd of the same item cancels the add', () => {
         const raf = stubRaf();
         const addFn = vi.fn();
         const removeFn = vi.fn();
@@ -49,7 +49,7 @@ describe('createMarkerBatcher', () => {
         expect(removeFn).toHaveBeenCalledWith(item);
     });
 
-    it('a scheduleAdd after a pending scheduleRemove for the same id cancels the remove', () => {
+    it('a scheduleAdd after a pending scheduleRemove of the same item cancels the remove', () => {
         const raf = stubRaf();
         const addFn = vi.fn();
         const removeFn = vi.fn();
@@ -60,6 +60,54 @@ describe('createMarkerBatcher', () => {
         raf.flush();
         expect(removeFn).not.toHaveBeenCalled();
         expect(addFn).toHaveBeenCalledWith(item);
+    });
+
+    it("a new item with an old item's id doesn't cancel the old item's pending remove", () => {
+        // An asset that leaves the feed and comes back before the frame
+        // runs is a new object with the same id: the old one's marker must
+        // still be removed, or it's left frozen beside the new one.
+        const raf = stubRaf();
+        const addFn = vi.fn();
+        const removeFn = vi.fn();
+        const batcher = createMarkerBatcher({ addFn, removeFn });
+        const oldItem = { id: () => 'a1', v: 'old' };
+        const newItem = { id: () => 'a1', v: 'new' };
+        batcher.scheduleRemove(oldItem);
+        batcher.scheduleAdd(newItem);
+        raf.flush();
+        expect(removeFn).toHaveBeenCalledWith(oldItem);
+        expect(addFn).toHaveBeenCalledWith(newItem);
+    });
+
+    it('removes every replaced item when an id flaps within one frame', () => {
+        const raf = stubRaf();
+        const addFn = vi.fn();
+        const removeFn = vi.fn();
+        const batcher = createMarkerBatcher({ addFn, removeFn });
+        const a = { id: () => 'a1', v: 'a' };
+        const b = { id: () => 'a1', v: 'b' };
+        const c = { id: () => 'a1', v: 'c' };
+        batcher.scheduleRemove(a);
+        batcher.scheduleAdd(b);
+        batcher.scheduleRemove(b);
+        batcher.scheduleAdd(c);
+        raf.flush();
+        expect(removeFn.mock.calls.map(([i]) => i.v)).toEqual(['a', 'b']);
+        expect(addFn.mock.calls.map(([i]) => i.v)).toEqual(['c']);
+    });
+
+    it("a remove of a different item doesn't cancel the pending add for its id", () => {
+        const raf = stubRaf();
+        const addFn = vi.fn();
+        const removeFn = vi.fn();
+        const batcher = createMarkerBatcher({ addFn, removeFn });
+        const oldItem = { id: () => 'a1', v: 'old' };
+        const newItem = { id: () => 'a1', v: 'new' };
+        batcher.scheduleAdd(newItem);
+        batcher.scheduleRemove(oldItem);
+        raf.flush();
+        expect(addFn).toHaveBeenCalledWith(newItem);
+        expect(removeFn).toHaveBeenCalledWith(oldItem);
     });
 
     it('flushes all removes before all adds', () => {
