@@ -11,6 +11,7 @@ export class AssetPopupViewModel {
     this.map = map;
     this.api = api;
     this._routeSubs = []
+    this.feedAgeText = ko.pureComputed(() => this.api.assetsFetchedAgo());
   }
 
   routeLoading = ko.observable(false);

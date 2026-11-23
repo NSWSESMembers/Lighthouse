@@ -16,16 +16,16 @@ export function buildAssetPopupKO() {
         Rego:&nbsp;<strong data-bind="text: licensePlate"></strong>
       </div>
 
-      <div data-bind="visible: lastSeenText">
-        Last seen:&nbsp;<span data-bind="text: lastSeenText"></span>
+      <div data-bind="visible: lastSeenText" title="When this radio or tracker last sent its position">
+        Position reported:&nbsp;<span data-bind="text: lastSeenText"></span>
         <span class="sat-icon ms-1"
            data-bind="visible: isSatellite, css: { 'sat-icon--inactive': !satelliteActive() }, attr: { title: satelliteIconTitle }"><i class="fas fa-satellite"></i><i class="fas fa-slash sat-icon__slash" data-bind="visible: !satelliteActive()"></i></span>
       </div>
 
-      <div data-bind="visible: talkgroup">
+      <div data-bind="visible: talkgroup" title="The talkgroup this radio is on, and when it last reported it">
         TG:&nbsp;<strong data-bind="text: talkgroup"></strong>
         <small data-bind="visible: talkgroupLastUpdatedText">
-          &nbsp;(<span data-bind="text: talkgroupLastUpdatedText"></span>)
+          &nbsp;<span data-bind="text: '(reported ' + talkgroupLastUpdatedText() + ')'"></span>
         </small>
       </div>
 
@@ -35,6 +35,10 @@ export function buildAssetPopupKO() {
 
       <div class="veh-pop__coords text-muted" data-bind="visible: latLngText">
         <code data-bind="text: latLngText"></code>
+      </div>
+
+      <div class="text-muted" data-bind="visible: $root.feedAgeText" title="When the details above were last refreshed from Beacon. This happens every 30 seconds.">
+        <span data-bind="text: 'Updated ' + $root.feedAgeText()"></span>
       </div>
     </div>
           <hr class="my-2" />

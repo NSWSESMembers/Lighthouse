@@ -30,7 +30,7 @@ function writeCache(key, data) {
   }
 }
 
-async function fetchRadioAssets(host, userId, token, signal, simulation, refreshToken) {
+async function fetchRadioAssets(host, userId, token, signal, simulation, refreshToken, fresh) {
   if (simulation) {
     // A CADence exercise is selected (Train/Test Beacon only, see
     // ../cadenceSimulation.js): its simulated positions replace Beacon's radio
@@ -39,7 +39,7 @@ async function fetchRadioAssets(host, userId, token, signal, simulation, refresh
     return fetchSimulatedRadioAssets(simulation, { host, token, signal, refreshToken });
   }
   const key = cacheKey(host, 'LighthouseFetchedRadioAssets');
-  const cached = readCache(key);
+  const cached = fresh ? null : readCache(key);
   if (cached) {
     return cached;
   }
@@ -50,9 +50,9 @@ async function fetchRadioAssets(host, userId, token, signal, simulation, refresh
   return merged;
 }
 
-async function fetchTeleAssets(host, userId, token, signal) {
+async function fetchTeleAssets(host, userId, token, signal, fresh) {
   const key = cacheKey(host, 'LighthouseFetchedTeleAssets');
-  const cached = readCache(key);
+  const cached = fresh ? null : readCache(key);
   if (cached) {
     return cached;
   }
@@ -91,10 +91,10 @@ function normaliseRadioAssets(features, exerciseHqId = null) {
   return assets;
 }
 
-async function returnAssetLocations(host, userId, token, signal, simulation, refreshToken) {
+async function returnAssetLocations(host, userId, token, signal, simulation, refreshToken, fresh) {
   const [radio, tele] = await Promise.allSettled([
-    fetchRadioAssets(host, userId, token, signal, simulation, refreshToken),
-    fetchTeleAssets(host, userId, token, signal),
+    fetchRadioAssets(host, userId, token, signal, simulation, refreshToken, fresh),
+    fetchTeleAssets(host, userId, token, signal, fresh),
   ]);
 
   // With a simulated exercise selected, a failed radio fetch rejects instead of
@@ -157,16 +157,18 @@ async function returnAssetLocations(host, userId, token, signal, simulation, ref
  * each simulated asset carries that HQ as `exerciseHqId`, so LAD only matches
  * it to teams assigned to that HQ. `refreshToken` (simulated feed only) gives the
  * newest Beacon token after a 401/403, see cadenceSimulation.js.
+ * `fresh` skips the 20 s cache (a user asked for new positions); the response
+ * is still cached for the next caller.
  *
  * @param {string[]} assetFilter  asset names to keep; empty/falsy returns everything
  * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
  *          simulation?: {exerciseId: string, copyId: string, participantHqId?: string}|null,
- *          refreshToken?: () => Promise<string|null>}} ctx
+ *          refreshToken?: () => Promise<string|null>, fresh?: boolean}} ctx
  * @returns {Promise<object[]>}
  */
 export async function filter(assetFilter, ctx = {}) {
-  const { host, userId = 'notPassed', token, signal, simulation = null, refreshToken } = ctx;
-  const response = await returnAssetLocations(host, userId, token, signal, simulation, refreshToken);
+  const { host, userId = 'notPassed', token, signal, simulation = null, refreshToken, fresh = false } = ctx;
+  const response = await returnAssetLocations(host, userId, token, signal, simulation, refreshToken, fresh);
   if (!assetFilter || assetFilter.length === 0) {
     return response;
   }

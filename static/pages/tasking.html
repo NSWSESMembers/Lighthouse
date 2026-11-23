@@ -226,11 +226,11 @@
                                     </button>
                             </ul>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh (also flashes on a live team update)" data-bind="
-                            click: fetchAllTeamData,
-                            disable: teamsLoading,
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh teams and asset positions (also flashes on a live team update)" data-bind="
+                            click: refreshTeamsAndAssets,
+                            disable: teamsLoading() || assetsRefreshing(),
                             flashOnChange: teamsLivePulse">
-                            <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading }"></i>
+                            <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading() || assetsRefreshing() }"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
                             data-bs-toggle="modal" data-bs-target="#configModal">
