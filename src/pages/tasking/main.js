@@ -1644,8 +1644,10 @@ function VM() {
     // layer; everything else is only drawable on the unmatched layer, so that
     // layer is switched on (and persisted, like a manual toggle) if needed.
     self.focusTrackableAsset = function (asset) {
-        const lat = +asset?.latitude?.();
-        const lng = +asset?.longitude?.();
+        // No position yet (null): +null is 0, so check before converting.
+        if (asset?.latitude?.() == null || asset?.longitude?.() == null) return;
+        const lat = +asset.latitude();
+        const lng = +asset.longitude();
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
         const mapVM = self.mapVM;
