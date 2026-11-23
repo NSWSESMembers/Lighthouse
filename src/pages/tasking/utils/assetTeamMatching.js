@@ -138,6 +138,17 @@ export function unlinkTeam(team) {
     setTeamAssets(team, new Set());
 }
 
+// True when none of the asset's teams is one LAD shows (`shownTeams`, a Set
+// of the teams passing the config filters). Teams outside the filters stay
+// in LAD's team list -- ones only known from an incident's taskings (another
+// unit's, or stood down), or ones that have left the team feed -- and are
+// still matched to assets, but drawn nowhere, so their assets go on the
+// unmatched layer rather than neither.
+export function isAssetUnmatched(asset, shownTeams) {
+    const teams = (typeof asset?.matchingTeams === 'function') ? asset.matchingTeams() : [];
+    return !(teams || []).some(t => shownTeams.has(t));
+}
+
 export function computeMatchedAssetsForTeam(team, allAssets) {
     const tokens = extractTeamTokens(team);
     if (!tokens.length) return new Set();

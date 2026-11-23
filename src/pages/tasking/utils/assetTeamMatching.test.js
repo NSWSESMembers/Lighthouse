@@ -3,7 +3,7 @@ import ko from 'knockout';
 import {
     normAssetName, splitTeamCallsignIntoParts, tokenVariantsFromPart,
     extractTeamTokens, scoreFuzzy, computeMatchedAssetsForTeam,
-    teamHqId, assetIsForTeamHq, setTeamAssets, unlinkTeam,
+    teamHqId, assetIsForTeamHq, setTeamAssets, unlinkTeam, isAssetUnmatched,
 } from './assetTeamMatching.js';
 
 describe('normAssetName', () => {
@@ -268,5 +268,34 @@ describe('unlinkTeam', () => {
         expect(team.trackableAssets()).toEqual([]);
         expect(a.matchingTeams()).toEqual([]);
         expect(b.matchingTeams()).toEqual([]);
+    });
+});
+
+describe('isAssetUnmatched', () => {
+    it('is unmatched with no teams', () => {
+        expect(isAssetUnmatched(linkedAsset('PAR33'), new Set())).toBe(true);
+    });
+
+    it('is matched when one of its teams is shown', () => {
+        const shown = linkedTeam('PAR33');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(shown, new Set([a]));
+        expect(isAssetUnmatched(a, new Set([shown]))).toBe(false);
+    });
+
+    it("is unmatched when its only teams aren't shown (e.g. known only from a tasking)", () => {
+        const hidden = linkedTeam('PAR33');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(hidden, new Set([a]));
+        expect(isAssetUnmatched(a, new Set())).toBe(true);
+    });
+
+    it('is matched when any one of several teams is shown', () => {
+        const hidden = linkedTeam('PAR33');
+        const shown = linkedTeam('PAR33 + PAR56');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(hidden, new Set([a]));
+        setTeamAssets(shown, new Set([a]));
+        expect(isAssetUnmatched(a, new Set([shown]))).toBe(false);
     });
 });

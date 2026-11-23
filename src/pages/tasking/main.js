@@ -56,7 +56,7 @@ import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
-import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam } from './utils/assetTeamMatching.js';
+import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam, isAssetUnmatched } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
 import { buildJobSuggestionPool, buildTeamSuggestionPool, filterJobsBySearchTerm, filterTeamsBySearchTerm } from './utils/searchMatching.js';
 import { createSearchSuggest } from './utils/searchSuggest.js';
@@ -1043,10 +1043,8 @@ function VM() {
 
     self.unmatchedTrackableAssets = ko.pureComputed(() => {
         const all = self.trackableAssets?.() || [];
-        return all.filter(a => {
-            const mt = (typeof a.matchingTeams === 'function') ? a.matchingTeams() : [];
-            return !mt || mt.length === 0;
-        });
+        const shownTeams = new Set(self.filteredTeamsAgainstConfig());
+        return all.filter(a => isAssetUnmatched(a, shownTeams));
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     self.sectorsLoading = ko.observable(false);
