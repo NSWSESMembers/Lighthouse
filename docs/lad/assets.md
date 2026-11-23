@@ -103,7 +103,13 @@ The register *focus* buttons can only zoom to teams that are on the map.
 
 ### Asset Popup
 
-Click an asset marker to see the radio or satellite tracker's details, such as when it was last seen, the team it's matched to, and that team's taskings. If the location comes from a satellite tracker, a satellite icon shows next to the last-seen time (crossed out if the tracker isn't active), with a **Satellite** line giving the tracker's class, status and battery (see [Satellite-Tracked Assets](#satellite-tracked-assets)). Each tasking has two buttons:
+Click an asset marker to see the radio or satellite tracker's details, such as when it last reported its position, the team it's matched to, and that team's taskings. If the location comes from a satellite tracker, a satellite icon shows next to the **Position reported** time (crossed out if the tracker isn't active), with a **Satellite** line giving the tracker's class, status and battery (see [Satellite-Tracked Assets](#satellite-tracked-assets)).
+
+**Position reported** is when the radio or tracker last sent its position. A long time ago means the asset has stopped reporting (out of range, switched off), so it may have moved since. The talkgroup has its own **reported** time.
+
+**Updated**, at the bottom of the details, is when they were last refreshed from Beacon. That happens every 30 seconds, so it normally reads **just now**. A time in minutes means Beacon can't be reached, and every asset marker may be out of date. To refresh straight away, use the Team Register's **Refresh Data** button (see [Register Controls](interface.md#register-controls)).
+
+Each tasking has two buttons:
 
 - **Route to Asset** (left): shows a road route from the team's current location to the incident with an approximate ETA.
 - **Open Incident in Remote Tab**: opens the incident in the Beacon [remote tab](getting-started.md#remote-beacon-tab).

@@ -1209,6 +1209,9 @@ export function MapVM(Lmap, root) {
   const PopupStuff = {
     getToken: () => root.getToken(),
 
+    // Asset popup's "Updated ..." line
+    assetsFetchedAgo: () => root.assetsFetchedAgo?.() || '',
+
     flyToBounds: (bounds, { opts }) => {
       self._flyingToBounds = true;
       self.map.flyToBounds(bounds, opts);

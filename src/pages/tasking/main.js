@@ -16,6 +16,7 @@ require('../lib/shared_chrome_code.js'); // side-effect
 
 import { showAlert } from './components/windowAlert.js';
 import { describeBeaconError } from './utils/beaconError.js';
+import { fmtRelative } from './utils/common.js';
 
 import { ResizeDividers } from './resize.js';
 import { initPopupAutoPan } from './utils/popupAutoPan.js';
@@ -543,6 +544,9 @@ function VM() {
 
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
+    // Assets: a Refresh press in progress, and when the feed last loaded
+    self.assetsRefreshing = ko.observable(false);
+    self.assetsFetchedAt = ko.observable(null);
     self.jobsLoading = ko.observable(true);
     self.tagsLoading = ko.observable(true);
 
@@ -602,6 +606,15 @@ function VM() {
     setInterval(() => {
         self.relativeUpdateTick30s(self.relativeUpdateTick30s() + 1);
     }, 1000 * 30);
+
+    // Asset popup: when the feed last loaded. It's polled every 30s, so
+    // anything under a minute is "just now"; older means fetches are failing.
+    self.assetsFetchedAgo = ko.pureComputed(() => {
+        self.relativeUpdateTick30s();
+        const at = self.assetsFetchedAt();
+        if (!at) return '';
+        return Date.now() - at.getTime() < 60000 ? 'just now' : fmtRelative(at);
+    });
 
     self.allTags = ko.observableArray([]);
 
@@ -2652,10 +2665,14 @@ function VM() {
     // older (or failed) one undoing a newer one. A call while a fetch is
     // running isn't dropped -- one more fetch runs when it finishes, so a
     // simulated exercise chosen mid-fetch still gets a fetch of its own.
+    // `fresh` (the Refresh buttons) skips the 20s shared asset cache; asked
+    // for mid-fetch, it applies to the follow-up fetch.
     let assetFetchInFlight = null;
     let assetFetchAgain = false;
-    self.fetchAllTrackableAssets = function () {
+    let assetFetchFresh = false;
+    self.fetchAllTrackableAssets = function ({ fresh = false } = {}) {
         if (tabDormancy.isDormant()) return Promise.resolve();
+        if (fresh) assetFetchFresh = true;
         if (assetFetchInFlight) {
             assetFetchAgain = true;
             return assetFetchInFlight;
@@ -2664,7 +2681,9 @@ function VM() {
             try {
                 do {
                     assetFetchAgain = false;
-                    await fetchTrackableAssetsOnce();
+                    const freshThisTime = assetFetchFresh;
+                    assetFetchFresh = false;
+                    await fetchTrackableAssetsOnce(freshThisTime);
                 } while (assetFetchAgain && !tabDormancy.isDormant());
             } finally {
                 assetFetchInFlight = null;
@@ -2673,7 +2692,25 @@ function VM() {
         return assetFetchInFlight;
     };
 
-    async function fetchTrackableAssetsOnce() {
+    // Refresh button: fetch now, skipping the cache, and start the 30s
+    // interval again from here (if it's running yet).
+    self.refreshAssetsNow = async function () {
+        if (tabDormancy.isDormant()) return;
+        if (assetDataRefreshTimer) startAssetDataRefreshTimer();
+        self.assetsRefreshing(true);
+        try {
+            await self.fetchAllTrackableAssets({ fresh: true });
+        } finally {
+            self.assetsRefreshing(false);
+        }
+    };
+
+    self.refreshTeamsAndAssets = function () {
+        self.fetchAllTeamData();
+        self.refreshAssetsNow();
+    };
+
+    async function fetchTrackableAssetsOnce(fresh) {
         const t = await getToken();   // blocks here until token is ready
         // With a simulated exercise chosen the radio half of the feed
         // comes from the exercise, so the first fetch waits until the
@@ -2686,7 +2723,7 @@ function VM() {
         const simulation = simulatedExercise.feedSelection();
         const simulationGeneration = simulatedExercise.generation();
         try {
-            const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken }));
+            const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken, fresh }));
             if (simulationGeneration !== simulatedExercise.generation()) return;
             if (simulation) {
                 simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);
@@ -2713,6 +2750,7 @@ function VM() {
             // so we know which teams have multiple assets)
             self._fetchSharedDefaultAssets();
 
+            self.assetsFetchedAt(new Date());
             myViewModel._markInitialFetchDone();
         } catch (err) {
             if (simulationGeneration !== simulatedExercise.generation()) return;
