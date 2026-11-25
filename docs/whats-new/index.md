@@ -18,6 +18,12 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Council flood systems on the map
+
+*25 November 2026*
+
+- **New Council Systems layers.** The Layers menu has a new **Council Systems** section with data from councils' own flood systems. **Parramatta FloodSmart** shows City of Parramatta's flood warning areas shaded by what its flood model forecasts for the next 5 hours, which key assets the model forecasts to flood, forecast flood hazard (H1 to H6) and catchment rainfall. **Northern Beaches FLASH** shows Northern Beaches Council's catchment rainfall. Everything from a flood model is labelled as a forecast: it isn't an observed level or a warning. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
+
 ## Asset pins stay on the map
 
 *23 November 2026*

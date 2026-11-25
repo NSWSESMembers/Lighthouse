@@ -99,6 +99,7 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerPowerOutagesLayers } from "./mapLayers/powerOutages.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
+import { registerFloodSmartLayers } from "./mapLayers/floodsmart.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
 import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
@@ -433,6 +434,7 @@ map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 7
 // Font Awesome icon for each section of the Layers menu.
 const OVERLAY_GROUP_ICONS = {
     "Collaborative Layers": "fa-users",
+    "Council Systems": "fa-landmark",
     "Forecasts": "fa-cloud-sun",
     "Historical Imagery": "fa-history",
     "Infrastructure": "fa-city",
@@ -3149,6 +3151,7 @@ function VM() {
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
+    registerFloodSmartLayers(self, getToken);
     registerTerrainLayers(self, map);
     registerPastFloodLayers(self);
     registerBOMLandWarningsLayer(self, sourceUrl);
@@ -3462,8 +3465,19 @@ function VM() {
                     body.appendChild(incidentsBtn);
                 }
 
-                // Build layer toggle buttons
-                defs.forEach(({ key, statusKey, label, layer, visibleByDefault }) => {
+                // Build layer toggle buttons, with a sub-heading where a run of
+                // layers shares a subgroup (e.g. one council system's layers)
+                let subgroup = null;
+                defs.forEach(({ key, statusKey, label, layer, visibleByDefault, subgroup: sub }) => {
+                    if (sub && sub !== subgroup) {
+                        const subHeader = document.createElement("div");
+                        subHeader.className = "ld-subgroup-header";
+                        subHeader.dataset.subgroup = sub;
+                        subHeader.textContent = sub;
+                        body.appendChild(subHeader);
+                    }
+                    subgroup = sub || null;
+
                     const stored = localStorage.getItem(`ov.${key}`);
                     const saved = (stored === null)
                         ? (visibleByDefault === true)
@@ -3478,6 +3492,7 @@ function VM() {
                         (saved ? "btn-outline-secondary active" : "btn-outline-secondary");
                     obtn.dataset.key = key;
                     obtn.dataset.label = label;
+                    if (sub) obtn.dataset.subgroup = sub;
                     obtn.innerHTML = `
                         <span class="me-2">${label}</span>
                         <span class="ms-auto">
@@ -3977,6 +3992,11 @@ function VM() {
                             : cell.dataset.group === section;
                     show(btn, visible);
                     anyRow ||= visible;
+                });
+                // A sub-heading shows while any of its layers do
+                cell.querySelectorAll(".ld-subgroup-header").forEach((h) => {
+                    const rows = [...cell.querySelectorAll(".ld-overlay-btn")].filter((b) => b.dataset.subgroup === h.dataset.subgroup);
+                    show(h, rows.some((b) => b.style.display !== "none"));
                 });
                 show(cell, anyRow);
                 // Group headers label mixed lists; one group's own section has its name as the title
