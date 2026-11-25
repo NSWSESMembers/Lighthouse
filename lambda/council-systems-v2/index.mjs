@@ -219,8 +219,10 @@ export const handler = async (event) => {
   const council = COUNCILS[route.council];
   const key = [route.council, route.dataset, route.item].filter(Boolean).join('/');
 
+  // `sub` and `platform` (prod/train/dev, from the token's issuer) are set by the authorizer.
   const userId = event?.requestContext?.authorizer?.lambda?.sub || 'unknown';
-  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'council-systems-v2', userId, key }));
+  const platform = event?.requestContext?.authorizer?.lambda?.platform || 'unknown';
+  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'council-systems-v2', userId, platform, key }));
 
   try {
     const state = await getState(key, dataset);
