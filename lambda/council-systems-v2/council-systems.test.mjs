@@ -456,11 +456,14 @@ samplegrid000078408.ts
       .toEqual({ imageUrl: null, takenAt: new Date(NOW - 24500).toISOString(), offline: true });
   });
 
-  it("lists Clarence's grid cameras as approximate, with the live video, without fetching", async () => {
+  it("lists Clarence's grid cameras with the live video, without fetching", async () => {
     const features = await cameraList('clarence');
-    const grid = features.filter((f) => f.properties.approximate);
+    const grid = features.filter((f) => f.properties.liveUrl);
     expect(grid.map((f) => f.properties.id)).toEqual(['harwood', 'lilydale', 'palmersisland', 'rogans', 'sandycrossing', 'maclean', 'boothbys']);
     for (const f of grid) expect(f.properties.liveUrl).toMatch(/^http:\/\/180\.150\.8\.170:5080\/LiveApp\/play\.html\?name=/);
+    // Only Palmer's Island (off) has no bearing yet, so only it is approximate.
+    expect(features.filter((f) => f.properties.approximate).map((f) => f.properties.id)).toEqual(['palmersisland']);
+    expect(features.find((f) => f.properties.id === 'rogans').properties).toMatchObject({ bearing: 31.83, fov: null });
   });
 });
 

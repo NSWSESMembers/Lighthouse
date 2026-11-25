@@ -31,12 +31,9 @@
  * The page's water-level charts (Bluff Bridge, Esk River) aren't used: their
  * levels have no stated datum.
  *
- * Positions: MHL's station page for Grafton (204400), OpenStreetMap for
- * Bluff Bridge. The council doesn't publish where the "Other Locations"
- * cameras are, so they're approximate: the bridge or road of the same name
- * in NSW Spatial's road data (Rogans Bridge: MHL's gauge there, Sandy
- * Crossing: the place name's nearest bridge, Maclean Bridge: a guess at the
- * Lawrence Road bridge).
+ * Positions and which way each camera looks were checked against its image
+ * on the map by hand. Palmer's Island's camera is off, so its position is
+ * still a guess from the place name (approximate) and it has no bearing.
  */
 
 import { cameraDataset } from './cameras.mjs';
@@ -52,8 +49,9 @@ const CAMERAS = [
   {
     id: 'princestreet',
     name: 'Prince Street, Grafton (Clarence River)',
-    lat: -29.6938,
-    lng: 152.9317,
+    lat: -29.6933466,
+    lng: 152.9318394,
+    bearing: 219.63,
     gaugeUrl: 'https://mhlfit.net/Station-204400',
     timelapseUrl: mhlAnimationUrl('grafton', 12),
     latest: async ({ fetchText }) => latestMhlImage(await fetchText(mhlAnimationUrl('grafton', 1)), 'grafton'),
@@ -61,8 +59,9 @@ const CAMERAS = [
   {
     id: 'bluffbridge',
     name: 'Bluff Bridge, Orara Way (Orara River)',
-    lat: -29.9368793,
-    lng: 152.9842874,
+    lat: -29.9363956,
+    lng: 152.9848994,
+    bearing: 232.29,
     latest: async () => ({ imageUrl: 'https://www.envault.com.au/api?contentUrl=6a435e358e530', takenAt: null }),
   },
 ];
@@ -75,18 +74,19 @@ const LIVE_PAGE = `${LIVE_SERVER}/play.html?name=${LIVE_NAME}`;
 const COLUMNS = [{ x: 0, w: 613 }, { x: 637, w: 628 }, { x: 1289, w: 631 }];
 const ROWS = [{ y: 0, h: 314 }, { y: 397, h: 345 }, { y: 797, h: 283 }];
 
-// [id, name (as in the grid), column, row, lat, lng, gauge or null]
+// [id, name (as in the grid), column, row, lat, lng, bearing, gauge or null].
+// No bearing: the position is a guess, so it's approximate.
 const GRID_CAMERAS = [
-  ['harwood', 'Harwood Bridge', 0, 0, -29.43009, 153.2413, null],
-  ['lilydale', 'Lilydale Bridge', 1, 0, -29.56693, 152.60878, null],
-  ['palmersisland', "Palmer's Island", 2, 0, -29.4321, 153.26563, null],
-  ['rogans', 'Rogans Bridge', 0, 1, -29.6192, 152.8845, 'https://mhlfit.net/Station-204414'],
-  ['sandycrossing', 'Sandy Crossing', 1, 1, -29.76579, 153.09361, null],
-  ['maclean', 'Maclean Bridge', 2, 1, -29.46499, 153.19663, null],
-  ['boothbys', 'Boothbys', 0, 2, -29.6171, 153.0246, null],
-].map(([id, name, col, row, lat, lng, gaugeUrl]) => ({
+  ['harwood', 'Harwood Bridge', 0, 0, -29.4333167, 153.2394806, 68.51, null],
+  ['lilydale', 'Lilydale Bridge', 1, 0, -29.5480375, 152.6730958, 337.01, null],
+  ['palmersisland', "Palmer's Island", 2, 0, -29.4321, 153.26563, null, null],
+  ['rogans', 'Rogans Bridge', 0, 1, -29.6221056, 152.8823111, 31.83, 'https://mhlfit.net/Station-204414'],
+  ['sandycrossing', 'Sandy Crossing', 1, 1, -29.7648639, 153.0949389, 64.49, null],
+  ['maclean', 'Maclean Bridge', 2, 1, -29.465875, 153.1956528, 243.66, null],
+  ['boothbys', 'Boothbys', 0, 2, -29.6151028, 153.0193139, 41.06, null],
+].map(([id, name, col, row, lat, lng, bearing, gaugeUrl]) => ({
   id, name, lat, lng, gaugeUrl,
-  approximate: true,
+  ...(bearing === null ? { approximate: true } : { bearing }),
   liveUrl: LIVE_PAGE,
   latest: (fetchers) => liveStill(LIVE_VIDEO, { ...COLUMNS[col], ...ROWS[row] }, fetchers),
 }));
