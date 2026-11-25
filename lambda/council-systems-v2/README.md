@@ -1,8 +1,10 @@
 # Council Systems Lambda (v2)
 
 `GET /lad_v2/council/{council}/{dataset}` returns one dataset from a council's
-own system as a GeoJSON FeatureCollection. It's used by the
-tasking map's **Council Systems** overlays (`src/pages/tasking/mapLayers/floodsmart.js`),
+own system as a GeoJSON FeatureCollection, and `GET .../{dataset}/{item}` one
+item of a dataset that has them (a camera's latest image). It's used by the
+tasking map's **Council Systems** overlays (`src/pages/tasking/mapLayers/floodsmart.js`
+and `councilCameras.js`),
 through `src/shared/councilSystems.js`. Going through the Lambda means the
 extension needs no permission for each council's site and gets no CORS errors
 from them.
@@ -15,12 +17,17 @@ from them.
 | `/lad_v2/council/parramatta/flood-hazard` | Australian flood hazard categories H1-H6 (AIDR Guideline 7-3), worked out from City of Parramatta's flood model **forecast** maximum depth and velocity, on a ~25 m grid (Lizard raster data, needs the Lizard key) |
 | `/lad_v2/council/parramatta/catchment-rainfall` | City of Parramatta FloodSmart rainfall totals per catchment, measured and forecast (Lizard GeoServer WFS) |
 | `/lad_v2/council/northernbeaches/catchment-rainfall` | Northern Beaches Council FLASH rainfall totals per catchment, measured and forecast (Lizard GeoServer WFS) |
+| `/lad_v2/council/tweed/flood-cameras` | Tweed Shire Council's 13 flood monitoring cameras: name, position, river gauge. From the list in `tweed.mjs`: Tweed's site isn't asked |
+| `/lad_v2/council/tweed/flood-cameras/{id}` | One Tweed camera's latest image and when it was taken, read from that camera's page on `floodcam.tweed.nsw.gov.au` (no API: see `tweed.mjs`) |
+| `/lad_v2/council/clarence/flood-cameras` (and `/{id}`) | Clarence Valley Council's 9 flood cameras: Prince Street, Grafton (Manly Hydraulics Laboratory, latest image read from MHL's animation page), Bluff Bridge (Envault, one fixed latest-image URL), and seven published only as one live video, a grid of them: each one's still is cut from the video's newest frame with ffmpeg (`videostill.mjs`). Palmer's Island (off) has an approximate position and no bearing yet |
+| `/lad_v2/council/bellingen/flood-cameras` (and `/{id}`) | Bellingen Shire Council's bridge flood cameras on webcam.io (latest image read from its `latest.jpg` redirect with a HEAD request) |
+| `/lad_v2/council/coffsharbour/flood-cameras` (and `/{id}`) | City of Coffs Harbour's Edward Sharp Bridge camera (DisasterWatch, one fixed latest-image URL; its time from a HEAD request) |
 
 Anything else is a 404. Everything is public data except Parramatta's forecast
 alerts and flood hazard, which use a Lizard API key (below).
 
 It only runs when someone asks. Each dataset is cached in memory and in S3 for
-its own TTL (rainfall 2 minutes, warning areas 10,
+its own TTL (rainfall 2 minutes, a camera's latest image 5, warning areas 10,
 flood hazard 15; the warning area shapes are kept for 6 hours), so
 however many people have a layer on, the council's system is asked at most once
 per TTL. If the council's system fails or times out, the last good copy is
@@ -149,10 +156,21 @@ Check what a Lizard portal makes public on that council's own portal
 
 Otherwise write a module like `parramatta.mjs` exporting
 `{ name, system, datasets: { [dataset]: { ttlSeconds, load } } }`, where
-`load(fetchJson, now)` returns GeoJSON features, and add it to `COUNCILS` in
+`load(fetchJson, now, { fetchText, fetchBytes, fetchHead })` returns GeoJSON
+features (`fetchText` for a council page with no API, `fetchBytes` for a
+binary download such as a video segment, `fetchHead` for a HEAD request that
+doesn't follow redirects), and add it to `COUNCILS` in
 `councils.mjs`. Add tests next to the existing ones and redeploy: the route
 already covers it. Then add the overlay in `src/pages/tasking/mapLayers/`
 under the "Council Systems" menu group.
+
+A dataset whose items are fetched one at a time when someone asks (a
+camera's latest image) also has
+`item: { ttlSeconds, has(id), load(id, { fetchJson, fetchText, fetchBytes, fetchHead, now }) }`:
+`.../{dataset}/{id}` is a 404 unless `has(id)`, and each item is cached on
+its own (ids are lower case). Another council's flood cameras: a module like
+`bellingen.mjs` using `cameraDataset` (`cameras.mjs`), then one
+`registerCouncilCamerasLayer` call in `councilCameras.js`.
 
 ## Response
 
@@ -171,6 +189,15 @@ Feature properties:
 
 - `warning-areas`: `name`, `description` (polygons)
 - `water-levels`: `id`, `name`, `value`, `unit` (`m`), `datum` (`AHD`), `observedAt` (points)
+- `flood-cameras`: `id`, `name`, `gaugeUrl` and `timelapseUrl` (or `null`), `liveUrl` (the council's
+  live video page, for cameras cut from one), `approximate` (`true` when the council doesn't publish the
+  position), `bearing` and `fov` (which way the camera looks and how wide, in degrees, worked out from its
+  image; `fov` `null` for the default), `latestPath` (where the extension asks for the camera's latest
+  image, under `/lad_v2/council/`) (points)
+- `flood-cameras/{id}`: one point with those and `imageUrl` (on the camera's own site, or for a still cut
+  from a video the JPEG itself as a `data:` URL), `takenAt` (ISO, or `null` when the time is only stamped
+  on the image), and `offline: true` with `imageUrl: null` when the camera is blank in the video;
+  `meta.item` is the camera id
 - `catchment-rainfall`: `name`, `anchor` (`[lng, lat]` label point or `null`), `totals` in mm, keyed as in
   `RAINFALL_FIELDS` in `floodsmart.mjs` (`since9am`, `last1hr`, ..., `next3hr`, ...): only the ones that
   council's table has (polygons)
@@ -184,6 +211,12 @@ Feature properties:
 | `parramatta.mjs` | City of Parramatta FloodSmart: URLs and parsers |
 | `northernbeaches.mjs` | Northern Beaches Council FLASH (Lizard, like FloodSmart) |
 | `floodsmart.mjs` | FloodSmart catchment rainfall, shared by the councils |
+| `cameras.mjs` | A council's flood cameras as a dataset: the list and the per-camera route |
+| `tweed.mjs` | Tweed Shire Council flood cameras: the camera list and the camera page parser |
+| `clarence.mjs` | Clarence Valley Council flood cameras (MHL, Envault, the live video grid) |
+| `videostill.mjs` | A still cut from a live HLS video with ffmpeg: the newest segment's first frame, one camera's box |
+| `bellingen.mjs` | Bellingen Shire Council bridge flood cameras (webcam.io) |
+| `coffsharbour.mjs` | City of Coffs Harbour bridge camera (DisasterWatch) |
 | `geometry.mjs` | Polygon simplification (about 1 m), for councils' survey-detail polygons |
 | `council-systems.test.mjs` | Unit tests, run by `npm test` from the repo root (invented data) |
 
@@ -206,12 +239,18 @@ so on), in `ap-southeast-2`.
 2. **Configuration**:
    - **Timeout**: 29 seconds (API Gateway's limit is 30). Each upstream request gets 8 seconds
      (the flood hazard rasters 20), plus the S3 read and write.
-   - **Memory**: 512 MB (the flood hazard grids).
+   - **Memory**: 1024 MB (the flood hazard grids, and decoding a 1080p video frame).
+   - **Layer**: ffmpeg at `/opt/bin/ffmpeg`, for the Clarence video cameras. `LH-ffmpeg` is a static
+     x86_64 build (johnvansickle.com's ffmpeg-release-amd64-static, checked against its published md5):
+     a zip of `bin/ffmpeg` and the build's `GPLv3.txt`, published with
+     `aws lambda publish-layer-version --layer-name LH-ffmpeg --compatible-runtimes nodejs22.x --compatible-architectures x86_64 --license-info GPL-3.0-or-later --zip-file fileb://ffmpeg-layer.zip`
+     and added to the function. Without it the video cameras fail; nothing else needs it.
    - **Environment variables**:
      - `BUCKET_NAME` (required for the S3 cache): an existing private bucket is fine, for example the
        default-assets bucket. Without it the cache only lives in each warm instance's memory.
      - `CACHE_PREFIX` (optional): default `council-systems/`.
      - `FETCH_TIMEOUT_MS` (optional): default `8000`.
+     - `FFMPEG_PATH` (optional): default `/opt/bin/ffmpeg`, from the layer.
 3. **Permissions**: give the function's role `s3:GetObject` and
    `s3:PutObject` on `arn:aws:s3:::<bucket>/council-systems/*`, and
    `secretsmanager:GetSecretValue` on the `council-systems/lizard` secret.
@@ -229,5 +268,9 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   https://lambda.lighthouse-extension.com/lad_v2/council/parramatta/water-levels | jq '.meta, (.features | length)'
 ```
 
-`meta.ok` should be `true` with around 20 gauges. The CloudWatch logs have a
+`meta.ok` should be `true` with around 20 gauges. For a Tweed camera,
+`.../council/tweed/flood-cameras/wooyungroad` should have an `imageUrl` and a
+`takenAt` within the last 15 minutes or so, and a Clarence video camera,
+`.../council/clarence/flood-cameras/rogans`, an `imageUrl` starting
+`data:image/jpeg`. The CloudWatch logs have a
 `source_failed` line for each failed fetch from a council's system.

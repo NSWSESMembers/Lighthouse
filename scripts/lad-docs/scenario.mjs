@@ -839,6 +839,7 @@ function councilSystems(now) {
       ],
       meta: meta('catchment-rainfall'),
     },
+    ...councilCameras(lat, lng, iso),
     'northernbeaches/catchment-rainfall': {
       type: 'FeatureCollection',
       features: [
@@ -848,6 +849,66 @@ function councilSystems(now) {
       meta: { ...meta('catchment-rainfall', 'northernbeaches', 'Northern Beaches Council'), system: 'FLASH' },
     },
   };
+}
+
+// Made-up council flood cameras as the Lambda returns them
+// (lambda/council-systems-v2/tweed.mjs): the list, then each camera's latest
+// image. One camera's last image is old (not updating) and its position
+// approximate; one has no time (it's only stamped on the image); one has no
+// latest image (the camera site is down), so its popup shows the error; the
+// last two are cut from a live video (clarence.mjs), one sent inline as a data
+// URL, the other off (blank in the video). All but Mockford Ford have a view
+// (bearing and width) for the map's cone.
+function councilCameras(lat, lng, iso) {
+  const meta = (item) => ({
+    council: 'tweed', councilName: 'Tweed Shire Council', system: 'Flood monitoring cameras', dataset: 'flood-cameras',
+    ...(item ? { item } : {}), generatedAt: iso(-0.03), ok: true, lastGoodAt: iso(-0.03),
+  });
+  const cams = [
+    ['samplecreekbridge', 'Sample Creek Bridge', 0.009, -0.022, -0.1],
+    ['exampleroad', 'Example Road causeway', -0.008, 0.016, -2.3],
+    ['mockfordford', 'Mockford Ford', -0.004, -0.032, 'unstamped'],
+    ['testfordweir', 'Testford Weir', 0.003, 0.03, null],
+    ['samplelanebridge', 'Samplelane Bridge', 0.014, 0.008, -0.01, 'inline'],
+    ['mockvillecrossing', 'Mockville Crossing', -0.013, -0.01, -0.01, 'offline'],
+  ];
+  const VIEWS = { samplecreekbridge: [32, 60], exampleroad: [200, 75], testfordweir: [110, 45], samplelanebridge: [300, 60], mockvillecrossing: [150, 90] };
+  const timelapseUrl = (id) => `https://floodcam.example.test/CameraImages.aspx?folder=${id}&viewmode=timelapse`;
+  const point = ([id, name, dy, dx], properties) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [lng + dx, lat + dy] },
+    properties: {
+      id, name, timelapseUrl: timelapseUrl(id),
+      ...(id === 'exampleroad' ? { approximate: true } : {}),
+      ...(VIEWS[id] ? { bearing: VIEWS[id][0], fov: VIEWS[id][1] } : {}),
+      ...(id === 'samplelanebridge' ? { liveUrl: 'http://video.example.test/LiveApp/play.html?name=demogrid' } : {}),
+      ...properties,
+    },
+  });
+  const latest = (c, i) => {
+    if (c[5] === 'inline') return { imageUrl: `demo-camera-inline:${i}`, takenAt: iso(c[4]) }; // mockBeacon.mjs makes it a data URL
+    if (c[5] === 'offline') return { imageUrl: null, takenAt: iso(c[4]), offline: true };
+    return { imageUrl: `https://lambda.lighthouse-extension.com/demo-camera/${i}.jpg`, takenAt: c[4] === 'unstamped' ? null : iso(c[4]) };
+  };
+  const out = {
+    'tweed/flood-cameras': {
+      type: 'FeatureCollection',
+      features: cams.map((c, i) => point(c, {
+        gaugeUrl: i === 0 ? 'https://gauges.example.test/sample-creek' : null,
+        latestPath: `tweed/flood-cameras/${c[0]}`,
+      })),
+      meta: meta(),
+    },
+  };
+  cams.forEach((c, i) => {
+    if (c[4] == null) return; // 404: the popup's error
+    out[`tweed/flood-cameras/${c[0]}`] = {
+      type: 'FeatureCollection',
+      features: [point(c, latest(c, i))],
+      meta: meta(c[0]),
+    };
+  });
+  return out;
 }
 
 // A made-up forecast flood hazard grid (lambda/council-systems-v2/hazard.mjs

@@ -6,6 +6,9 @@
  *     (see councils.mjs), with
  *     `meta = { council, councilName, system, dataset, generatedAt, ok,
  *               lastGoodAt, error? }`.
+ * GET /lad_v2/council/{council}/{dataset}/{item}
+ *   → the same for one item of a dataset that has them (e.g. one camera's
+ *     latest image), with `meta.item`. Each item is cached on its own.
  *
  * Fetched on demand only: nothing runs while nobody has the layer on.
  * A request uses, in order:
@@ -23,6 +26,8 @@
  *                     survive cold starts; without it only 1 is used)
  *   CACHE_PREFIX      key prefix, default council-systems/
  *   FETCH_TIMEOUT_MS  per upstream request, default 8000
+ *   FFMPEG_PATH       ffmpeg for stills cut from a live video
+ *                     (videostill.mjs), default /opt/bin/ffmpeg (a layer)
  */
 
 import { gzipSync } from 'node:zlib';
@@ -100,15 +105,33 @@ const isFresh = (state, ttlMs, now) =>
 // fetchJson(url, { headers, timeoutMs }): extra headers are a login (e.g. a
 // Lizard key), so a redirect is refused rather than followed somewhere else
 // with it. timeoutMs overrides FETCH_TIMEOUT_MS for a big download.
-function makeFetchJson(fetchImpl) {
+// fetchText is the same for a council page with no API (an HTML page).
+// fetchBytes is the same for a binary download, as a Buffer (a video
+// segment; a `range` header asks for only its start).
+// fetchHead(url) is a HEAD request that doesn't follow redirects, for an
+// image's time (its Last-Modified, or where a "latest" URL redirects).
+function makeFetchHead(fetchImpl) {
+  return async (url) => {
+    const res = await fetchImpl(url, {
+      method: 'HEAD',
+      headers: FETCH_HEADERS,
+      redirect: 'manual',
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (res.status >= 400) throw new Error(`HTTP ${res.status}`);
+    return res;
+  };
+}
+
+function makeFetch(fetchImpl, read, accept) {
   return async (url, { headers, timeoutMs } = {}) => {
     const res = await fetchImpl(url, {
-      headers: { ...FETCH_HEADERS, accept: 'application/json', ...headers },
+      headers: { ...FETCH_HEADERS, accept, ...headers },
       ...(headers ? { redirect: 'error' } : {}),
       signal: AbortSignal.timeout(timeoutMs || FETCH_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    return res[read]();
   };
 }
 
@@ -119,7 +142,11 @@ function makeFetchJson(fetchImpl) {
 export async function refresh(dataset, previous, { fetchImpl = fetch, now = Date.now(), key = '' } = {}) {
   const nowIso = new Date(now).toISOString();
   try {
-    const features = await dataset.load(makeFetchJson(fetchImpl), now);
+    const features = await dataset.load(makeFetch(fetchImpl, 'json', 'application/json'), now, {
+      fetchText: makeFetch(fetchImpl, 'text', 'text/html'),
+      fetchBytes: async (url, options) => Buffer.from(await makeFetch(fetchImpl, 'arrayBuffer', '*/*')(url, options)),
+      fetchHead: makeFetchHead(fetchImpl),
+    });
     return { generatedAt: nowIso, ok: true, lastGoodAt: nowIso, error: null, features };
   } catch (err) {
     const error = err?.name === 'TimeoutError'
@@ -137,18 +164,27 @@ export async function refresh(dataset, previous, { fetchImpl = fetch, now = Date
 }
 
 /**
- * "/lad_v2/council/parramatta/water-levels" -> { council, dataset }, or null.
+ * "/lad_v2/council/parramatta/water-levels" -> { council, dataset }, and
+ * ".../tweed/flood-cameras/oaksave" -> { council, dataset, item }, or null.
  * Exported for tests.
  */
 export function parsePath(path) {
-  const m = String(path || '').match(/\/council\/([a-z0-9-]+)\/([a-z0-9-]+)\/?$/);
-  return m ? { council: m[1], dataset: m[2] } : null;
+  const m = String(path || '').match(/\/council\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?\/?$/);
+  if (!m) return null;
+  return m[3] ? { council: m[1], dataset: m[2], item: m[3] } : { council: m[1], dataset: m[2] };
 }
 
-/** The dataset a route asks for, or null. */
+/** The dataset a route asks for (one item of it, if it names one), or null. */
 function routeDataset(route) {
   const council = route && Object.hasOwn(COUNCILS, route.council) ? COUNCILS[route.council] : null;
-  return council && Object.hasOwn(council.datasets, route.dataset) ? council.datasets[route.dataset] : null;
+  const dataset = council && Object.hasOwn(council.datasets, route.dataset) ? council.datasets[route.dataset] : null;
+  if (!dataset || !route.item) return dataset;
+  const { item } = dataset;
+  if (!item?.has(route.item)) return null;
+  return {
+    ttlSeconds: item.ttlSeconds,
+    load: (fetchJson, now, fetchers) => item.load(route.item, { fetchJson, ...fetchers, now }),
+  };
 }
 
 async function getState(key, dataset) {
@@ -181,7 +217,7 @@ export const handler = async (event) => {
   const dataset = routeDataset(route);
   if (!dataset) return json(404, { error: 'Unknown council system' });
   const council = COUNCILS[route.council];
-  const key = `${route.council}/${route.dataset}`;
+  const key = [route.council, route.dataset, route.item].filter(Boolean).join('/');
 
   const userId = event?.requestContext?.authorizer?.lambda?.sub || 'unknown';
   console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'council-systems-v2', userId, key }));
@@ -199,6 +235,7 @@ export const handler = async (event) => {
         councilName: council.name,
         system: council.system,
         dataset: route.dataset,
+        ...(route.item ? { item: route.item } : {}),
         generatedAt: state.generatedAt,
         ok: state.ok,
         lastGoodAt: state.lastGoodAt,

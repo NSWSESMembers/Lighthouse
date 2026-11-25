@@ -16,10 +16,21 @@ export const COUNCIL_SYSTEMS_URL = 'https://lambda.lighthouse-extension.com/lad_
  * @param {string} dataset e.g. 'water-levels'
  * @param {string} token Beacon access token
  */
-export async function fetchCouncilDataset(council, dataset, token, { fetchImpl = fetch } = {}) {
-  // Only a plain path under COUNCIL_SYSTEMS_URL, so the token never goes anywhere else.
-  if (![council, dataset].every((part) => /^[a-z0-9-]+$/.test(String(part)))) throw new Error('Council systems: bad path');
-  const res = await fetchImpl(`${COUNCIL_SYSTEMS_URL}/${council}/${dataset}`, {
+export function fetchCouncilDataset(council, dataset, token, opts) {
+  if (![council, dataset].every((part) => /^[a-z0-9-]+$/.test(String(part)))) {
+    return Promise.reject(new Error('Council systems: bad path'));
+  }
+  return fetchCouncilPath(`${council}/${dataset}`, token, opts);
+}
+
+/**
+ * GET a council systems path the Lambda handed out, e.g. a camera's
+ * `latestPath` ('tweed/flood-cameras/oaksave'). Only a plain path under
+ * COUNCIL_SYSTEMS_URL, so the token never goes anywhere else.
+ */
+export async function fetchCouncilPath(path, token, { fetchImpl = fetch } = {}) {
+  if (!/^[a-z0-9-]+(\/[a-z0-9-]+){1,2}$/.test(String(path))) throw new Error('Council systems: bad path');
+  const res = await fetchImpl(`${COUNCIL_SYSTEMS_URL}/${path}`, {
     method: 'GET',
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'omit',

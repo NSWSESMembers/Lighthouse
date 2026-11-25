@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fetchCouncilDataset, COUNCIL_SYSTEMS_URL } from './councilSystems.js';
+import { fetchCouncilDataset, fetchCouncilPath, COUNCIL_SYSTEMS_URL } from './councilSystems.js';
 
 const reply = (status, body) => async (url, opts) => ({ ok: status < 300, status, url, opts, json: async () => body });
 
@@ -32,5 +32,24 @@ describe('fetchCouncilDataset', () => {
     for (const [council, dataset] of [['example', '../x'], ['https://example.test', 'x'], ['Example', 'x'], ['example', 'x/y']]) {
       await expect(fetchCouncilDataset(council, dataset, 'tok', { fetchImpl })).rejects.toThrow('bad path');
     }
+  });
+});
+
+describe('fetchCouncilPath', () => {
+  const body = { type: 'FeatureCollection', features: [], meta: { ok: true } };
+
+  it('GETs a path under the council systems URL', async () => {
+    let seen;
+    await fetchCouncilPath('example/cameras/cam-1', 'tok', { fetchImpl: async (url) => { seen = url; return reply(200, body)(); } });
+    expect(seen).toBe(`${COUNCIL_SYSTEMS_URL}/example/cameras/cam-1`);
+  });
+
+  it('refuses anything but a plain path, without fetching', async () => {
+    let fetched = 0;
+    const fetchImpl = async () => { fetched++; return reply(200, body)(); };
+    for (const path of ['https://example.test/x/y', '//example.test/x', 'example/../../x', 'example', 'a/b/c/d', 'a/b?x=1', '', null]) {
+      await expect(fetchCouncilPath(path, 'tok', { fetchImpl })).rejects.toThrow('bad path');
+    }
+    expect(fetched).toBe(0);
   });
 });

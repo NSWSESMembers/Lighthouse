@@ -913,6 +913,12 @@ body.dark-mode .leaflet-tooltip.lh-forecast-pim { color: #81d4fa; }
 body.dark-mode .leaflet-tooltip.lh-forecast-minor { color: #ffe066; }
 body.dark-mode .leaflet-tooltip.lh-forecast-moderate { color: #ffb366; }
 body.dark-mode .leaflet-tooltip.lh-forecast-major { color: #ff8a80; }
+body.dark-mode .lh-council-cam-frame { background: #343a40; }
+body.dark-mode .lh-council-cam-loading { color: #adb5bd; }
+body.dark-mode .lh-council-cam-when,
+body.dark-mode .lh-council-cam-msg { color: #ced4da; }
+body.dark-mode .lh-council-cam-note { color: #adb5bd; }
+body.dark-mode .lh-council-cam-stale { color: #ff8a80; }
 body.dark-mode .ld-empty { color: #9aa3ae; }
 body.dark-mode .ld-base-tile { color: #e0e0e0; }
 body.dark-mode .ld-base-tile.active { border-color: #7aa7ff; }

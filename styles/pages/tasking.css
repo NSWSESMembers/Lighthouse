@@ -6725,3 +6725,80 @@ html {
   border: 1.5px dashed #868e96;
 }
 
+/* Council flood cameras (mapLayers/councilCameras.js) */
+/* Only the camera body takes clicks: the cone and the rest of the box let
+   them through to the map and other markers. */
+.leaflet-marker-icon.leaflet-interactive.lh-council-cam-marker {
+  pointer-events: none;
+}
+.lh-council-cam {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+.lh-council-cam-cone {
+  fill: #1565c0;
+  fill-opacity: 0.2;
+  stroke: #1565c0;
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+.lh-council-cam-body {
+  fill: #1565c0;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  pointer-events: visiblePainted;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
+}
+.lh-council-cam-approx .lh-council-cam-cone {
+  stroke-dasharray: 4 3;
+}
+.lh-council-cam-approx .lh-council-cam-body {
+  stroke-dasharray: 3 2;
+}
+.lh-council-cam-popup {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.lh-council-cam-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 6px 0 4px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.lh-council-cam-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.lh-council-cam-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #868e96;
+  font-size: 18px;
+}
+.lh-council-cam-when {
+  color: #495057;
+}
+.lh-council-cam-stale {
+  color: #9b1515;
+  font-weight: 600;
+}
+.lh-council-cam-msg {
+  margin: 6px 0;
+  color: #495057;
+}
+.lh-council-cam-links {
+  margin: 4px 0;
+}
+.lh-council-cam-note {
+  display: block;
+  color: #6c757d;
+}
