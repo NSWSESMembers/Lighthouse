@@ -5059,6 +5059,20 @@ body.dark-mode .ops-log-status-details {
   padding: 0;
 }
 
+/* Sub-heading for a run of layers in a group, e.g. one council system's */
+.ld-subgroup-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #444;
+  padding: 2px 2px 3px;
+  margin-top: 6px;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 4px;
+}
+.ld-subgroup-header:first-child {
+  margin-top: 0;
+}
+
 .layers-drawer .ld-overlay-btn {
   font-size: 11px;
   padding: 3px 6px;
@@ -6617,3 +6631,97 @@ html {
     touch-action: manipulation;
   }
 }
+
+/* Parramatta FloodSmart catchment rainfall totals (mapLayers/floodsmart.js) */
+.leaflet-tooltip.lh-rain-label {
+  background: rgba(255, 255, 255, 0.85);
+  border: 0;
+  border-radius: 3px;
+  box-shadow: none;
+  color: #1f2328;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0 3px;
+}
+.leaflet-tooltip.lh-rain-label::before {
+  display: none;
+}
+
+/* Parramatta FloodSmart forecast alerts on warning areas (mapLayers/floodsmart.js) */
+.leaflet-tooltip.lh-forecast-label {
+  border: 2px dashed currentColor;
+  border-radius: 4px;
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 5px;
+  background: #fff;
+}
+.leaflet-tooltip.lh-forecast-label::before {
+  display: none;
+}
+.leaflet-tooltip.lh-forecast-unknown { color: #495057; }
+.leaflet-tooltip.lh-forecast-pim { color: #01579b; }
+.leaflet-tooltip.lh-forecast-minor { color: #7a6100; background: #fff8cc; }
+.leaflet-tooltip.lh-forecast-moderate { color: #8a4200; background: #ffe8cc; }
+.leaflet-tooltip.lh-forecast-major { color: #9b1515; background: #ffe0e0; }
+
+/* Parramatta forecast flood hazard H1-H6 (mapLayers/floodsmart.js) */
+.lh-hazard-image {
+  image-rendering: pixelated;
+}
+.lh-hazard-legend {
+  background: #fff;
+  padding: 6px 8px;
+  max-width: 270px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.lh-hazard-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.lh-hazard-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+.lh-hazard-swatch {
+  flex: 0 0 12px;
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  align-self: center;
+}
+.lh-hazard-note {
+  margin-top: 4px;
+  color: #555;
+}
+
+/* Parramatta flood impact assets (mapLayers/floodsmart.js) */
+.lh-impact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-sizing: border-box;
+  font-size: 11px;
+  background: #fff;
+  color: #546e7a;
+  border: 1.5px solid #78909c;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.lh-impact-flooded {
+  font-size: 14px;
+  background: #d32f2f;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #d32f2f, 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.lh-impact-unknown {
+  background: #f1f3f5;
+  color: #868e96;
+  border: 1.5px dashed #868e96;
+}
+

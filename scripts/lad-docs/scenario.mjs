@@ -690,6 +690,7 @@ export function buildScenario(now = new Date(), { jobCount = JOB_SPECS.length } 
   return {
     hq: HQ, jobs, leanJobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
     powerOutages: powerOutages(now),
+    councilSystems: councilSystems(now),
     createTasking, createOpsLogEntry,
   };
 }
@@ -738,4 +739,142 @@ function powerOutages(now) {
       ),
     },
   };
+}
+
+// Council systems, in the shape the council-systems Lambda returns
+// (lambda/council-systems-v2), keyed by "council/dataset": two made-up
+// flood warning areas and four catchments with rainfall totals near the HQ,
+// and two more catchments for a second council.
+function councilSystems(now) {
+  const iso = (hours) => new Date(now.getTime() + hours * 3600 * 1000).toISOString();
+  const lat = HQ.Latitude;
+  const lng = HQ.Longitude;
+  const meta = (dataset, council = 'parramatta', councilName = 'City of Parramatta') => ({
+    council, councilName, system: 'FloodSmart', dataset,
+    generatedAt: iso(-0.03), ok: true, lastGoodAt: iso(-0.03),
+  });
+  // Forecast for the next 5 hours as the Lambda returns it: the flood model
+  // forecasts Minor for one area, the other is clear.
+  const levels = (minor) => [{ level: 'minor', value: minor }, { level: 'moderate', value: minor + 0.8 }, { level: 'major', value: minor + 1.6 }];
+  const window5 = { hours: 5, from: iso(0), to: iso(5) };
+  const area = (name, description, pts, forecast) => ({
+    type: 'Feature',
+    geometry: { type: 'Polygon', coordinates: [[...pts, pts[0]].map(([dy, dx]) => [lng + dx, lat + dy])] },
+    properties: { name, description, forecast },
+  });
+  // Totals scale with `wet` (mm since 9am); the others follow from it.
+  const catchment = (name, pts, wet) => ({
+    type: 'Feature',
+    geometry: { type: 'Polygon', coordinates: [[...pts, pts[0]].map(([dy, dx]) => [lng + dx, lat + dy])] },
+    properties: {
+      name,
+      anchor: null,
+      totals: {
+        since9am: wet, last1hr: wet * 0.2, last3hr: wet * 0.5, last6hr: wet * 0.8, last12hr: wet * 1.1,
+        last24hr: wet * 1.4, last48hr: wet * 1.6, max6hr: wet * 0.9, next3hr: wet * 0.3, next6hr: wet * 0.6,
+        next12hr: wet * 1.2, next24hr: wet * 2, next48hr: wet * 2.6, next72hr: wet * 3,
+      },
+    },
+  });
+  // Impact assets as the Lambda returns them: the council's 12-hour run status
+  const impact = (name, type, status, dy, dx) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [lng + dx, lat + dy] },
+    properties: {
+      name, type, area: 'North', status,
+      forecastFrom: status === 'unknown' ? null : iso(-1),
+      forecastUntil: status === 'unknown' ? null : iso(13),
+    },
+  });
+  return {
+    'parramatta/warning-areas': {
+      type: 'FeatureCollection',
+      features: [
+        area('Sample Creek', 'Properties near Sample Creek in Demoville and Testford.',
+          [[0.006, -0.030], [0.016, -0.012], [0.010, 0.004], [-0.002, -0.006], [-0.004, -0.024]],
+          { status: 'minor', thresholds: levels(12.4), ...window5, value: 12.71, peakAt: iso(3.5), thresholdValue: 12.4, expectedAt: iso(2.2) }),
+        area('Example River CBD', 'Properties near Example River in Demo City.',
+          [[-0.004, 0.002], [0.004, 0.018], [-0.006, 0.032], [-0.014, 0.020], [-0.012, 0.004]],
+          { status: 'clear', thresholds: [{ level: 'pim', value: 2.5 }, ...levels(3.5)], ...window5, value: 1.21, peakAt: iso(1) }),
+      ],
+      meta: meta('warning-areas'),
+    },
+    'parramatta/flood-impacts': {
+      type: 'FeatureCollection',
+      features: [
+        impact('Sample Creek Bridge', 'Road or crossing', 'flooded', 0.008, -0.018),
+        impact('Example Rd crossing', 'Road or crossing', 'not_flooded', -0.006, 0.012),
+        impact('Demo Hospital, Mock St', 'Healthcare', 'not_flooded', 0.004, 0.006),
+        impact('Testford Pde Levee U/S', 'Levee', 'unknown', 0.013, -0.006),
+        impact('Sample Cres homes', 'Houses', 'flooded', 0.010, -0.014),
+        impact('Old Demo Mill', 'Historical landmark', 'not_flooded', -0.002, -0.004),
+      ],
+      meta: meta('flood-impacts'),
+    },
+    'parramatta/flood-hazard': {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: null,
+        properties: {
+          runs: [
+            { area: 'North', available: true, forecastFrom: iso(-3), forecastUntil: iso(35), runUpdatedAt: iso(-0.6) },
+            { area: 'South', available: false, forecastFrom: iso(-42), forecastUntil: iso(-2), runUpdatedAt: iso(-40) },
+          ],
+          minDepth: 0.02,
+          cellMetres: 25,
+          method: 'AIDR Guideline 7-3, Table 2',
+          grid: hazardGrid(lat, lng),
+        },
+      }],
+      meta: meta('flood-hazard'),
+    },
+    'parramatta/catchment-rainfall': {
+      type: 'FeatureCollection',
+      features: [
+        catchment('Sample Creek', [[0.020, -0.040], [0.020, -0.010], [0.002, -0.010], [0.002, -0.040]], 3),
+        catchment('Testford Creek', [[0.020, -0.010], [0.020, 0.015], [0.002, 0.015], [0.002, -0.010]], 9),
+        catchment('Example River', [[0.002, -0.010], [0.002, 0.035], [-0.016, 0.035], [-0.016, -0.010]], 22),
+        catchment('Mock Creek', [[0.002, -0.040], [0.002, -0.010], [-0.030, -0.010], [-0.030, -0.040]], 48),
+      ],
+      meta: meta('catchment-rainfall'),
+    },
+    'northernbeaches/catchment-rainfall': {
+      type: 'FeatureCollection',
+      features: [
+        catchment('Sample Lagoon', [[0.020, 0.035], [0.020, 0.060], [0.002, 0.060], [0.002, 0.035]], 15),
+        catchment('Example Beach', [[0.002, 0.035], [0.002, 0.060], [-0.016, 0.060], [-0.016, 0.035]], 64),
+      ],
+      meta: { ...meta('catchment-rainfall', 'northernbeaches', 'Northern Beaches Council'), system: 'FLASH' },
+    },
+  };
+}
+
+// A made-up forecast flood hazard grid (lambda/council-systems-v2/hazard.mjs
+// encoding): a winding river band south of the HQ, deep and fast in the
+// middle (H6) shading out to H1 at the edges, with matching depths/velocities.
+function hazardGrid(lat, lng) {
+  const width = 120;
+  const height = 80;
+  const cellLon = 25 / (111320 * Math.cos((lat * Math.PI) / 180));
+  const cellLat = 25 / 110574;
+  const west = lng - (width / 2) * cellLon;
+  const north = lat + (height / 4) * cellLat;
+  const hazard = new Uint8Array(width * height);
+  const depth = new Uint16Array(width * height);
+  const velocity = new Uint16Array(width * height);
+  const bands = [[4.5, 150], [3.0, 120], [1.8, 50], [1.0, 40], [0.45, 30], [0.2, 20]]; // [depth m, velocity cm/s] by distance
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const centre = 45 + 8 * Math.sin(c / 14);
+      const dist = Math.floor(Math.abs(r - centre) / 2);
+      if (dist >= bands.length) continue;
+      const i = r * width + c;
+      hazard[i] = 6 - dist;
+      depth[i] = Math.round(bands[dist][0] * 100);
+      velocity[i] = bands[dist][1];
+    }
+  }
+  const b64 = (t) => Buffer.from(t.buffer).toString('base64');
+  return { west, north, cellLon, cellLat, width, height, hazard: b64(hazard), depth: b64(depth), velocity: b64(velocity) };
 }

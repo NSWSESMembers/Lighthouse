@@ -155,7 +155,8 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
   function lambda(route, url) {
     const method = route.request().method();
     // Shared default assets, collab map layers, share/load config, geocode,
-    // routing: nothing shared in the demo. Power outages: a few made-up ones.
+    // routing: nothing shared in the demo. Power outages and council systems:
+    // a few made-up ones.
     log(`[mock] lambda ${method} ${url.pathname} (empty)`);
     if (/geocode/.test(url.pathname)) {
       // Reverse lookups (?lat=&lon=, e.g. Drive time's "Near ...") get an
@@ -169,6 +170,11 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null,
     }
     if (/\/route$/.test(url.pathname) && method === 'POST') return json(route, fakeRoute(route.request().postDataJSON()));
     if (/\/power-outages$/.test(url.pathname)) return json(route, scenario.powerOutages);
+    const council = url.pathname.match(/\/council\/([a-z0-9-]+\/[a-z0-9-]+)$/);
+    if (council) {
+      const body = scenario.councilSystems[council[1]];
+      return body ? json(route, body) : route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"Unknown council system"}' });
+    }
     return json(route, method === 'GET' ? [] : {});
   }
 
