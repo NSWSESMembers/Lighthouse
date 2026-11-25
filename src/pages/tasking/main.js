@@ -100,6 +100,7 @@ import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerPowerOutagesLayers } from "./mapLayers/powerOutages.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { registerFloodSmartLayers } from "./mapLayers/floodsmart.js";
+import { registerCouncilCamerasLayers } from "./mapLayers/councilCameras.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
 import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
@@ -3152,6 +3153,7 @@ function VM() {
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
     registerFloodSmartLayers(self, getToken);
+    registerCouncilCamerasLayers(self, getToken);
     registerTerrainLayers(self, map);
     registerPastFloodLayers(self);
     registerBOMLandWarningsLayer(self, sourceUrl);

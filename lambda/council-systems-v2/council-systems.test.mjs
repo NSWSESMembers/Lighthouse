@@ -6,6 +6,12 @@ import { lizardAuthHeaders, resetSecretsCache } from './secrets.mjs';
 import { handler, parsePath, refresh } from './index.mjs';
 import { simplifyGeometry } from './geometry.mjs';
 import { hazardCategory, makeGrid, combineHazard, encodeHazardGrid } from './hazard.mjs';
+import { imageTime, latestImage, tweed } from './tweed.mjs';
+import { latestMhlImage, clarence } from './clarence.mjs';
+import { webcamIoImage, bellingen } from './bellingen.mjs';
+import { lastModifiedTime, coffsharbour } from './coffsharbour.mjs';
+import { newestSegment, cropFirstFrame, liveStill } from './videostill.mjs';
+import { spawnSync } from 'node:child_process';
 
 const NOW = Date.parse('2026-10-15T00:00:00Z');
 
@@ -22,8 +28,9 @@ describe('parsePath', () => {
   it('reads the council and dataset', () => {
     expect(parsePath('/lad_v2/council/parramatta/water-levels')).toEqual({ council: 'parramatta', dataset: 'water-levels' });
     expect(parsePath('/lad_v2/council/parramatta/water-levels/')).toEqual({ council: 'parramatta', dataset: 'water-levels' });
+    expect(parsePath('/lad_v2/council/tweed/flood-cameras/oaksave')).toEqual({ council: 'tweed', dataset: 'flood-cameras', item: 'oaksave' });
     expect(parsePath('/lad_v2/council/parramatta')).toBeNull();
-    expect(parsePath('/lad_v2/council/a/b/c')).toBeNull();
+    expect(parsePath('/lad_v2/council/a/b/c/d')).toBeNull();
     expect(parsePath('/lad_v2/council/../x/y')).toBeNull();
   });
 });
@@ -32,6 +39,8 @@ describe('handler', () => {
   it('404s an unknown council or dataset without fetching', async () => {
     for (const rawPath of [
       '/lad_v2/council/nowhere/water-levels', '/lad_v2/council/parramatta/rainfall', '/lad_v2/council/parramatta/toString',
+      // an item of a dataset without items, an unknown camera
+      '/lad_v2/council/parramatta/water-levels/x', '/lad_v2/council/tweed/flood-cameras/nowhere', '/lad_v2/council/tweed/flood-cameras/constructor',
     ]) {
       const res = await handler({ rawPath, requestContext: { http: { method: 'GET' } } });
       expect(res.statusCode).toBe(404);
@@ -295,5 +304,203 @@ describe('flood impacts', () => {
     expect(impactType('forest', 'Sample Pde Levee U/S')).toBe('Levee');
     expect(impactType('forest', 'Bush Reserve')).toBe('Bushland');
     expect(impactType('historical_landmark', 'x')).toBe('Historical landmark');
+  });
+});
+
+// Every council camera list: from the module's own list, never fetched.
+const NO_FETCH = { fetchText: async () => { throw new Error('fetched'); }, fetchHead: async () => { throw new Error('fetched'); } };
+const cameraList = (council) => COUNCILS[council].datasets['flood-cameras'].load(NO_FETCH.fetchText, NOW, NO_FETCH);
+const headers = (h) => ({ headers: new Headers(h) });
+
+describe('council flood cameras', () => {
+  it('list each council\'s cameras, with where to ask for the latest image', async () => {
+    for (const [council, count] of [['tweed', 13], ['clarence', 9], ['bellingen', 5], ['coffsharbour', 1]]) {
+      const features = await cameraList(council);
+      expect(features).toHaveLength(count);
+      const { item } = COUNCILS[council].datasets['flood-cameras'];
+      for (const f of features) {
+        const [lng, lat] = f.geometry.coordinates;
+        expect(lat).toBeGreaterThan(-31);
+        expect(lat).toBeLessThan(-28);
+        expect(lng).toBeGreaterThan(152.4);
+        expect(lng).toBeLessThan(153.7);
+        expect(f.properties.latestPath).toBe(`${council}/flood-cameras/${f.properties.id}`);
+        expect(parsePath(`/lad_v2/council/${f.properties.latestPath}`)).toMatchObject({ council, item: f.properties.id });
+        expect(item.has(f.properties.id)).toBe(true);
+      }
+    }
+  });
+});
+
+describe('Tweed flood cameras', () => {
+  const PAGE = `<form><div class="container-fluid">
+    <a id="btnViewLatestImage" href='/CameraImages.aspx?folder=samplecam&viewmode=latest'><img src='/Images/Icons/image.png' /></a>
+    <img id="LatestImageViewer1_imgLatest" class="img-responsive" src="/ImageProxy.ashx?container=samplecam&amp;blob=SampleCam_XX123_20261124173038387_TIMING.jpg" style="border: none" />
+    <span id="LatestImageViewer1_lblTimestamp">24 November 2026 5:30 pm</span></div></form>`;
+
+  it("reads the image's Sydney time from its file name", () => {
+    expect(imageTime('SampleCam_XX123_20261124173038387_TIMING.jpg')).toBe('2026-11-24T06:30:38.387Z'); // AEDT
+    expect(imageTime('SampleCam_XX123_20260624173038000_TIMING.jpg')).toBe('2026-06-24T07:30:38.000Z'); // AEST
+    expect(imageTime('SampleCam_XX123_20261004030000000_TIMING.jpg')).toBe('2026-10-03T16:00:00.000Z'); // just after DST starts
+    expect(imageTime('SampleCam.jpg')).toBeNull();
+    expect(imageTime(null)).toBeNull();
+  });
+
+  it('reads the latest image from a camera page', () => {
+    expect(latestImage(PAGE, 'samplecam')).toEqual({
+      imageUrl: 'https://floodcam.tweed.nsw.gov.au/ImageProxy.ashx?container=samplecam&blob=SampleCam_XX123_20261124173038387_TIMING.jpg',
+      takenAt: '2026-11-24T06:30:38.387Z',
+    });
+  });
+
+  it("refuses a page without its camera's image, or an image from somewhere else", () => {
+    expect(() => latestImage('<html>Down for maintenance</html>', 'samplecam')).toThrow('No latest image');
+    expect(() => latestImage(PAGE, 'othercam')).toThrow('No latest image');
+    const elsewhere = PAGE.replace('src="/ImageProxy', 'src="https://example.test/ImageProxy');
+    expect(() => latestImage(elsewhere, 'samplecam')).toThrow('No latest image');
+  });
+
+  it("serves one camera's latest image, fetching only that camera's page", async () => {
+    const [{ properties: { id } }] = await cameraList('tweed');
+    const seen = [];
+    const html = PAGE.replaceAll('samplecam', id);
+    const features = await tweed.datasets['flood-cameras'].item.load(id, { fetchText: async (url) => { seen.push(url); return html; } });
+    expect(seen).toEqual([`https://floodcam.tweed.nsw.gov.au/flood-cameras/${id}`]);
+    expect(features).toHaveLength(1);
+    expect(features[0].properties).toMatchObject({ id, takenAt: '2026-11-24T06:30:38.387Z' });
+    expect(features[0].properties.imageUrl).toContain(`container=${id}&`);
+  });
+});
+
+describe('Clarence Valley flood cameras', () => {
+  const MHL_PAGE = `<div class="frames">
+    <img src="/s3/www/media/webcams/samplestn/20261124_16114064_samplestn.jpg">
+    <img src="https://www.mhl.nsw.gov.au/s3/www/media/webcams/samplestn/20261124_17114068_samplestn.jpg">
+    <img src="/s3/www/media/webcams/samplestn/20261124_15114064_samplestn.jpg"></div>`;
+
+  it("reads MHL's newest image, its time AEST all year", () => {
+    expect(latestMhlImage(MHL_PAGE, 'samplestn')).toEqual({
+      imageUrl: 'https://www.mhl.nsw.gov.au/s3/www/media/webcams/samplestn/20261124_17114068_samplestn.jpg',
+      takenAt: '2026-11-24T07:11:40.000Z', // 17:11 AEST, 18:11 AEDT
+    });
+    expect(() => latestMhlImage('<html></html>', 'samplestn')).toThrow('No image');
+    expect(() => latestMhlImage(MHL_PAGE, 'otherstn')).toThrow('No image');
+  });
+
+  it("asks MHL for Grafton's latest image only", async () => {
+    const seen = [];
+    const html = MHL_PAGE.replaceAll('samplestn', 'grafton');
+    const [f] = await clarence.datasets['flood-cameras'].item.load('princestreet', { fetchText: async (url) => { seen.push(url); return html; } });
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toContain('page=animation&n=1&');
+    expect(seen[0]).toContain('stn=67726166746F6E'); // "grafton"
+    expect(f.properties).toMatchObject({ id: 'princestreet', takenAt: '2026-11-24T07:11:40.000Z' });
+  });
+
+  it("serves Bluff Bridge's fixed latest-image URL without fetching", async () => {
+    const [f] = await clarence.datasets['flood-cameras'].item.load('bluffbridge', NO_FETCH);
+    expect(f.properties).toMatchObject({ id: 'bluffbridge', takenAt: null });
+    expect(f.properties.imageUrl).toMatch(/^https:\/\/www\.envault\.com\.au\/api\?contentUrl=/);
+  });
+});
+
+describe('stills cut from a live video', () => {
+  const PLAYLIST_URL = 'http://192.0.2.10:5080/LiveApp/streams/samplegrid.m3u8';
+  const PLAYLIST = `#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:25
+#EXT-X-MEDIA-SEQUENCE:78407
+#EXTINF:25.000000,
+samplegrid000078407.ts
+#EXTINF:24.500000,
+samplegrid000078408.ts
+`;
+  // A 1920x1080 grid: black, with one grey "camera" where Sandy Crossing is.
+  const hasFfmpeg = spawnSync('ffmpeg', ['-version']).status === 0;
+  const video = hasFfmpeg
+    ? spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=1920x1080:r=10:d=1',
+      '-vf', 'drawbox=x=637:y=397:w=628:h=345:color=gray:t=fill', '-c:v', 'mpeg2video', '-f', 'mpegts', 'pipe:1'],
+    { maxBuffer: 64 * 1024 * 1024 }).stdout
+    : null;
+  const LIVE = { x: 637, y: 397, w: 628, h: 345 };
+  const BLANK = { x: 0, y: 0, w: 613, h: 314 };
+
+  it("finds the playlist's newest segment, on its own server only", () => {
+    expect(newestSegment(PLAYLIST, PLAYLIST_URL)).toEqual({ url: 'http://192.0.2.10:5080/LiveApp/streams/samplegrid000078408.ts', seconds: 24.5 });
+    expect(() => newestSegment('#EXTM3U\n', PLAYLIST_URL)).toThrow('No video segment');
+    expect(() => newestSegment(`${PLAYLIST}#EXTINF:25,\nhttp://example.test/x.ts\n`, PLAYLIST_URL)).toThrow('No video segment');
+    expect(() => newestSegment(`${PLAYLIST}#EXTINF:25,\nother.m3u8\n`, PLAYLIST_URL)).toThrow('No video segment');
+  });
+
+  it.skipIf(!hasFfmpeg)("cuts a camera's box out of the first frame, with its brightness", async () => {
+    const live = await cropFirstFrame(video, LIVE, { ffmpeg: 'ffmpeg' });
+    expect(live.jpeg.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8])); // a JPEG
+    expect(live.brightness).toBeGreaterThan(100);
+    const blank = await cropFirstFrame(video, BLANK, { ffmpeg: 'ffmpeg' });
+    expect(blank.brightness).toBeLessThan(8);
+    await expect(cropFirstFrame(Buffer.from('not a video'), LIVE, { ffmpeg: 'ffmpeg' })).rejects.toThrow('No frame');
+  });
+
+  it.skipIf(!hasFfmpeg)('serves the still as a JPEG data URL, or a blank camera as offline, fetching only the start of a segment', async () => {
+    const seen = [];
+    const fetchers = {
+      now: NOW,
+      fetchText: async (url) => { seen.push(url); return PLAYLIST; },
+      fetchBytes: async (url, { headers }) => { seen.push(`${url} ${headers.range}`); return video; },
+    };
+    const live = await liveStill(PLAYLIST_URL, LIVE, fetchers, { ffmpeg: 'ffmpeg' });
+    expect(seen).toEqual([PLAYLIST_URL, 'http://192.0.2.10:5080/LiveApp/streams/samplegrid000078408.ts bytes=0-393215']);
+    expect(live.imageUrl).toMatch(/^data:image\/jpeg;base64,\/9j\//);
+    expect(live.takenAt).toBe(new Date(NOW - 24500).toISOString());
+    expect(await liveStill(PLAYLIST_URL, BLANK, fetchers, { ffmpeg: 'ffmpeg' }))
+      .toEqual({ imageUrl: null, takenAt: new Date(NOW - 24500).toISOString(), offline: true });
+  });
+
+  it("lists Clarence's grid cameras as approximate, with the live video, without fetching", async () => {
+    const features = await cameraList('clarence');
+    const grid = features.filter((f) => f.properties.approximate);
+    expect(grid.map((f) => f.properties.id)).toEqual(['harwood', 'lilydale', 'palmersisland', 'rogans', 'sandycrossing', 'maclean', 'boothbys']);
+    for (const f of grid) expect(f.properties.liveUrl).toMatch(/^http:\/\/180\.150\.8\.170:5080\/LiveApp\/play\.html\?name=/);
+  });
+});
+
+describe('Bellingen bridge flood cameras', () => {
+  it("reads webcam.io's latest-image redirect, its time UTC", () => {
+    expect(webcamIoImage('https://assets11.webcam.io/w11/AbC123/20261124/074157-5781b1.jpg', 'AbC123')).toEqual({
+      imageUrl: 'https://assets11.webcam.io/w11/AbC123/20261124/074157-5781b1.jpg',
+      takenAt: '2026-11-24T07:41:57.000Z',
+    });
+    expect(() => webcamIoImage(null, 'AbC123')).toThrow('No latest image');
+    expect(() => webcamIoImage('https://assets11.webcam.io/w11/Other1/20261124/074157-5781b1.jpg', 'AbC123')).toThrow('No latest image');
+    expect(() => webcamIoImage('https://example.test/w11/AbC123/20261124/074157-5781b1.jpg', 'AbC123')).toThrow('No latest image');
+  });
+
+  it('asks webcam.io where the latest image is, without downloading it', async () => {
+    const seen = [];
+    const fetchHead = async (url) => { seen.push(url); return headers({ location: 'https://assets11.webcam.io/w11/z71j19/20261124/074157-5781b1.jpg' }); };
+    const [f] = await bellingen.datasets['flood-cameras'].item.load('lavenders', { fetchHead });
+    expect(seen).toEqual(['https://webcam.io/webcams/z71j19/latest.jpg']);
+    expect(f.properties).toMatchObject({ id: 'lavenders', takenAt: '2026-11-24T07:41:57.000Z', timelapseUrl: 'https://webcam.io/webcams/z71j19' });
+  });
+
+  it('lists which way each camera looks, for the map', async () => {
+    const features = await cameraList('bellingen');
+    for (const f of features) {
+      expect(f.properties.bearing).toBeGreaterThanOrEqual(0);
+      expect(f.properties.bearing).toBeLessThan(360);
+      expect(f.properties.approximate).toBeUndefined();
+    }
+    expect(features.find((f) => f.properties.id === 'lavenders').properties).toMatchObject({ bearing: 50, fov: null });
+  });
+});
+
+describe('Coffs Harbour bridge cameras', () => {
+  it("reads the image's time from its Last-Modified", async () => {
+    expect(lastModifiedTime('Tue, 24 Nov 2026 07:41:26 GMT')).toBe('2026-11-24T07:41:26.000Z');
+    expect(lastModifiedTime(null)).toBeNull();
+    const fetchHead = async () => headers({ 'last-modified': 'Tue, 24 Nov 2026 07:41:26 GMT' });
+    const [f] = await coffsharbour.datasets['flood-cameras'].item.load('edwardsharp', { fetchHead });
+    expect(f.properties).toMatchObject({ id: 'edwardsharp', takenAt: '2026-11-24T07:41:26.000Z' });
+    expect(f.properties.imageUrl).toMatch(/^https:\/\/public\.disasterwatch-iotp\.com\.au\//);
   });
 });
