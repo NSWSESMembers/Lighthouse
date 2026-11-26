@@ -31,6 +31,8 @@ Type the headquarters name into the search field. Click anywhere on the headquar
 
 ![Headquarters search with Teams and Incidents buttons](images/hq-filter-search.png)
 
+If the search can't reach Beacon, it says why in red instead of **No results found**. The same goes for the HQ, event and moderator searches under [Collaborative Layers](#collaborative-layers), and for expanding a zone. If it says Beacon refused the request, see [Beacon Login](#beacon-login).
+
 #### Expanding Headquarters
 
 If you select a zone, you can expand it to include all units under the zone. This works the same way as the zone expand feature in the Beacon headquarters filter.
@@ -74,6 +76,12 @@ A LAD tab that has been in the background for 30 minutes pauses: it stops loadin
 If the tab's Beacon login has also expired while it was in the background, reloading wouldn't work, so instead it asks you to open LAD again from the **Lighthouse** menu in Beacon. After that you can reload the paused tab or close it.
 
 [Asset trails](assets.md) aren't recorded while a tab is paused, so they have a gap for that time.
+
+### Beacon Login
+
+If Beacon stops accepting LAD's login, usually because it has expired, a red banner across the top of the page says LAD may be out of date. Whatever failed hasn't loaded, and the next refreshes would fail too, so it applies to the whole page, not just the one search or list.
+
+To fix it, open LAD again from the **Lighthouse** menu in Beacon, then reload the tab. Once LAD has a new login, from that or from another Beacon tab, the banner shows a **Reload** button. If you don't reload, the banner goes away by itself after the next full refresh of incidents and teams works, as they're then up to date again.
 
 ## Filter Settings
 

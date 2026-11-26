@@ -6497,6 +6497,18 @@ input[type="search"]:focus {
   font-size: 15px;
 }
 
+/* Beacon refused this tab's login (a 401): same strip, in danger colours. */
+.beacon-login-banner {
+  background: #f8d7da;
+  color: #58151c;
+}
+
+body.dark-mode .beacon-login-banner {
+  background: #2c0b0e;
+  color: #ea868f;
+  border-bottom-color: #842029;
+}
+
 /* Satellite-tracked asset marker next to "Last seen"; a red fa-slash is
    stacked over it when the tracker's satelliteStatus isn't ACTIVE. */
 .sat-icon {
