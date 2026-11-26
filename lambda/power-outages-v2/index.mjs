@@ -183,8 +183,10 @@ export const handler = async (event) => {
   const method = event?.requestContext?.http?.method || event?.httpMethod;
   if (method === 'OPTIONS') return { statusCode: 204, headers: corsHeaders, body: '' };
 
+  // `sub` and `platform` (prod/train/dev, from the token's issuer) are set by the authorizer.
   const userId = event?.requestContext?.authorizer?.lambda?.sub || 'unknown';
-  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'power-outages-v2', userId }));
+  const platform = event?.requestContext?.authorizer?.lambda?.platform || 'unknown';
+  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'power-outages-v2', userId, platform }));
 
   try {
     const body = JSON.stringify(toResponseBody(await getState()));
