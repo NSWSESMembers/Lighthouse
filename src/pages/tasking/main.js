@@ -3072,7 +3072,8 @@ function VM() {
     self.pausedLoginChecking = ko.pureComputed(() => self.pausedLogin() === 'checking');
     self.pausedLoginOk = ko.pureComputed(() => self.pausedLogin() === 'ok');
     self.pausedLoginExpired = ko.pureComputed(() => self.pausedLogin() === 'expired');
-    let dataLoadStarted = false;
+    // Observable for the login banner's wording (see BEACON REFUSED THE LOGIN).
+    self.dataLoadStarted = ko.observable(false);
 
     self.reloadPage = function () {
         window.location.reload();
@@ -3100,7 +3101,7 @@ function VM() {
     };
     tabDormancy.onReturn = () => {
         // Nothing has loaded behind the config modal yet, so nothing is stale.
-        if (!dataLoadStarted) {
+        if (!self.dataLoadStarted()) {
             tabDormancy.reset();
             return;
         }
@@ -3127,7 +3128,9 @@ function VM() {
     // token arrives (another Beacon tab, or LAD opened again from Beacon) the
     // banner offers Reload, as a reload starts from the stored token. It goes
     // away by itself once a jobs refresh and a teams refresh have both worked
-    // since the last 401, as the lists are then up to date again.
+    // since the last 401, as the lists are then up to date again. Before the
+    // first load (still on the Configuration screen) nothing is stale, so a
+    // newer token clears it straight away: the searches just work again.
     self.beaconLoginRejected = ko.observable(false);
     self.beaconLoginRenewed = ko.observable(false);
     // Counts 401s. Each jobs/teams refresh notes it when sending, so one sent
@@ -3145,7 +3148,11 @@ function VM() {
     };
     self.recheckRejectedLogin = function () {
         if (self.beaconLoginRejected() && token !== rejectedToken && !BeaconToken.nearExpiry(tokenExp)) {
-            self.beaconLoginRenewed(true);
+            if (self.dataLoadStarted()) {
+                self.beaconLoginRenewed(true);
+            } else {
+                self.beaconLoginRejected(false);
+            }
         }
     };
     onBeaconAuthError((err, refusedToken) => {
@@ -3164,7 +3171,7 @@ function VM() {
     });
 
     self.UserPressedSaveOnTheConfigModal = function () {
-        dataLoadStarted = true;
+        self.dataLoadStarted(true);
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land

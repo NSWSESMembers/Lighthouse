@@ -83,6 +83,8 @@ If Beacon stops accepting LAD's login, usually because it has expired, a red ban
 
 To fix it, open LAD again from the **Lighthouse** menu in Beacon, then reload the tab. Once LAD has a new login, from that or from another Beacon tab, the banner shows a **Reload** button. If you don't reload, the banner goes away by itself after the next full refresh of incidents and teams works, as they're then up to date again.
 
+On the Configuration screen before LAD has loaded anything, nothing is out of date yet. The banner just asks you to open LAD again from Beacon, and goes away as soon as LAD has a new login, with no need to reload.
+
 ## Filter Settings
 
 The **Filters** tab gives more granular control over which incidents and teams are synced into LAD.

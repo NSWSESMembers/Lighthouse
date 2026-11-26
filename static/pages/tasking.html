@@ -20,7 +20,8 @@
     </div>
     <div id="beacon-login-banner" class="signalr-status-banner beacon-login-banner" role="alert" style="display: none" data-bind="visible: beaconLoginRejected() && !tabPaused()">
         <span class="signalr-status-banner__icon">⚠</span>
-        <span data-bind="visible: !beaconLoginRenewed()">Beacon has stopped accepting this tab's login, so LAD may be out of date. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon, then reload this tab.</span>
+        <span data-bind="visible: !dataLoadStarted()">Beacon has stopped accepting this tab's login. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon.</span>
+        <span data-bind="visible: dataLoadStarted() && !beaconLoginRenewed()">Beacon has stopped accepting this tab's login, so LAD may be out of date. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon, then reload this tab.</span>
         <span data-bind="visible: beaconLoginRenewed">Beacon stopped accepting this tab's login for a while, so LAD may be out of date. Reload to bring it up to date.</span>
         <button type="button" class="btn btn-sm btn-danger py-0" data-bind="visible: beaconLoginRenewed, click: reloadPage">Reload</button>
     </div>
