@@ -3,6 +3,7 @@ global.jQuery = $;
 
 import { beaconSiteEnvironment, blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import BeaconClient from '../../shared/BeaconClient.js';
+import { onBeaconAuthError } from '../../shared/BeaconClient/core/request.js';
 import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, connectionRecovered, getConnectionStatus, messageReceived } from './signalr/connection.js';
@@ -2055,11 +2056,7 @@ function VM() {
     // same member-id space as getMemberId()/createdByMemberId above.
     self.searchMembers = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        try {
-            return (await BeaconClient.users.search(query, beaconCtx(t))).results;
-        } catch (_) {
-            return [];
-        }
+        return (await BeaconClient.users.search(query, beaconCtx(t))).results;
     }
 
     // Searches Beacon events by name or identifier -- used by the
@@ -2067,11 +2064,7 @@ function VM() {
     // Events/Search result rows.
     self.searchEvents = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        try {
-            return (await BeaconClient.events.search(query, beaconCtx(t))).results;
-        } catch (_) {
-            return [];
-        }
+        return (await BeaconClient.events.search(query, beaconCtx(t))).results;
     }
 
     self.sendSMS = async function (recipients, jobId = '', message, isOperational) {
@@ -2796,6 +2789,7 @@ function VM() {
         const pollStartTime = Date.now();
 
         const t = await getToken();   // blocks here until token is ready
+        const loginRefusals = self.beaconLoginRefusals;
 
         const paramsArray = [
             `StartDate=${start.toISOString()}`,
@@ -2846,6 +2840,7 @@ function VM() {
 
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
+            self.noteFullRefreshOk('jobs', loginRefusals);
             // Runs here (not alongside the fetchAllJobsData() call itself)
             // so it sees this cycle's actual results -- fetchAllJobsData is
             // async and its merges land after the network round-trip, not
@@ -2875,6 +2870,7 @@ function VM() {
         // these teams while this request is in flight.
         const pollStartTime = Date.now();
         const t = await getToken();   // blocks here until token is ready
+        const loginRefusals = self.beaconLoginRefusals;
         try {
             const teams = await BeaconClient.team.search(hqsFilter, start, end, beaconCtx(t, {
                 statusTypes: statusFilterToView,
@@ -2894,6 +2890,7 @@ function VM() {
             console.log("Total teams fetched:", teams.results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.teamsLoading(false);
+            self.noteFullRefreshOk('teams', loginRefusals);
 
             // Loop over all the teams in the results and compare them to self.teams
             const fetchedTeamIds = new Set(teams.results.map(t => t.Id));
@@ -3075,7 +3072,8 @@ function VM() {
     self.pausedLoginChecking = ko.pureComputed(() => self.pausedLogin() === 'checking');
     self.pausedLoginOk = ko.pureComputed(() => self.pausedLogin() === 'ok');
     self.pausedLoginExpired = ko.pureComputed(() => self.pausedLogin() === 'expired');
-    let dataLoadStarted = false;
+    // Observable for the login banner's wording (see BEACON REFUSED THE LOGIN).
+    self.dataLoadStarted = ko.observable(false);
 
     self.reloadPage = function () {
         window.location.reload();
@@ -3103,7 +3101,7 @@ function VM() {
     };
     tabDormancy.onReturn = () => {
         // Nothing has loaded behind the config modal yet, so nothing is stale.
-        if (!dataLoadStarted) {
+        if (!self.dataLoadStarted()) {
             tabDormancy.reset();
             return;
         }
@@ -3123,8 +3121,57 @@ function VM() {
         checkPausedLogin();
     };
 
+    // ---------------- BEACON REFUSED THE LOGIN -----------------
+    // A 401 on any Beacon request means this tab's login stopped working, so
+    // whatever failed didn't update and the timed refreshes won't either: the
+    // whole page may be out of date, not just the one lookup. Once a newer
+    // token arrives (another Beacon tab, or LAD opened again from Beacon) the
+    // banner offers Reload, as a reload starts from the stored token. It goes
+    // away by itself once a jobs refresh and a teams refresh have both worked
+    // since the last 401, as the lists are then up to date again. Before the
+    // first load (still on the Configuration screen) nothing is stale, so a
+    // newer token clears it straight away: the searches just work again.
+    self.beaconLoginRejected = ko.observable(false);
+    self.beaconLoginRenewed = ko.observable(false);
+    // Counts 401s. Each jobs/teams refresh notes it when sending, so one sent
+    // before the latest 401 can't clear the banner.
+    self.beaconLoginRefusals = 0;
+    let refreshedSinceRefusal = new Set();
+    let rejectedToken = null;
+    self.noteFullRefreshOk = function (part, refusalsWhenSent) {
+        if (!self.beaconLoginRejected() || refusalsWhenSent !== self.beaconLoginRefusals) return;
+        refreshedSinceRefusal.add(part);
+        if (refreshedSinceRefusal.has('jobs') && refreshedSinceRefusal.has('teams')) {
+            self.beaconLoginRejected(false);
+            self.beaconLoginRenewed(false);
+        }
+    };
+    self.recheckRejectedLogin = function () {
+        if (self.beaconLoginRejected() && token !== rejectedToken && !BeaconToken.nearExpiry(tokenExp)) {
+            if (self.dataLoadStarted()) {
+                self.beaconLoginRenewed(true);
+            } else {
+                self.beaconLoginRejected(false);
+            }
+        }
+    };
+    onBeaconAuthError((err, refusedToken) => {
+        // Only Beacon itself. The CADence exercise feed also goes through
+        // request(), and its backend 401s a stale token copy before retrying
+        // with a newer one (cadenceSimulation.js feedRequest).
+        if (!String(err.url).startsWith(apiHost + '/')) return;
+        self.beaconLoginRefusals++;
+        refreshedSinceRefusal = new Set();
+        rejectedToken = refusedToken;
+        self.beaconLoginRenewed(false);
+        self.beaconLoginRejected(true);
+        // A request sent with an older token can be refused after a newer one
+        // has already arrived.
+        self.recheckRejectedLogin();
+    });
+
     self.UserPressedSaveOnTheConfigModal = function () {
-        dataLoadStarted = true;
+        self.dataLoadStarted(true);
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
@@ -4491,6 +4538,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
             myViewModel?.recheckPausedLogin();
+            myViewModel?.recheckRejectedLogin();
         }
     );
 

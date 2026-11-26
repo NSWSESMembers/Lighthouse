@@ -18,6 +18,19 @@ export class BeaconApiError extends Error {
   }
 }
 
+// Called with the BeaconApiError of every 401 and the token that was refused,
+// before the request rejects (or resolves null under nullOnError). A page uses it to say its whole view may be
+// out of date once Beacon stops accepting its login, rather than leaving each
+// caller to notice. One handler per page; null removes it.
+let authErrorHandler = null;
+
+/**
+ * @param {((err: BeaconApiError, token: string|undefined) => void)|null} fn
+ */
+export function onBeaconAuthError(fn) {
+  authErrorHandler = fn;
+}
+
 /**
  * Serialise a plain object to application/x-www-form-urlencoded.
  * Array values are emitted as `key[]=a&key[]=b`; null/undefined become "".
@@ -109,11 +122,19 @@ export async function request(url, opts = {}) {
     } catch (_) {
       /* body already consumed or unavailable */
     }
+    const err = new BeaconApiError(response.status, response.statusText, url, errorBody);
+    if (response.status === 401 && authErrorHandler) {
+      try {
+        authErrorHandler(err, token);
+      } catch (handlerErr) {
+        console.error('Beacon auth error handler failed:', handlerErr);
+      }
+    }
     if (nullOnError) {
       console.warn(`Beacon API ${response.status} ${response.statusText || ''} (${url}) -- swallowed (nullOnError)`);
       return null;
     }
-    throw new BeaconApiError(response.status, response.statusText, url, errorBody);
+    throw err;
   }
 
   if (responseType === 'none' || response.status === 204) {

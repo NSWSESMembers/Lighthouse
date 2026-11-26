@@ -18,7 +18,14 @@
             <button type="button" class="btn btn-primary" data-bind="visible: pausedLoginOk, click: reloadPage">Reload</button>
         </div>
     </div>
-    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !tabPaused()">
+    <div id="beacon-login-banner" class="signalr-status-banner beacon-login-banner" role="alert" style="display: none" data-bind="visible: beaconLoginRejected() && !tabPaused()">
+        <span class="signalr-status-banner__icon">⚠</span>
+        <span data-bind="visible: !dataLoadStarted()">Beacon has stopped accepting this tab's login. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon.</span>
+        <span data-bind="visible: dataLoadStarted() && !beaconLoginRenewed()">Beacon has stopped accepting this tab's login, so LAD may be out of date. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon, then reload this tab.</span>
+        <span data-bind="visible: beaconLoginRenewed">Beacon stopped accepting this tab's login for a while, so LAD may be out of date. Reload to bring it up to date.</span>
+        <button type="button" class="btn btn-sm btn-danger py-0" data-bind="visible: beaconLoginRenewed, click: reloadPage">Reload</button>
+    </div>
+    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !tabPaused() && !beaconLoginRejected()">
         <span class="signalr-status-banner__icon">⚠</span>
         <span data-bind="text: signalrStatusText"></span>
         <button type="button" class="btn btn-sm btn-warning py-0" data-bind="visible: signalrNeedsPermission, click: allowLiveUpdatesHost">Allow</button>
@@ -1924,7 +1931,13 @@
                                                     </li>
                                                     <!-- /ko -->
                                                     <!-- /ko -->
-                                                    <!-- ko if: config.results().length === 0 -->
+                                                    <!-- ko if: config.searchError -->
+                                                    <li>
+                                                        <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert"
+                                                            style="pointer-events:none;" data-bind="text: config.searchError"></div>
+                                                    </li>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: config.results().length === 0 && !config.searchError() -->
                                                     <li>
                                                         <div class="dropdown-item text-muted text-center py-2"
                                                             style="pointer-events:none;">
@@ -1935,6 +1948,7 @@
                                                     <!-- /ko -->
                                                 </ul>
                                             </div>
+                                            <div class="small text-danger mt-1" role="alert" data-bind="visible: config.lookupError, text: config.lookupError" style="display: none"></div>
 
                                             <div class="row g-3 mt-0">
                                                 <div class="col-12 col-sm-6">
@@ -3047,7 +3061,12 @@
                                                                 </div>
                                                             </li>
                                                             <!-- /ko -->
-                                                            <!-- ko if: searchResults().length === 0 -->
+                                                            <!-- ko if: searchError -->
+                                                            <li>
+                                                                <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                             <li>
                                                                 <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                             </li>
@@ -3099,7 +3118,12 @@
                                                                     </div>
                                                                 </li>
                                                                 <!-- /ko -->
-                                                                <!-- ko if: searchResults().length === 0 -->
+                                                                <!-- ko if: searchError -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                                 <li>
                                                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                                 </li>
@@ -3204,7 +3228,12 @@
                                                                     </div>
                                                                 </li>
                                                                 <!-- /ko -->
-                                                                <!-- ko if: searchResults().length === 0 -->
+                                                                <!-- ko if: searchError -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                                 <li>
                                                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                                 </li>
@@ -3281,7 +3310,12 @@
                                                                 </div>
                                                             </li>
                                                             <!-- /ko -->
-                                                            <!-- ko if: searchResults().length === 0 -->
+                                                            <!-- ko if: searchError -->
+                                                            <li>
+                                                                <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                             <li>
                                                                 <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                             </li>
@@ -3804,7 +3838,12 @@
                                     </div>
                                 </li>
                                 <!-- /ko -->
-                                <!-- ko if: searchResults().length === 0 -->
+                                <!-- ko if: searchError -->
+                                <li>
+                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                 <li>
                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                 </li>
@@ -3849,7 +3888,12 @@
                                     </div>
                                 </li>
                                 <!-- /ko -->
-                                <!-- ko if: searchResults().length === 0 -->
+                                <!-- ko if: searchError -->
+                                <li>
+                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                 <li>
                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                 </li>
@@ -3895,7 +3939,12 @@
                                     </div>
                                 </li>
                                 <!-- /ko -->
-                                <!-- ko if: searchResults().length === 0 -->
+                                <!-- ko if: searchError -->
+                                <li>
+                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                 <li>
                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                 </li>

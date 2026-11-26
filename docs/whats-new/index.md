@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Clearer when Beacon refuses LAD's login
+
+*26 November 2026*
+
+- **A banner when Beacon stops accepting LAD's login.** If Beacon refuses LAD's login, usually because it has expired, a red banner across the top of the page now says LAD may be out of date and how to fix it: open LAD again from the **Lighthouse** menu in Beacon, then reload. It offers **Reload** once LAD has a new login, and goes away by itself once incidents and teams have loaded again. On the Configuration screen, before anything has loaded, it goes away as soon as LAD has a new login. See [Beacon Login](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#beacon-login).
+- **Searches in the Configuration screen say when they fail.** The Headquarters search, and the HQ, event and moderator searches for collaborative layers, used to show **No results found** when they couldn't reach Beacon. They now say why. Expanding a zone, and loading the HQ LAD was opened for, also say when they fail instead of doing nothing. See [Adding Headquarters](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#adding-headquarters).
+
 ## Council flood systems and cameras
 
 *25 November 2026*
