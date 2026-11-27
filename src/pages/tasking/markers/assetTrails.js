@@ -221,7 +221,9 @@ export class AssetTrails {
 
     _record(asset) {
         if (!this.enabled) return false;
-        const lat = +asset.latitude?.(), lng = +asset.longitude?.();
+        // No position yet (null): +null is 0, so check before converting.
+        if (asset.latitude?.() == null || asset.longitude?.() == null) return false;
+        const lat = +asset.latitude(), lng = +asset.longitude();
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
         const id = keyOf(asset);
         let trail = this.trails.get(id);

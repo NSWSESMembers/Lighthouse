@@ -91,12 +91,14 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 | **EPA Contamination Sites** | Red dot | Site name, address, activity type and management class |
 | **NSW Declared Dams** | Blue dot | Dam name, place, owner and declared status |
 | **Power Outages (Unplanned)** and **(Planned, next 48 hrs)** | Warning triangle with a lightning bolt: yellow with a red border (unplanned) or white with a blue border (planned). Where the company maps the outage area, it's shaded in the border colour | The power company, customers affected, status, cause, suburbs (and streets for Ausgrid), when it started or starts, the estimated restore time and the company's faults number |
+| **Council Flood Cameras** (Tweed, Clarence Valley, Bellingen, Coffs Harbour) | A blue camera drawn from above, turned the way it looks, with a cone showing its view about 150 m out (drawn to scale, so it only appears once you zoom in to suburb level). A camera whose direction isn't known yet is upright with no cone. A dashed outline means the council doesn't publish where the camera is, so its position is approximate | The camera's latest image and when it was taken, with a warning if it's more than 45 minutes old. Links to the camera's time lapse, its river gauge or the council's live video, where there is one |
+| **Parramatta Flood Impacts (forecast next ~12 hrs)** | A round icon for the type of asset (road or crossing, houses, healthcare, landmark, levee, bushland): large and red if it's forecast to flood, small and white if not | The asset, whether the council's flood model forecasts it flooded in its current run, and the run's times |
 
 **Transport NSW Incidents** shows both incidents managed by Transport NSW and road closures and hazards reported by local councils. Council reports are often regional road closures, such as flooded causeways, that don't appear as Transport NSW incidents. Council roadworks are left out. Where Transport NSW maps the affected stretch of road or area, it's drawn as a coloured line or shaded area, coloured as on Live Traffic NSW: blue for flooding and weather, dark red for fire and heavy impact, orange for moderate and grey for low impact. Click a line or area for the same details.
 
 ![Popup from clicking a traffic incident marker](images/overlay-marker-popup.png)
 
-**WaterNSW Special & Controlled Areas** also opens a popup when you click inside an area, with the area's name and class. Other overlays, such as boundaries, radar, BOM warnings and BOM observations, are pictures only and don't respond to clicks.
+**WaterNSW Special & Controlled Areas** also opens a popup when you click inside an area, with the area's name and class. So do the Council Systems areas (see [Overlay Notes](#overlay-notes)): the Parramatta flood warning areas, the flood hazard shading and the rainfall catchments. Other overlays, such as boundaries, radar, BOM warnings and BOM observations, are pictures only and don't respond to clicks.
 
 Overlay markers are drawn under incidents by default. If one is hidden behind an incident, move it up on the [Map layers](configuration.md#map-layers) tab of the Configuration screen.
 
@@ -125,6 +127,20 @@ Most layers are described by their name. Those that need more explanation:
 **Infrastructure**
 
 - **Power Outages (Unplanned)** and **Power Outages (Planned, next 48 hrs)**: current outages from Ausgrid, Endeavour Energy and Essential Energy, refreshed every 5 minutes while the layer is on. Planned outages are only shown if they're under way or start within 48 hours. Ausgrid only gives a location, so its outages have a marker but no shaded area. Single-home outages and retailer meter changes aren't shown. An estimated restore time that has already passed is marked *overdue*. The details come from each company's public outage map and can lag behind what crews on the ground know. If a company's feed stops updating, its outages stay on the map and the popup says when they were last loaded.
+
+**Council Systems**
+
+Data from councils' own flood systems, through Lighthouse's backend. Anything marked *forecast* comes from the council's flood model: it isn't an observed level or an issued warning, so check NSW SES warnings.
+
+- **Parramatta FloodSmart**, from City of Parramatta's FloodSmart dashboard:
+  - **Parramatta Flood Warning Areas (forecast next 5 hrs)**: the council's 10 flood warning areas, shaded by what its flood model forecasts for the next 5 hours. Areas forecast to reach the public information, Minor, Moderate or Major level have a dashed outline and a label on the map (for example *Forecast: Minor*). Click an area for the forecast peak and when it's expected, and the area's warning levels.
+  - **Parramatta Flood Impacts (forecast next ~12 hrs)**: the council's key assets, such as road crossings, hospitals and levees, and whether its current 12-hour model run forecasts each one flooded.
+  - **Parramatta Flood Hazard H1–H6 (forecast max, ~36 hrs)**: the national flood hazard categories H1 (generally safe) to H6 (unsafe for vehicles and people, buildings may fail), worked out from the model's forecast maximum depth and speed of water over its whole run, on a grid of about 25 m. A key shows on the map while it's on. Click a shaded square for its forecast depth and velocity. Rivers, lakes and basins always show H5–H6 because they're deep even in dry weather.
+  - **Parramatta Rainfall since 9am** and **Parramatta Rainfall forecast next 3 hrs**: each catchment shaded on the FloodSmart rainfall scale, with its total in mm. Click a catchment for both totals.
+- **Northern Beaches FLASH**: **Northern Beaches Rainfall since 9am** and **forecast next 3 hrs**, the same as Parramatta's, from Northern Beaches Council's FLASH dashboard.
+- **Council Flood Cameras**: councils' flood monitoring cameras at bridges, causeways and flood-prone roads, one layer per council: **Tweed Flood Cameras**, **Clarence Valley Flood Cameras**, **Bellingen Flood Cameras** and **Coffs Harbour Flood Cameras**. Turning a layer on only shows where the cameras are. A camera's latest image is loaded when you click it, so the councils' sites aren't asked for images nobody looks at. Most cameras take a picture every 15 to 30 minutes, or hourly, and more often during a flood. Some only have the time stamped on the image itself. Seven of Clarence Valley's cameras are only published as one live video: their pictures are taken from that video when you click, and a camera that's switched off says so. The images are automated and not checked by the council.
+
+The layers refresh every 5 to 15 minutes while they're on. If a council's system stops responding, the last data Lighthouse loaded stays on the map.
 
 **NSW SES Geoservices**
 

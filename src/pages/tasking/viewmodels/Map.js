@@ -714,6 +714,8 @@ export function MapVM(Lmap, root) {
    * @param {string} key - unique id for this overlay
    * @param {{
    *   label: string,
+   *   menuGroup?: string,  // Layers menu section
+   *   menuSubgroup?: string,  // sub-heading within the section, e.g. one council system's layers
    *   refreshMs?: number,
    *   visibleByDefault?: boolean,
    *   stack?: 'vector'|'tiles'|'ground'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
@@ -756,6 +758,7 @@ export function MapVM(Lmap, root) {
       skipIfBusy: opts.skipIfBusy,
       timerId: null,
       menuGroup: opts.menuGroup || null,
+      menuSubgroup: opts.menuSubgroup || null,
       track: newLayerTrack(),
     };
 
@@ -883,6 +886,7 @@ export function MapVM(Lmap, root) {
           label: entry.label || k,
           layer: entry.layerGroup,
           group: entry.menuGroup || null,
+          subgroup: entry.menuSubgroup || null,
           visibleByDefault: entry.visibleByDefault,
         });
       }
@@ -1208,6 +1212,9 @@ export function MapVM(Lmap, root) {
 
   const PopupStuff = {
     getToken: () => root.getToken(),
+
+    // Asset popup's "Updated ..." line
+    assetsFetchedAgo: () => root.assetsFetchedAgo?.() || '',
 
     flyToBounds: (bounds, { opts }) => {
       self._flyingToBounds = true;

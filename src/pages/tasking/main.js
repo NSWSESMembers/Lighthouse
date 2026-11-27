@@ -3,6 +3,7 @@ global.jQuery = $;
 
 import { beaconSiteEnvironment, blockUnlessOpenedFromBeacon } from '../../shared/beaconEnvironments.js';
 import BeaconClient from '../../shared/BeaconClient.js';
+import { onBeaconAuthError } from '../../shared/BeaconClient/core/request.js';
 import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, connectionRecovered, getConnectionStatus, messageReceived } from './signalr/connection.js';
@@ -16,6 +17,7 @@ require('../lib/shared_chrome_code.js'); // side-effect
 
 import { showAlert } from './components/windowAlert.js';
 import { describeBeaconError } from './utils/beaconError.js';
+import { fmtRelative } from './utils/common.js';
 
 import { ResizeDividers } from './resize.js';
 import { initPopupAutoPan } from './utils/popupAutoPan.js';
@@ -56,7 +58,7 @@ import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
-import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
+import { computeMatchedAssetsForTeam, setTeamAssets, unlinkTeam, unlinkAsset, isAssetUnmatched } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
 import { buildJobSuggestionPool, buildTeamSuggestionPool, filterJobsBySearchTerm, filterTeamsBySearchTerm } from './utils/searchMatching.js';
 import { createSearchSuggest } from './utils/searchSuggest.js';
@@ -82,6 +84,7 @@ import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
 import { installRowTransitionBindings } from "./bindings/rowTransitions.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
 import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
+import "./bindings/holdToConfirm.js";  // registers ko.bindingHandlers.holdToConfirm
 import "./bindings/fitInPane.js";    // registers ko.bindingHandlers.fitInPane
 import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
@@ -98,6 +101,8 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerPowerOutagesLayers } from "./mapLayers/powerOutages.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
+import { registerFloodSmartLayers } from "./mapLayers/floodsmart.js";
+import { registerCouncilCamerasLayers } from "./mapLayers/councilCameras.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
 import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
@@ -432,6 +437,7 @@ map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 7
 // Font Awesome icon for each section of the Layers menu.
 const OVERLAY_GROUP_ICONS = {
     "Collaborative Layers": "fa-users",
+    "Council Systems": "fa-landmark",
     "Forecasts": "fa-cloud-sun",
     "Historical Imagery": "fa-history",
     "Infrastructure": "fa-city",
@@ -543,6 +549,9 @@ function VM() {
 
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
+    // Assets: a Refresh press in progress, and when the feed last loaded
+    self.assetsRefreshing = ko.observable(false);
+    self.assetsFetchedAt = ko.observable(null);
     self.jobsLoading = ko.observable(true);
     self.tagsLoading = ko.observable(true);
 
@@ -602,6 +611,15 @@ function VM() {
     setInterval(() => {
         self.relativeUpdateTick30s(self.relativeUpdateTick30s() + 1);
     }, 1000 * 30);
+
+    // Asset popup: when the feed last loaded. It's polled every 30s, so
+    // anything under a minute is "just now"; older means fetches are failing.
+    self.assetsFetchedAgo = ko.pureComputed(() => {
+        self.relativeUpdateTick30s();
+        const at = self.assetsFetchedAt();
+        if (!at) return '';
+        return Date.now() - at.getTime() < 60000 ? 'just now' : fmtRelative(at);
+    });
 
     self.allTags = ko.observableArray([]);
 
@@ -1043,10 +1061,8 @@ function VM() {
 
     self.unmatchedTrackableAssets = ko.pureComputed(() => {
         const all = self.trackableAssets?.() || [];
-        return all.filter(a => {
-            const mt = (typeof a.matchingTeams === 'function') ? a.matchingTeams() : [];
-            return !mt || mt.length === 0;
-        });
+        const shownTeams = new Set(self.filteredTeamsAgainstConfig());
+        return all.filter(a => isAssetUnmatched(a, shownTeams));
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     self.sectorsLoading = ko.observable(false);
@@ -1646,8 +1662,10 @@ function VM() {
     // layer; everything else is only drawable on the unmatched layer, so that
     // layer is switched on (and persisted, like a manual toggle) if needed.
     self.focusTrackableAsset = function (asset) {
-        const lat = +asset?.latitude?.();
-        const lng = +asset?.longitude?.();
+        // No position yet (null): +null is 0, so check before converting.
+        if (asset?.latitude?.() == null || asset?.longitude?.() == null) return;
+        const lat = +asset.latitude();
+        const lng = +asset.longitude();
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
         const mapVM = self.mapVM;
@@ -1748,25 +1766,16 @@ function VM() {
 
         // Defer execution to avoid blocking UI thread
         setTimeout(() => {
-            const all = self.trackableAssets?.() || [];
-            const desired = computeMatchedAssetsForTeam(team, all); // Set<Asset>
-
-            // Remove no-longer-matching
-            (team.trackableAssets() || []).slice().forEach(a => {
-                if (!desired.has(a)) {
-                    a?.matchingTeams?.remove?.(team);
-                    team.trackableAssets.remove(a);
-                }
-            });
-
-            // Add new matches
-            for (const a of desired) {
-                const has = (team.trackableAssets() || []).includes(a);
-                if (!has) {
-                    team.trackableAssets.push(a);
-                    a?.matchingTeams?.push?.(team);
-                }
+            // The team can be dropped before this runs (a pushed team outside
+            // the config filters is added then removed straight away). Match
+            // it now and nothing would ever re-check it, so its assets would
+            // be off both asset layers until a reload.
+            if (self.teamsById.get(team.id()) !== team) {
+                unlinkTeam(team);
+                return;
             }
+            const all = self.trackableAssets?.() || [];
+            setTeamAssets(team, computeMatchedAssetsForTeam(team, all));
         }, 0);
     };
 
@@ -2048,11 +2057,7 @@ function VM() {
     // same member-id space as getMemberId()/createdByMemberId above.
     self.searchMembers = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        try {
-            return (await BeaconClient.users.search(query, beaconCtx(t))).results;
-        } catch (_) {
-            return [];
-        }
+        return (await BeaconClient.users.search(query, beaconCtx(t))).results;
     }
 
     // Searches Beacon events by name or identifier -- used by the
@@ -2060,11 +2065,7 @@ function VM() {
     // Events/Search result rows.
     self.searchEvents = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        try {
-            return (await BeaconClient.events.search(query, beaconCtx(t))).results;
-        } catch (_) {
-            return [];
-        }
+        return (await BeaconClient.events.search(query, beaconCtx(t))).results;
     }
 
     self.sendSMS = async function (recipients, jobId = '', message, isOperational) {
@@ -2657,72 +2658,111 @@ function VM() {
         return true;
     }
 
-    self.fetchAllTrackableAssets = async function () {
-        if (tabDormancy.isDormant()) return;
-        if (!assetDataRefreshInterlock) {
-            const t = await getToken();   // blocks here until token is ready
-            // With a simulated exercise chosen the radio half of the feed
-            // comes from the exercise, so the first fetch waits until the
-            // choice has been read. Note which selection this request is
-            // for: if it changes while the request is in flight, the change
-            // has already started a fresh fetch, so this response is dropped
-            // rather than drawn over it.
-            const simulatedExercise = self.simulatedExercise;
-            await simulatedExercise.ready;
-            const simulation = simulatedExercise.feedSelection();
-            const simulationGeneration = simulatedExercise.generation();
+    // One asset fetch at a time: two at once could land in either order, an
+    // older (or failed) one undoing a newer one. A call while a fetch is
+    // running isn't dropped -- one more fetch runs when it finishes, so a
+    // simulated exercise chosen mid-fetch still gets a fetch of its own.
+    // `fresh` (the Refresh buttons) skips the 20s shared asset cache; asked
+    // for mid-fetch, it applies to the follow-up fetch.
+    let assetFetchInFlight = null;
+    let assetFetchAgain = false;
+    let assetFetchFresh = false;
+    self.fetchAllTrackableAssets = function ({ fresh = false } = {}) {
+        if (tabDormancy.isDormant()) return Promise.resolve();
+        if (fresh) assetFetchFresh = true;
+        if (assetFetchInFlight) {
+            assetFetchAgain = true;
+            return assetFetchInFlight;
+        }
+        assetFetchInFlight = (async () => {
             try {
-                const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken }));
-                if (simulationGeneration !== simulatedExercise.generation()) return;
-                if (simulation) {
-                    simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);
-                }
-                assets.forEach(function (a) {
-                    myViewModel.getOrCreateAsset(a);
-                })
-                const fetchedAssetIds = new Set((assets || []).map(a => a.properties.id));
-                const existingAssetIds = self.assetsById.keys();
-                const assetsToRemove = [...existingAssetIds].filter(id => !fetchedAssetIds.has(id));
-                assetsToRemove.forEach(id => {
-                    const asset = self.assetsById.get(id);
-                    if (!asset) return;
-                    // Unlink from matching teams
-                    if (Array.isArray(asset.matchingTeams)) {
-                        asset.matchingTeams.slice().forEach(team => {
-                            if (team.trackableAssets) team.trackableAssets.remove(asset);
-                            asset.matchingTeams.remove(team);
-                        });
-                    }
-                    // Remove from observable array and registry
-                    self.trackableAssets.remove(asset);
-                    self.assetsById.delete(id);
-                    self.mapVM?.assetTrails?.untrack(asset);
-                });
-                //Update Asset/Team mappings only once after all changes
-                self._attachAssetsToMatchingTeams();
-
-                // Fetch shared default-asset mappings (runs after matching
-                // so we know which teams have multiple assets)
-                self._fetchSharedDefaultAssets();
-
-                myViewModel._markInitialFetchDone();
-            } catch (err) {
-                if (simulationGeneration !== simulatedExercise.generation()) return;
-                if (simulation && isSimulationUnavailable(err)) {
-                    // The exercise backend refused this Beacon sign-in: go back
-                    // to the real feed everywhere (endHere() refetches and
-                    // tells the user).
-                    console.warn("Simulated exercise feed unavailable, returning to the real feed:", err);
-                    simulatedExercise.endHere('unavailable');
-                    return;
-                }
-                console.error("Error fetching trackable assets:", err);
-                showAlert(simulation
-                    ? 'Failed to fetch the simulated exercise positions. Showing the last positions received.'
-                    : 'Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
+                do {
+                    assetFetchAgain = false;
+                    const freshThisTime = assetFetchFresh;
+                    assetFetchFresh = false;
+                    await fetchTrackableAssetsOnce(freshThisTime);
+                } while (assetFetchAgain && !tabDormancy.isDormant());
             } finally {
-                assetDataRefreshInterlock = false;
+                assetFetchInFlight = null;
             }
+        })();
+        return assetFetchInFlight;
+    };
+
+    // Refresh button: fetch now, skipping the cache, and start the 30s
+    // interval again from here (if it's running yet).
+    self.refreshAssetsNow = async function () {
+        if (tabDormancy.isDormant()) return;
+        if (assetDataRefreshTimer) startAssetDataRefreshTimer();
+        self.assetsRefreshing(true);
+        try {
+            await self.fetchAllTrackableAssets({ fresh: true });
+        } finally {
+            self.assetsRefreshing(false);
+        }
+    };
+
+    self.refreshTeamsAndAssets = function () {
+        self.fetchAllTeamData();
+        self.refreshAssetsNow();
+    };
+
+    async function fetchTrackableAssetsOnce(fresh) {
+        const t = await getToken();   // blocks here until token is ready
+        // With a simulated exercise chosen the radio half of the feed
+        // comes from the exercise, so the first fetch waits until the
+        // choice has been read. Note which selection this request is
+        // for: if it changes while the request is in flight, the change
+        // has asked for a fresh fetch (run straight after this one), so
+        // this response is dropped rather than drawn over it.
+        const simulatedExercise = self.simulatedExercise;
+        await simulatedExercise.ready;
+        const simulation = simulatedExercise.feedSelection();
+        const simulationGeneration = simulatedExercise.generation();
+        try {
+            const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation, refreshToken: refreshCadenceToken, fresh }));
+            if (simulationGeneration !== simulatedExercise.generation()) return;
+            if (simulation) {
+                simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);
+            }
+            assets.forEach(function (a) {
+                myViewModel.getOrCreateAsset(a);
+            })
+            const fetchedAssetIds = new Set((assets || []).map(a => a.properties.id));
+            const existingAssetIds = self.assetsById.keys();
+            const assetsToRemove = [...existingAssetIds].filter(id => !fetchedAssetIds.has(id));
+            assetsToRemove.forEach(id => {
+                const asset = self.assetsById.get(id);
+                if (!asset) return;
+                unlinkAsset(asset);
+                // Remove from observable array and registry
+                self.trackableAssets.remove(asset);
+                self.assetsById.delete(id);
+                self.mapVM?.assetTrails?.untrack(asset);
+            });
+            //Update Asset/Team mappings only once after all changes
+            self._attachAssetsToMatchingTeams();
+
+            // Fetch shared default-asset mappings (runs after matching
+            // so we know which teams have multiple assets)
+            self._fetchSharedDefaultAssets();
+
+            self.assetsFetchedAt(new Date());
+            myViewModel._markInitialFetchDone();
+        } catch (err) {
+            if (simulationGeneration !== simulatedExercise.generation()) return;
+            if (simulation && isSimulationUnavailable(err)) {
+                // The exercise backend refused this Beacon sign-in: go back
+                // to the real feed everywhere (endHere() refetches and
+                // tells the user).
+                console.warn("Simulated exercise feed unavailable, returning to the real feed:", err);
+                simulatedExercise.endHere('unavailable');
+                return;
+            }
+            console.error("Error fetching trackable assets:", err);
+            showAlert(simulation
+                ? 'Failed to fetch the simulated exercise positions. Showing the last positions received.'
+                : 'Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
         }
     }
 
@@ -2750,6 +2790,7 @@ function VM() {
         const pollStartTime = Date.now();
 
         const t = await getToken();   // blocks here until token is ready
+        const loginRefusals = self.beaconLoginRefusals;
 
         const paramsArray = [
             `StartDate=${start.toISOString()}`,
@@ -2800,6 +2841,7 @@ function VM() {
 
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
+            self.noteFullRefreshOk('jobs', loginRefusals);
             // Runs here (not alongside the fetchAllJobsData() call itself)
             // so it sees this cycle's actual results -- fetchAllJobsData is
             // async and its merges land after the network round-trip, not
@@ -2829,6 +2871,7 @@ function VM() {
         // these teams while this request is in flight.
         const pollStartTime = Date.now();
         const t = await getToken();   // blocks here until token is ready
+        const loginRefusals = self.beaconLoginRefusals;
         try {
             const teams = await BeaconClient.team.search(hqsFilter, start, end, beaconCtx(t, {
                 statusTypes: statusFilterToView,
@@ -2848,6 +2891,7 @@ function VM() {
             console.log("Total teams fetched:", teams.results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.teamsLoading(false);
+            self.noteFullRefreshOk('teams', loginRefusals);
 
             // Loop over all the teams in the results and compare them to self.teams
             const fetchedTeamIds = new Set(teams.results.map(t => t.Id));
@@ -2869,8 +2913,6 @@ function VM() {
             myViewModel.teamsLoading(false);
         }
     }
-
-    var assetDataRefreshInterlock = false
 
     var assetDataRefreshTimer = null
 
@@ -3031,7 +3073,8 @@ function VM() {
     self.pausedLoginChecking = ko.pureComputed(() => self.pausedLogin() === 'checking');
     self.pausedLoginOk = ko.pureComputed(() => self.pausedLogin() === 'ok');
     self.pausedLoginExpired = ko.pureComputed(() => self.pausedLogin() === 'expired');
-    let dataLoadStarted = false;
+    // Observable for the login banner's wording (see BEACON REFUSED THE LOGIN).
+    self.dataLoadStarted = ko.observable(false);
 
     self.reloadPage = function () {
         window.location.reload();
@@ -3059,7 +3102,7 @@ function VM() {
     };
     tabDormancy.onReturn = () => {
         // Nothing has loaded behind the config modal yet, so nothing is stale.
-        if (!dataLoadStarted) {
+        if (!self.dataLoadStarted()) {
             tabDormancy.reset();
             return;
         }
@@ -3079,8 +3122,57 @@ function VM() {
         checkPausedLogin();
     };
 
+    // ---------------- BEACON REFUSED THE LOGIN -----------------
+    // A 401 on any Beacon request means this tab's login stopped working, so
+    // whatever failed didn't update and the timed refreshes won't either: the
+    // whole page may be out of date, not just the one lookup. Once a newer
+    // token arrives (another Beacon tab, or LAD opened again from Beacon) the
+    // banner offers Reload, as a reload starts from the stored token. It goes
+    // away by itself once a jobs refresh and a teams refresh have both worked
+    // since the last 401, as the lists are then up to date again. Before the
+    // first load (still on the Configuration screen) nothing is stale, so a
+    // newer token clears it straight away: the searches just work again.
+    self.beaconLoginRejected = ko.observable(false);
+    self.beaconLoginRenewed = ko.observable(false);
+    // Counts 401s. Each jobs/teams refresh notes it when sending, so one sent
+    // before the latest 401 can't clear the banner.
+    self.beaconLoginRefusals = 0;
+    let refreshedSinceRefusal = new Set();
+    let rejectedToken = null;
+    self.noteFullRefreshOk = function (part, refusalsWhenSent) {
+        if (!self.beaconLoginRejected() || refusalsWhenSent !== self.beaconLoginRefusals) return;
+        refreshedSinceRefusal.add(part);
+        if (refreshedSinceRefusal.has('jobs') && refreshedSinceRefusal.has('teams')) {
+            self.beaconLoginRejected(false);
+            self.beaconLoginRenewed(false);
+        }
+    };
+    self.recheckRejectedLogin = function () {
+        if (self.beaconLoginRejected() && token !== rejectedToken && !BeaconToken.nearExpiry(tokenExp)) {
+            if (self.dataLoadStarted()) {
+                self.beaconLoginRenewed(true);
+            } else {
+                self.beaconLoginRejected(false);
+            }
+        }
+    };
+    onBeaconAuthError((err, refusedToken) => {
+        // Only Beacon itself. The CADence exercise feed also goes through
+        // request(), and its backend 401s a stale token copy before retrying
+        // with a newer one (cadenceSimulation.js feedRequest).
+        if (!String(err.url).startsWith(apiHost + '/')) return;
+        self.beaconLoginRefusals++;
+        refreshedSinceRefusal = new Set();
+        rejectedToken = refusedToken;
+        self.beaconLoginRenewed(false);
+        self.beaconLoginRejected(true);
+        // A request sent with an older token can be refused after a newer one
+        // has already arrived.
+        self.recheckRejectedLogin();
+    });
+
     self.UserPressedSaveOnTheConfigModal = function () {
-        dataLoadStarted = true;
+        self.dataLoadStarted(true);
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
         self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
@@ -3108,6 +3200,8 @@ function VM() {
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerNSWDeclaredDamsLayer(self);
+    registerFloodSmartLayers(self, getToken);
+    registerCouncilCamerasLayers(self, getToken);
     registerTerrainLayers(self, map);
     registerPastFloodLayers(self);
     registerBOMLandWarningsLayer(self, sourceUrl);
@@ -3421,8 +3515,19 @@ function VM() {
                     body.appendChild(incidentsBtn);
                 }
 
-                // Build layer toggle buttons
-                defs.forEach(({ key, statusKey, label, layer, visibleByDefault }) => {
+                // Build layer toggle buttons, with a sub-heading where a run of
+                // layers shares a subgroup (e.g. one council system's layers)
+                let subgroup = null;
+                defs.forEach(({ key, statusKey, label, layer, visibleByDefault, subgroup: sub }) => {
+                    if (sub && sub !== subgroup) {
+                        const subHeader = document.createElement("div");
+                        subHeader.className = "ld-subgroup-header";
+                        subHeader.dataset.subgroup = sub;
+                        subHeader.textContent = sub;
+                        body.appendChild(subHeader);
+                    }
+                    subgroup = sub || null;
+
                     const stored = localStorage.getItem(`ov.${key}`);
                     const saved = (stored === null)
                         ? (visibleByDefault === true)
@@ -3437,6 +3542,7 @@ function VM() {
                         (saved ? "btn-outline-secondary active" : "btn-outline-secondary");
                     obtn.dataset.key = key;
                     obtn.dataset.label = label;
+                    if (sub) obtn.dataset.subgroup = sub;
                     obtn.innerHTML = `
                         <span class="me-2">${label}</span>
                         <span class="ms-auto">
@@ -3937,6 +4043,11 @@ function VM() {
                     show(btn, visible);
                     anyRow ||= visible;
                 });
+                // A sub-heading shows while any of its layers do
+                cell.querySelectorAll(".ld-subgroup-header").forEach((h) => {
+                    const rows = [...cell.querySelectorAll(".ld-overlay-btn")].filter((b) => b.dataset.subgroup === h.dataset.subgroup);
+                    show(h, rows.some((b) => b.style.display !== "none"));
+                });
                 show(cell, anyRow);
                 // Group headers label mixed lists; one group's own section has its name as the title
                 show(cell.querySelector(".ld-group-header"), !!q || section === "__on");
@@ -4428,6 +4539,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
             myViewModel?.recheckPausedLogin();
+            myViewModel?.recheckRejectedLogin();
         }
     );
 
@@ -4595,6 +4707,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!alreadyTracked && !myViewModel.teamMatchesConfigFilters(team)) {
                 myViewModel.teamsById.delete(team.id());
                 myViewModel.teams.remove(team);
+                unlinkTeam(team);
             }
         };
         getSubject('teamCreated').subscribe(admitTeamIfInFilter);

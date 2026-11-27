@@ -901,6 +901,24 @@ body.dark-mode .ld-rail-item[aria-current="true"] { background: #5a6068; color: 
 body.dark-mode .ld-rail-count { background: #444a52; color: #e0e0e0; }
 body.dark-mode .ld-narrow .ld-rail-item { border-color: #555; }
 body.dark-mode .ld-pane-title { color: #cfd5de; }
+body.dark-mode .ld-subgroup-header { color: #cfd5de; border-bottom-color: #4a4e55; }
+body.dark-mode .leaflet-tooltip.lh-rain-label { background: rgba(33, 37, 41, 0.85); color: #f1f3f5; }
+body.dark-mode .leaflet-tooltip.lh-forecast-label { background: #212529; }
+body.dark-mode .lh-hazard-legend { background: #2b2f33; color: #e9ecef; }
+body.dark-mode .lh-hazard-note { color: #adb5bd; }
+body.dark-mode .lh-impact-not_flooded { background: #343a40; color: #ced4da; border-color: #adb5bd; }
+body.dark-mode .lh-impact-unknown { background: #2b2f33; color: #adb5bd; border-color: #adb5bd; }
+body.dark-mode .leaflet-tooltip.lh-forecast-unknown { color: #ced4da; }
+body.dark-mode .leaflet-tooltip.lh-forecast-pim { color: #81d4fa; }
+body.dark-mode .leaflet-tooltip.lh-forecast-minor { color: #ffe066; }
+body.dark-mode .leaflet-tooltip.lh-forecast-moderate { color: #ffb366; }
+body.dark-mode .leaflet-tooltip.lh-forecast-major { color: #ff8a80; }
+body.dark-mode .lh-council-cam-frame { background: #343a40; }
+body.dark-mode .lh-council-cam-loading { color: #adb5bd; }
+body.dark-mode .lh-council-cam-when,
+body.dark-mode .lh-council-cam-msg { color: #ced4da; }
+body.dark-mode .lh-council-cam-note { color: #adb5bd; }
+body.dark-mode .lh-council-cam-stale { color: #ff8a80; }
 body.dark-mode .ld-empty { color: #9aa3ae; }
 body.dark-mode .ld-base-tile { color: #e0e0e0; }
 body.dark-mode .ld-base-tile.active { border-color: #7aa7ff; }

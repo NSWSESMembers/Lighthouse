@@ -87,6 +87,18 @@ function moveMarker(marker, lat, lng, { duration = 700, fps = 60, onMove } = {})
 }
 
 /**
+ * [lat, lng] from an asset's latLng value, or null until it has a real
+ * position. (+null is 0, so testing Number.isFinite(+lat) put a pin with
+ * no position at 0,0.)
+ */
+function positionOf(latLng) {
+  const lat = latLng?.lat;
+  const lng = latLng?.lng;
+  if (lat == null || lng == null) return null;
+  return (Number.isFinite(+lat) && Number.isFinite(+lng)) ? [+lat, +lng] : null;
+}
+
+/**
  * Create (if missing) and attach per-asset subscriptions that keep the
  * marker updated without walking the whole asset list.
  */
@@ -96,10 +108,10 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
   // Ensure layer exists
   const layer = viewModel.mapVM.assetLayer;
 
-  // Marker create (once)
-  const lat = +asset.latitude?.();
-  const lng = +asset.longitude?.();
-  if (Number.isFinite(lat) && Number.isFinite(lng) && !asset.marker) {
+  // Marker create (once), when the asset has a position
+  const pos = positionOf(asset.latLng?.());
+  if (pos && !asset.marker) {
+    const [lat, lng] = pos;
     const icon = buildIcon(asset, 'matched');
     // riseOnHover: a hovered pin comes to the front, with its leader line.
     const m = L.marker([lat, lng], { icon, pane: 'pane-top', riseOnHover: true });
@@ -148,15 +160,19 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
 
   // Position changes -> smooth move
   subs.push(asset.latLng.subscribe(v => {
-    const latNow = +v?.lat, lngNow = +v?.lng;
-    if (asset.marker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
-      moveMarker(asset.marker, latNow, lngNow, {
-        // Re-lay out pins on the way, so a pin straightens up as soon as it
-        // leaves a crowd rather than when it arrives (schedule() coalesces
-        // to one layout per frame).
-        onMove: viewModel.mapVM.assetPinLayout?.schedule,
-      });
+    const posNow = positionOf(v);
+    if (!posNow) return;
+    // No pin yet: the asset had no position when it was attached.
+    if (!asset.marker) {
+      attachAssetMarker(ko, map, viewModel, asset);
+      return;
     }
+    moveMarker(asset.marker, posNow[0], posNow[1], {
+      // Re-lay out pins on the way, so a pin straightens up as soon as it
+      // leaves a crowd rather than when it arrives (schedule() coalesces
+      // to one layout per frame).
+      onMove: viewModel.mapVM.assetPinLayout?.schedule,
+    });
   }));
 
   // lastSeen updated -> rebuild icon so dull/contrast updates
@@ -193,10 +209,9 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
 
   const layer = viewModel.mapVM.unmatchedAssetLayer;
 
-  const lat = +asset.latitude?.();
-  const lng = +asset.longitude?.();
-
-  if (Number.isFinite(lat) && Number.isFinite(lng) && !asset.unmatchedMarker) {
+  const pos = positionOf(asset.latLng?.());
+  if (pos && !asset.unmatchedMarker) {
+    const [lat, lng] = pos;
     const icon = buildIcon(asset, 'unmatched');
     const m = L.marker([lat, lng], { icon, pane: 'pane-top', riseOnHover: true });
     m._assetId = asset.id?.();
@@ -232,10 +247,14 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
 
   //location changes
   subs.push(asset.latLng.subscribe(v => {
-    const latNow = +v?.lat, lngNow = +v?.lng;
-    if (asset.unmatchedMarker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
-      moveMarker(asset.unmatchedMarker, latNow, lngNow, { onMove: viewModel.mapVM.assetPinLayout?.schedule });
+    const posNow = positionOf(v);
+    if (!posNow) return;
+    // No pin yet: the asset had no position when it was attached.
+    if (!asset.unmatchedMarker) {
+      attachUnmatchedAssetMarker(ko, map, viewModel, asset);
+      return;
     }
+    moveMarker(asset.unmatchedMarker, posNow[0], posNow[1], { onMove: viewModel.mapVM.assetPinLayout?.schedule });
   }));
 
   //last seen changes

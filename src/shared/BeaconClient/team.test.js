@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { request, requestPaginated } from './core/request.js';
 import { getTasking, getHistory, get, search, getTeamGeoJson } from './team.js';
+import { PAGING_PARAMS_LENGTH } from './core/queryBatches.js';
 
 vi.mock('./core/request.js', () => ({ request: vi.fn(), requestPaginated: vi.fn() }));
 
@@ -79,6 +80,27 @@ describe('search', () => {
     [url] = vi.mocked(requestPaginated).mock.calls[0];
     expect(url).toContain('TypeIds=1');
     expect(url).toContain('TypeIds=3');
+  });
+
+  it('splits a long unit list across requests and merges the teams', async () => {
+    const units = Array.from({ length: 300 }, (_, i) => ({ Id: i + 1 }));
+    vi.mocked(requestPaginated).mockImplementation(async (url) =>
+      url.includes('AssignedToId=1&') ? { results: [{ Id: 't1' }, { Id: 't2' }], totalItems: 2 } : { results: [{ Id: 't2' }, { Id: 't3' }], totalItems: 2 },
+    );
+    const found = await search(units, start, end, { ...ctx, typeIds: [1] });
+    const urls = vi.mocked(requestPaginated).mock.calls.map(([url]) => url);
+    expect(urls.length).toBeGreaterThan(1);
+    urls.forEach((url) => {
+      expect(url.split('?')[1].length + PAGING_PARAMS_LENGTH).toBeLessThanOrEqual(3800);
+      expect(url).toContain('TypeIds=1');
+      expect(url).not.toMatch(/&$/);
+    });
+    const assigned = urls.flatMap((url) => [...url.matchAll(/AssignedToId=(\d+)/g)].map((m) => +m[1]));
+    const created = urls.flatMap((url) => [...url.matchAll(/CreatedAtId=(\d+)/g)].map((m) => +m[1]));
+    expect(assigned).toEqual(units.map((u) => u.Id));
+    expect(created).toEqual(units.map((u) => u.Id));
+    expect(found.results.map((t) => t.Id)).toEqual(['t1', 't2', 't3']);
+    expect(found.totalItems).toBe(3);
   });
 
   it('pages at 50', async () => {

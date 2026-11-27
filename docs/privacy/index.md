@@ -3,7 +3,7 @@ title: Privacy Policy
 description: What data the Lighthouse browser extension uses, where it goes, and why.
 ---
 
-_Last updated: 30 October 2026_
+_Last updated: 25 November 2026_
 
 This policy covers the **Lighthouse** and **Lighthouse Development Preview**
 extensions for Google Chrome ("Lighthouse"). Lighthouse is built and maintained
@@ -70,6 +70,7 @@ then throws it away. It doesn't keep the token.
 | Default assets for teams | A team id and the asset id chosen for it | The pairing, so other users see the same default. Old entries expire automatically. |
 | Collaborative map layers | Layer names, markers and comments you add, the HQ or event a layer is attached to, the moderators you choose, and your Beacon member id as the author | The layer and its markers, so other users at your organisation can see them. Deleted layers and markers are hidden but kept, so they can be recovered. |
 | Power outages | Nothing beyond the request itself | Nothing about you. The backend downloads the outage feeds of Ausgrid, Endeavour Energy and Essential Energy and keeps the latest copy for a few minutes, so everyone's map shares one download. |
+| Council systems (City of Parramatta FloodSmart, Northern Beaches Council FLASH, and the flood cameras of Tweed Shire, Clarence Valley, Bellingen Shire and City of Coffs Harbour councils) | Nothing beyond the request itself | Nothing about you. The backend downloads the councils' flood warning areas, catchment rainfall and (for Parramatta, with a Lizard account) the flood model's forecast alerts, forecast flood depth and velocity and forecast flooding of key assets, and keeps the latest copy for a few minutes (the area shapes for a few hours), so everyone's map shares one download. When you open a council flood camera, it looks up that camera's latest image on the camera's site and keeps the answer for a few minutes. For Clarence Valley's cameras that are only published as a live video, it takes the camera's picture from the video and keeps that image for a few minutes instead. |
 | MyAvailability activation summaries | An activation id or unit name | Nothing. The backend reads the response counts and member names from MyAvailability and returns them. |
 
 For security and troubleshooting, the backend logs which feature was used, when,
@@ -122,6 +123,7 @@ To show public information on its maps, Lighthouse downloads data from:
 - Bureau of Meteorology (via Esri ArcGIS), RainViewer and WaterNSW (weather, radar, rivers and dams)
 - NSW Spatial Services and Esri ArcGIS (base maps, imagery and boundaries)
 - adsb.lol and the OpenSky Network (aircraft positions)
+- Council flood camera sites, when you open a camera: Tweed Shire Council, Manly Hydraulics Laboratory and Envault (Clarence Valley), webcam.io (Bellingen Shire) and DisasterWatch (City of Coffs Harbour). Clarence Valley's live video comes through Lighthouse's backend, unless you open the video itself from a camera's popup
 
 These requests only download public data. Lighthouse doesn't send them your
 Beacon token or any Beacon data. As with any web request, those services can

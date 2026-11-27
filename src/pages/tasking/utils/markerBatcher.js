@@ -18,8 +18,13 @@ function getItemId(item) {
  * @returns {{scheduleAdd: (item: any) => void, scheduleRemove: (item: any) => void}}
  */
 export function createMarkerBatcher({ addFn, removeFn }) {
+    // Adds are keyed by id (the newest item for an id wins). Removes are
+    // keyed by the item itself: an asset that leaves the feed and comes
+    // back is a new object with the same id, and the old one's marker must
+    // still go -- keyed by id, the new add cancelled the old remove and
+    // left a frozen duplicate pin until a reload.
     const pendingAdds = new Map();
-    const pendingRemoves = new Map();
+    const pendingRemoves = new Set();
     let rafHandle = null;
 
     const flush = () => {
@@ -44,7 +49,7 @@ export function createMarkerBatcher({ addFn, removeFn }) {
             addFn(item);
             return;
         }
-        pendingRemoves.delete(id);
+        pendingRemoves.delete(item);
         pendingAdds.set(id, item);
         ensureFlush();
     };
@@ -55,8 +60,8 @@ export function createMarkerBatcher({ addFn, removeFn }) {
             removeFn(item);
             return;
         }
-        pendingAdds.delete(id);
-        pendingRemoves.set(id, item);
+        if (pendingAdds.get(id) === item) pendingAdds.delete(id);
+        pendingRemoves.add(item);
         ensureFlush();
     };
 

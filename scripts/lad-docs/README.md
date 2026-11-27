@@ -11,9 +11,25 @@ npm run lad:demo            # visible Chrome window with the demo data
 npm run lad:shots           # headless screenshots -> build/lad-screenshots/
 npm run lad:shots -- --only main,team-expanded --out docs/lad/images
 npm run lad:bench           # performance benchmark, 1000 fake incidents, median of 5 runs
+npm run lad:assets-check    # end-to-end checks for the asset layers (see below)
 ```
 
 Requires Google Chrome installed; `playwright-core` drives it (no browser download).
+
+## Asset layer checks: `lad:assets-check`
+
+```sh
+npm run dev && npm run lad:assets-check
+npm run lad:assets-check -- --only "hidden tab"    # checks whose name contains it
+```
+
+End-to-end checks for trackable assets: team matching, the matched and
+unmatched asset layers, and the asset feed refresh. Each check drives the page
+the way Beacon would -- a pushed team, an incident's tasking, or the radio feed
+dropping an asset, failing, losing a position or overlapping -- and asserts
+that every asset is listed once, on exactly one layer, with one pin where the
+asset is (plus that a team inside the filters still takes its asset). Run it
+after changing asset matching, asset markers or the asset fetch.
 
 ## On a real device (iPad, phone): `lad:serve`
 

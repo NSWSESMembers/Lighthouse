@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { request, requestPaginated, toFormUrlEncoded, toCollection, BeaconApiError } from './request.js';
+import { request, requestPaginated, toFormUrlEncoded, toCollection, BeaconApiError, onBeaconAuthError } from './request.js';
 
 function mockFetch(response) {
   global.fetch = vi.fn().mockResolvedValue(response);
@@ -151,5 +151,46 @@ describe('requestPaginated', () => {
     mockFetch(jsonResponse(200, { Results: [], TotalItems: 0 }));
     await requestPaginated('https://beacon.test/api/search?userId=abc');
     expect(global.fetch.mock.calls[0][0]).toBe('https://beacon.test/api/search?userId=abc&PageIndex=1&PageSize=100');
+  });
+});
+
+describe('onBeaconAuthError', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    onBeaconAuthError(null);
+  });
+
+  it('is called on a 401 before the request rejects', async () => {
+    const handler = vi.fn();
+    onBeaconAuthError(handler);
+    mockFetch(jsonResponse(401, { Message: 'Authorization has been denied' }, 'Unauthorized'));
+    await expect(request('https://x/api', { token: 'old' })).rejects.toBeInstanceOf(BeaconApiError);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler.mock.calls[0][0].status).toBe(401);
+    expect(handler.mock.calls[0][1]).toBe('old');
+  });
+
+  it('is called on a 401 swallowed by nullOnError', async () => {
+    const handler = vi.fn();
+    onBeaconAuthError(handler);
+    mockFetch(jsonResponse(401, {}, 'Unauthorized'));
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await expect(request('https://x/api', { nullOnError: true })).resolves.toBeNull();
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('is not called for other errors', async () => {
+    const handler = vi.fn();
+    onBeaconAuthError(handler);
+    mockFetch(jsonResponse(403, {}, 'Forbidden'));
+    await expect(request('https://x/api')).rejects.toBeInstanceOf(BeaconApiError);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('still rejects with the BeaconApiError if the handler throws', async () => {
+    onBeaconAuthError(() => { throw new Error('boom'); });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch(jsonResponse(401, {}, 'Unauthorized'));
+    await expect(request('https://x/api')).rejects.toMatchObject({ status: 401 });
   });
 });

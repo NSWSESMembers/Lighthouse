@@ -18,6 +18,29 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## Clearer when Beacon refuses LAD's login
+
+*26 November 2026*
+
+- **A banner when Beacon stops accepting LAD's login.** If Beacon refuses LAD's login, usually because it has expired, a red banner across the top of the page now says LAD may be out of date and how to fix it: open LAD again from the **Lighthouse** menu in Beacon, then reload. It offers **Reload** once LAD has a new login, and goes away by itself once incidents and teams have loaded again. On the Configuration screen, before anything has loaded, it goes away as soon as LAD has a new login. See [Beacon Login](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#beacon-login).
+- **Searches in the Configuration screen say when they fail.** The Headquarters search, and the HQ, event and moderator searches for collaborative layers, used to show **No results found** when they couldn't reach Beacon. They now say why. Expanding a zone, and loading the HQ LAD was opened for, also say when they fail instead of doing nothing. See [Adding Headquarters](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#adding-headquarters).
+
+## Council flood systems and cameras
+
+*25 November 2026*
+
+- **New Council Systems layers.** The Layers menu has a new **Council Systems** section with data from councils' own flood systems. **Parramatta FloodSmart** shows City of Parramatta's flood warning areas shaded by what its flood model forecasts for the next 5 hours, which key assets the model forecasts to flood, forecast flood hazard (H1 to H6) and catchment rainfall. **Northern Beaches FLASH** shows Northern Beaches Council's catchment rainfall. Everything from a flood model is labelled as a forecast: it isn't an observed level or a warning. See [Overlay Notes](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-notes).
+- **Council flood cameras.** Under **Council Systems**, **Council Flood Cameras** has a layer each for Tweed, Clarence Valley, Bellingen and Coffs Harbour councils' flood cameras at bridges, causeways and flood-prone roads. Cameras point the way they look, with their view drawn on the map when you zoom in. Click one for its latest image and when it was taken. See [Clickable Overlay Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#clickable-overlay-markers).
+
+## Asset pins stay on the map
+
+*23 November 2026*
+
+- **Asset pins no longer disappear when a hidden team is created or tasked.** If a team your filters hide was created or tasked with a callsign matching a radio (another unit's team, a stood-down team, or an Operations team when you only show Field teams), that radio's pin vanished from both asset layers until you reloaded LAD. It now stays on the map, on the **Unmatched against Teams** layer unless a team you can see matches it. See [Asset Layers](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#asset-layers).
+- **No more frozen duplicate pins.** A radio that briefly dropped out of the feed, often while LAD was in a background tab, could leave an old pin stuck where it was next to the live one.
+- **Pins no longer jump off the map when a radio has no position.** They stay at the last known position, and a new radio gets its pin as soon as it reports one.
+- **Load asset positions on demand.** The Team Register's **Refresh Data** button now also loads asset locations straight away, instead of waiting for the next 30-second update. The [asset popup](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#asset-popup) now shows when its details were last refreshed (**Updated just now**), and **Last seen** is now **Position reported**, so the two times are easier to tell apart.
+
 ## Team Summary, terrain and power outages
 
 *16 November 2026 · [v2026.11.16](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.11.16)*

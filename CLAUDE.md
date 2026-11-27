@@ -59,6 +59,10 @@ fake incidents up, for benchmarks).
 Benchmark code changes against their base with `npm run lad:bench` (details
 and the base-worktree recipe in `scripts/lad-docs/README.md`).
 
+`npm run lad:assets-check` is an end-to-end check of the asset layers (team
+matching, matched/unmatched pins, the asset feed refresh); run it after
+changing asset matching, asset markers or the asset fetch.
+
 ## Running Incident Statistics without Beacon: `scripts/stats-docs`
 
 Same idea for `stats.html` (fake data in `scripts/stats-docs/scenario.mjs`).

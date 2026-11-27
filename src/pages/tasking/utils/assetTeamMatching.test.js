@@ -3,7 +3,7 @@ import ko from 'knockout';
 import {
     normAssetName, splitTeamCallsignIntoParts, tokenVariantsFromPart,
     extractTeamTokens, scoreFuzzy, computeMatchedAssetsForTeam,
-    teamHqId, assetIsForTeamHq,
+    teamHqId, assetIsForTeamHq, setTeamAssets, unlinkTeam, unlinkAsset, isAssetUnmatched,
 } from './assetTeamMatching.js';
 
 describe('normAssetName', () => {
@@ -207,5 +207,118 @@ describe('assetIsForTeamHq', () => {
         expect(assetIsForTeamHq(sim, '150')).toBe(true);
         expect(assetIsForTeamHq(sim, '151')).toBe(false);
         expect(assetIsForTeamHq(sim, '')).toBe(false);
+    });
+});
+
+// Teams and assets carry their links in observable arrays, as in LAD.
+function linkedAsset(name) {
+    return { name: () => name, matchingTeams: ko.observableArray() };
+}
+function linkedTeam(callsign) {
+    return { callsign: () => callsign, trackableAssets: ko.observableArray() };
+}
+
+describe('setTeamAssets', () => {
+    it("adds the assets to the team and the team to each asset", () => {
+        const team = linkedTeam('PAR33');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(team, new Set([a]));
+        expect(team.trackableAssets()).toEqual([a]);
+        expect(a.matchingTeams()).toEqual([team]);
+    });
+
+    it('removes assets no longer wanted from both sides', () => {
+        const team = linkedTeam('PAR33');
+        const keep = linkedAsset('PAR33');
+        const drop = linkedAsset('PAR56');
+        setTeamAssets(team, new Set([keep, drop]));
+        setTeamAssets(team, new Set([keep]));
+        expect(team.trackableAssets()).toEqual([keep]);
+        expect(drop.matchingTeams()).toEqual([]);
+        expect(keep.matchingTeams()).toEqual([team]);
+    });
+
+    it('does not link an asset twice', () => {
+        const team = linkedTeam('PAR33');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(team, new Set([a]));
+        setTeamAssets(team, new Set([a]));
+        expect(team.trackableAssets()).toHaveLength(1);
+        expect(a.matchingTeams()).toHaveLength(1);
+    });
+
+    it("leaves the asset's links to other teams alone", () => {
+        const team = linkedTeam('PAR33');
+        const other = linkedTeam('PAR33 + PAR56');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(team, new Set([a]));
+        setTeamAssets(other, new Set([a]));
+        setTeamAssets(team, new Set());
+        expect(a.matchingTeams()).toEqual([other]);
+    });
+});
+
+describe('unlinkTeam', () => {
+    it('frees every asset the team held, so they count as unmatched again', () => {
+        const team = linkedTeam('PAR33 + PAR56');
+        const a = linkedAsset('PAR33');
+        const b = linkedAsset('PAR56');
+        setTeamAssets(team, new Set([a, b]));
+        unlinkTeam(team);
+        expect(team.trackableAssets()).toEqual([]);
+        expect(a.matchingTeams()).toEqual([]);
+        expect(b.matchingTeams()).toEqual([]);
+    });
+});
+
+describe('isAssetUnmatched', () => {
+    it('is unmatched with no teams', () => {
+        expect(isAssetUnmatched(linkedAsset('PAR33'), new Set())).toBe(true);
+    });
+
+    it('is matched when one of its teams is shown', () => {
+        const shown = linkedTeam('PAR33');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(shown, new Set([a]));
+        expect(isAssetUnmatched(a, new Set([shown]))).toBe(false);
+    });
+
+    it("is unmatched when its only teams aren't shown (e.g. known only from a tasking)", () => {
+        const hidden = linkedTeam('PAR33');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(hidden, new Set([a]));
+        expect(isAssetUnmatched(a, new Set())).toBe(true);
+    });
+
+    it('is matched when any one of several teams is shown', () => {
+        const hidden = linkedTeam('PAR33');
+        const shown = linkedTeam('PAR33 + PAR56');
+        const a = linkedAsset('PAR33');
+        setTeamAssets(hidden, new Set([a]));
+        setTeamAssets(shown, new Set([a]));
+        expect(isAssetUnmatched(a, new Set([shown]))).toBe(false);
+    });
+});
+
+describe('unlinkAsset', () => {
+    it('removes the asset from every team it was on, and clears its teams', () => {
+        // matchingTeams is a Knockout observable array (a function, not an
+        // array), as on a real Asset.
+        const t1 = linkedTeam('PAR33');
+        const t2 = linkedTeam('PAR33 + PAR56');
+        const a = linkedAsset('PAR33');
+        const other = linkedAsset('PAR56');
+        setTeamAssets(t1, new Set([a]));
+        setTeamAssets(t2, new Set([a, other]));
+        unlinkAsset(a);
+        expect(a.matchingTeams()).toEqual([]);
+        expect(t1.trackableAssets()).toEqual([]);
+        expect(t2.trackableAssets()).toEqual([other]);
+    });
+
+    it('does nothing for an asset with no teams', () => {
+        const a = linkedAsset('PAR33');
+        unlinkAsset(a);
+        expect(a.matchingTeams()).toEqual([]);
     });
 });

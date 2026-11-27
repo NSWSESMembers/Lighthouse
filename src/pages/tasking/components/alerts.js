@@ -4,6 +4,12 @@ import { etaClockNow } from '../models/Tasking.js';
 import { findUnmarkedArrivals, ONSITE_GEOFENCE_DEFAULT_METRES } from '../utils/onsiteGeofence.js';
 
 const ruleState = new Map(); // key: rule.id -> { collapsed: boolean, open: boolean, lastCount: number }
+// key: rule.id -> the rule from the latest render. Listeners look the rule up
+// here by id rather than closing over it: an alert's header listeners live as
+// long as the alert, and a captured rule's onClick holds that render's jobs
+// array, so every incident loaded when the alert first showed was kept alive
+// (never freed after the sweep dropped it).
+const currentRules = new Map();
 
 /**
  * SVG hazard icon used in the header
@@ -50,6 +56,8 @@ function renderRules(container, rules, opts = {}) {
 
   // Build a set of active rule IDs so we can remove stale DOM elements
   const activeIds = new Set(rules.map(r => r.id));
+  currentRules.clear();
+  rules.forEach(r => currentRules.set(r.id, r));
 
   // Remove DOM elements for rules that are no longer active
   container.querySelectorAll('[data-rule-id]').forEach(el => {
@@ -114,14 +122,7 @@ function renderRules(container, rules, opts = {}) {
       if (ul) {
         ul.innerHTML = rule.items.map(it => `<li data-id="${it.id}">${it.label}</li>`).join('');
         // Re-attach item click handlers
-        if (typeof rule.onClick === 'function') {
-          ul.querySelectorAll('li[data-id]').forEach(li => {
-            li.style.cursor = 'pointer';
-            li.addEventListener('mouseenter', () => li.style.textDecoration = 'underline');
-            li.addEventListener('mouseleave', () => li.style.textDecoration = '');
-            li.addEventListener('click', () => rule.onClick(li.getAttribute('data-id')));
-          });
-        }
+        if (typeof rule.onClick === 'function') attachItemClicks(ul, rule.id);
       }
       continue; // skip full creation — DOM element (incl classes) stays as-is
     }
@@ -160,64 +161,13 @@ function renderRules(container, rules, opts = {}) {
       </div>
     `;
 
-    const btn = div.querySelector('.alerts__btn');
-    const hideBtn = div.querySelector('.alerts__hide-btn');
     if (!allowCollapse) {
-      hideBtn.style.display = 'none';
+      div.querySelector('.alerts__hide-btn').style.display = 'none';
     }
-
-    // main button: toggle open; if collapsed, un-collapse first
-    btn.addEventListener('click', () => {
-      const st = ruleState.get(rule.id) || { collapsed: false, open: false, lastCount: rule.count };
-
-      if (st.collapsed) {
-        st.collapsed = false;
-        st.open = true;
-        ruleState.set(rule.id, st);
-        div.classList.remove('alerts--collapsed');
-        div.querySelector('.alerts').style.width = expandedWidth;
-
-      }
-
-      const openNow = !div.classList.contains('alerts--open');
-      div.classList.toggle('alerts--open', openNow);
-      btn.setAttribute('aria-expanded', String(openNow));
-      st.open = openNow;
-      ruleState.set(rule.id, st);
-    });
-
-    // hide button: collapse down to icon
-    if (allowCollapse) {
-      hideBtn.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        const st = ruleState.get(rule.id) || { collapsed: false, open: false, lastCount: rule.count };
-        st.collapsed = true;
-        st.open = false;
-        st.lastCount = rule.count;
-        ruleState.set(rule.id, st);
-
-        div.classList.remove('alerts--open');
-        btn.setAttribute('aria-expanded', 'false');
-
-        div.querySelector('.alerts').animate(
-          [{ width: expandedWidth }, { width: collapsedWidth }],
-          { duration: 300, easing: 'ease-in-out' }
-        ).onfinish = () => {
-          div.querySelector('.alerts').style.width = collapsedWidth;
-        };
-        div.classList.add('alerts--collapsed');
-      });
-    }
+    attachHeaderClicks(div, rule.id, { allowCollapse, expandedWidth, collapsedWidth });
 
     // optional item click handler (e.g. fly to job)
-    if (typeof rule.onClick === 'function') {
-      div.querySelectorAll('li[data-id]').forEach(li => {
-        li.style.cursor = 'pointer';
-        li.addEventListener('mouseenter', () => li.style.textDecoration = 'underline');
-        li.addEventListener('mouseleave', () => li.style.textDecoration = '');
-        li.addEventListener('click', () => rule.onClick(li.getAttribute('data-id')));
-      });
-    }
+    if (typeof rule.onClick === 'function') attachItemClicks(div, rule.id);
 
     container.appendChild(div);
   }
@@ -225,6 +175,67 @@ function renderRules(container, rules, opts = {}) {
 
 
 
+
+// Header buttons: toggle open (un-collapsing first) and hide down to the icon.
+// Takes the rule's id, not the rule -- see currentRules.
+function attachHeaderClicks(div, ruleId, { allowCollapse, expandedWidth, collapsedWidth }) {
+  const btn = div.querySelector('.alerts__btn');
+  const hideBtn = div.querySelector('.alerts__hide-btn');
+  const stateFor = () => ruleState.get(ruleId) || { collapsed: false, open: false, lastCount: currentRules.get(ruleId)?.count };
+
+  // main button: toggle open; if collapsed, un-collapse first
+  btn.addEventListener('click', () => {
+    const st = stateFor();
+
+    if (st.collapsed) {
+      st.collapsed = false;
+      st.open = true;
+      ruleState.set(ruleId, st);
+      div.classList.remove('alerts--collapsed');
+      div.querySelector('.alerts').style.width = expandedWidth;
+
+    }
+
+    const openNow = !div.classList.contains('alerts--open');
+    div.classList.toggle('alerts--open', openNow);
+    btn.setAttribute('aria-expanded', String(openNow));
+    st.open = openNow;
+    ruleState.set(ruleId, st);
+  });
+
+  // hide button: collapse down to icon
+  if (allowCollapse) {
+    hideBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const st = stateFor();
+      st.collapsed = true;
+      st.open = false;
+      st.lastCount = currentRules.get(ruleId)?.count;
+      ruleState.set(ruleId, st);
+
+      div.classList.remove('alerts--open');
+      btn.setAttribute('aria-expanded', 'false');
+
+      div.querySelector('.alerts').animate(
+        [{ width: expandedWidth }, { width: collapsedWidth }],
+        { duration: 300, easing: 'ease-in-out' }
+      ).onfinish = () => {
+        div.querySelector('.alerts').style.width = collapsedWidth;
+      };
+      div.classList.add('alerts--collapsed');
+    });
+  }
+}
+
+// Item clicks run the current rule's onClick (e.g. fly to job).
+function attachItemClicks(root, ruleId) {
+  root.querySelectorAll('li[data-id]').forEach(li => {
+    li.style.cursor = 'pointer';
+    li.addEventListener('mouseenter', () => li.style.textDecoration = 'underline');
+    li.addEventListener('mouseleave', () => li.style.textDecoration = '');
+    li.addEventListener('click', () => currentRules.get(ruleId)?.onClick?.(li.getAttribute('data-id')));
+  });
+}
 
 const ruleBuilders = [];
 

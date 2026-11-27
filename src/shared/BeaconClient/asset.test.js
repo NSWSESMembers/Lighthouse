@@ -91,6 +91,22 @@ describe('filter', () => {
     await filter(null, ctx);
     expect(vi.mocked(request)).not.toHaveBeenCalled();
   });
+
+  it('re-fetches within the cache window with fresh, and caches that response', async () => {
+    vi.mocked(request).mockResolvedValueOnce([radioAsset('RES1A')]).mockResolvedValueOnce({ features: [] });
+    await filter(null, ctx);
+
+    vi.mocked(request).mockReset();
+    vi.mocked(request).mockResolvedValueOnce([radioAsset('RES2A')]).mockResolvedValueOnce({ features: [] });
+    const fresh = await filter(null, { ...ctx, fresh: true });
+    expect(vi.mocked(request)).toHaveBeenCalledTimes(2);
+    expect(fresh[0].name).toBe('RES2A (PSN)');
+
+    vi.mocked(request).mockClear();
+    const cached = await filter(null, ctx);
+    expect(vi.mocked(request)).not.toHaveBeenCalled();
+    expect(cached[0].name).toBe('RES2A (PSN)');
+  });
 });
 
 describe('telematics capability', () => {

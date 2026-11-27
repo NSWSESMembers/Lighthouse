@@ -20,10 +20,17 @@ import {
 import { RESET_GROUPS, keysToReset } from '../utils/resetGroups.js';
 import { taskingConfigKey } from '../utils/taskingConfigStorage.js';
 import { defaultLayoutPreset, splitLayoutPreset, joinLayoutPreset } from '../utils/layoutPreset.js';
+import { describeBeaconError } from '../utils/beaconError.js';
 
 
 
 const FUNCTION_URL = "https://lambda.lighthouse-extension.com/lad_v2/share";
+
+// What a search dropdown shows instead of "No results found." when the lookup
+// itself failed, so a refused login doesn't read as an empty search.
+function searchFailedText(err) {
+    return `Search failed: ${describeBeaconError(err)}.`;
+}
 
 /**
  * Reusable search-and-pick-multiple-members widget backing a layer's
@@ -46,6 +53,7 @@ function makeModeratorPicker(searchMembers, initial = []) {
     picker.searchResults = ko.observableArray([]);
     picker.dropdownOpen = ko.observable(false);
     picker.loading = ko.observable(false);
+    picker.searchError = ko.observable('');
     picker.hasFocus = ko.observable(false);
 
     let searchTimer = null;
@@ -53,6 +61,7 @@ function makeModeratorPicker(searchMembers, initial = []) {
     picker.clearSearch = () => {
         picker.searchQuery('');
         picker.searchResults([]);
+        picker.searchError('');
         picker.dropdownOpen(false);
     };
     picker.closeDropdown = () => {
@@ -70,6 +79,7 @@ function makeModeratorPicker(searchMembers, initial = []) {
     };
     picker.runSearch = async () => {
         const q = (picker.searchQuery() || '').trim();
+        picker.searchError('');
         if (q.length < 2) {
             picker.searchResults([]);
             picker.dropdownOpen(false);
@@ -109,6 +119,7 @@ function makeModeratorPicker(searchMembers, initial = []) {
         } catch (err) {
             console.error('Member search failed:', err);
             picker.searchResults([]);
+            picker.searchError(searchFailedText(err));
         } finally {
             picker.loading(false);
         }
@@ -149,6 +160,7 @@ function makeEventPicker(searchEvents, initial = null) {
     picker.searchResults = ko.observableArray([]);
     picker.dropdownOpen = ko.observable(false);
     picker.loading = ko.observable(false);
+    picker.searchError = ko.observable('');
     picker.hasFocus = ko.observable(false);
     // Precomputed (rather than a ternary in the data-bind attribute)
     // because knockout-secure-binding's expression grammar doesn't support
@@ -168,6 +180,7 @@ function makeEventPicker(searchEvents, initial = null) {
     picker.clearSearch = () => {
         picker.searchQuery('');
         picker.searchResults([]);
+        picker.searchError('');
         picker.dropdownOpen(false);
     };
     picker.closeDropdown = () => {
@@ -184,6 +197,7 @@ function makeEventPicker(searchEvents, initial = null) {
     };
     picker.runSearch = async () => {
         const q = (picker.searchQuery() || '').trim();
+        picker.searchError('');
         if (q.length < 2) {
             picker.searchResults([]);
             picker.dropdownOpen(false);
@@ -209,6 +223,7 @@ function makeEventPicker(searchEvents, initial = null) {
         } catch (err) {
             console.error('Event search failed:', err);
             picker.searchResults([]);
+            picker.searchError(searchFailedText(err));
         } finally {
             picker.loading(false);
         }
@@ -253,6 +268,7 @@ function makeHqPicker(searchEntities, initial = null) {
     picker.searchResults = ko.observableArray([]);
     picker.dropdownOpen = ko.observable(false);
     picker.loading = ko.observable(false);
+    picker.searchError = ko.observable('');
     picker.hasFocus = ko.observable(false);
 
     let searchTimer = null;
@@ -260,6 +276,7 @@ function makeHqPicker(searchEntities, initial = null) {
     picker.clearSearch = () => {
         picker.searchQuery('');
         picker.searchResults([]);
+        picker.searchError('');
         picker.dropdownOpen(false);
     };
     picker.closeDropdown = () => {
@@ -276,6 +293,7 @@ function makeHqPicker(searchEntities, initial = null) {
     };
     picker.runSearch = async () => {
         const q = (picker.searchQuery() || '').trim();
+        picker.searchError('');
         if (q.length < 2) {
             picker.searchResults([]);
             picker.dropdownOpen(false);
@@ -297,6 +315,7 @@ function makeHqPicker(searchEntities, initial = null) {
         } catch (err) {
             console.error('HQ search failed:', err);
             picker.searchResults([]);
+            picker.searchError(searchFailedText(err));
         } finally {
             picker.loading(false);
         }
@@ -364,6 +383,8 @@ export function ConfigVM(root, deps) {
     self.query = ko.observable('');
     self.results = ko.observableArray([]);
     self.searching = ko.observable(false);
+    self.searchError = ko.observable('');   // the HQ search itself failed (shown in its dropdown)
+    self.lookupError = ko.observable('');   // loading an HQ's children, or the ?hq= HQ, failed
     self.dropdownOpen = ko.observable(false);
     self.inputHasFocus = ko.observable(false);
 
@@ -378,6 +399,10 @@ export function ConfigVM(root, deps) {
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
+    // An empty list deliberately set to load every unit (holding Clear on
+    // Production Beacon, where an empty list otherwise means the focus unit).
+    self.teamsAllUnits = ko.observable(false);
+    self.incidentsAllUnits = ko.observable(false);
 
     // Selected-filter boxes collapse past this many pills; a "…more" button
     // toggles the expanded state.
@@ -1585,7 +1610,9 @@ export function ConfigVM(root, deps) {
         layoutPreset: normalizeLayoutPreset(self.layoutPreset()),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
-            incidents: ko.toJS(self.incidentFilters)
+            incidents: ko.toJS(self.incidentFilters),
+            teamsAllUnits: !!self.teamsAllUnits(),
+            incidentsAllUnits: !!self.incidentsAllUnits()
         },
         // these are your “ignored” statuses used by filters
         teamStatusFilter: ko.toJS(self.teamStatusFilter),
@@ -1654,10 +1681,12 @@ export function ConfigVM(root, deps) {
     const focusHqId = requireHqFilter ? parseInt(deps.defaultHqId, 10) : NaN;
     let focusUnitFilter = focusHqId > 0 ? { id: focusHqId, name: 'Your focus unit', entityType: 0 } : null;
 
+    const allUnitsFlagFor = (arr) => (arr === self.teamFilters ? self.teamsAllUnits : self.incidentsAllUnits);
+
     const fillEmptyHqFilters = () => {
         if (!focusUnitFilter) return;
         [self.teamFilters, self.incidentFilters].forEach((arr) => {
-            if (arr().length === 0) arr([focusUnitFilter]);
+            if (arr().length === 0 && !allUnitsFlagFor(arr)()) arr([focusUnitFilter]);
         });
     };
 
@@ -1676,17 +1705,33 @@ export function ConfigVM(root, deps) {
 
     // Only when Production Beacon has no focus unit to fall back on.
     self.hqFilterMissing = ko.pureComputed(() =>
-        requireHqFilter && (self.teamFilters().length === 0 || self.incidentFilters().length === 0));
-    self.teamsEmptyHint = requireHqFilter
-        ? 'Choose at least one headquarters - Production Beacon can\'t load teams from all units'
-        : 'No Filters Applied - Teams from all units will be fetched';
-    self.incidentsEmptyHint = requireHqFilter
-        ? 'Choose at least one headquarters - Production Beacon can\'t load incidents from all units'
-        : 'No Filters Applied - Incidents from all units will be fetched';
+        requireHqFilter && (
+            (self.teamFilters().length === 0 && !self.teamsAllUnits()) ||
+            (self.incidentFilters().length === 0 && !self.incidentsAllUnits())));
+    self.teamsEmptyHint = ko.pureComputed(() => {
+        if (requireHqFilter && self.teamsAllUnits()) return 'All units - teams from every unit in NSW will be fetched';
+        return requireHqFilter
+            ? 'Choose at least one headquarters - Production Beacon can\'t load teams from all units'
+            : 'No Filters Applied - Teams from all units will be fetched';
+    });
+    self.incidentsEmptyHint = ko.pureComputed(() => {
+        if (requireHqFilter && self.incidentsAllUnits()) return 'All units - incidents from every unit in NSW will be fetched';
+        return requireHqFilter
+            ? 'Choose at least one headquarters - Production Beacon can\'t load incidents from all units'
+            : 'No Filters Applied - Incidents from all units will be fetched';
+    });
+    self.teamsAllUnitsShown = ko.pureComputed(() => requireHqFilter && self.teamsAllUnits());
+    self.incidentsAllUnitsShown = ko.pureComputed(() => requireHqFilter && self.incidentsAllUnits());
+    // Clear stays enabled on Production so it can be held for all units.
+    self.teamsClearEnabled = ko.pureComputed(() => requireHqFilter || self.teamFilters().length > 0);
+    self.incidentsClearEnabled = ko.pureComputed(() => requireHqFilter || self.incidentFilters().length > 0);
 
     const upsert = (arr, item) => {
         const exists = arr().some(x => x.id === item.id);
-        if (!exists) arr.push(item);
+        if (!exists) {
+            arr.push(item);
+            allUnitsFlagFor(arr)(false);
+        }
         if (exists) arr.remove(x => x.id === item.id);
         fillEmptyHqFilters();
     };
@@ -1695,8 +1740,11 @@ export function ConfigVM(root, deps) {
         fillEmptyHqFilters();
     };
 
-    self.clearTeams = () => { self.teamFilters.removeAll(); fillEmptyHqFilters(); self.teamsExpanded(false); };
-    self.clearIncidents = () => { self.incidentFilters.removeAll(); fillEmptyHqFilters(); self.incidentsExpanded(false); };
+    self.clearTeams = () => { self.teamFilters.removeAll(); self.teamsAllUnits(false); fillEmptyHqFilters(); self.teamsExpanded(false); };
+    self.clearIncidents = () => { self.incidentFilters.removeAll(); self.incidentsAllUnits(false); fillEmptyHqFilters(); self.incidentsExpanded(false); };
+    // Holding Clear (holdToConfirm binding) loads every unit, even on Production.
+    self.allUnitsTeams = () => { self.teamFilters.removeAll(); self.teamsAllUnits(true); self.teamsExpanded(false); };
+    self.allUnitsIncidents = () => { self.incidentFilters.removeAll(); self.incidentsAllUnits(true); self.incidentsExpanded(false); };
     self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
@@ -1706,6 +1754,7 @@ export function ConfigVM(root, deps) {
         .extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } })
         .subscribe(q => {
             const t = (q || '').trim();
+            self.searchError('');
             if (!t) {
                 searchSeq++;
                 self.searching(false);
@@ -1727,9 +1776,11 @@ export function ConfigVM(root, deps) {
                     self.results(list.map(e => makeResultVM({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
                     self.dropdownOpen(true);
                 })
-                .catch(() => {
+                .catch(err => {
                     if (mySeq !== searchSeq) return;
-                    self.results([]);      // triggers "No results found."
+                    console.error('HQ search failed:', err);
+                    self.results([]);
+                    self.searchError(searchFailedText(err));
                     self.dropdownOpen(true);
                 })
                 .finally(() => {
@@ -1762,9 +1813,11 @@ export function ConfigVM(root, deps) {
 
         const teamExists = self.teamFilters().some(x => x.id === n.id);
         if (!teamExists) self.teamFilters.push(n);
+        self.teamsAllUnits(false);
 
         const incidentExists = self.incidentFilters().some(x => x.id === n.id);
         if (!incidentExists) self.incidentFilters.push(n);
+        self.incidentsAllUnits(false);
 
         self.dropdownOpen(true);
         self.inputHasFocus(true);
@@ -1777,15 +1830,20 @@ export function ConfigVM(root, deps) {
     self.removeTeam = (item) => removeById(self.teamFilters, item.id);
     self.removeIncident = (item) => removeById(self.incidentFilters, item.id);
 
-    self.loadChildrenForTeam = (item) => deps.entitiesChildren(item.id).then(children => {
-        children.forEach(c => upsert(self.teamFilters, norm({ id: c.Id, name: c.Name, entityType: c.EntityTypeId })));
-    });
-    self.loadChildrenForIncident = (item) => deps.entitiesChildren(item.id).then(children => {
-        children.forEach(c => upsert(self.incidentFilters, norm({ id: c.Id, name: c.Name, entityType: c.EntityTypeId })));
-    });
+    const loadChildrenInto = (filters, item) => {
+        self.lookupError('');
+        return deps.entitiesChildren(item.id).then(children => {
+            children.forEach(c => upsert(filters, norm({ id: c.Id, name: c.Name, entityType: c.EntityTypeId })));
+        }).catch(err => {
+            console.error('Loading child HQs failed:', err);
+            self.lookupError(`Couldn't add the HQs under ${item.name}: ${describeBeaconError(err)}.`);
+        });
+    };
+    self.loadChildrenForTeam = (item) => loadChildrenInto(self.teamFilters, item);
+    self.loadChildrenForIncident = (item) => loadChildrenInto(self.incidentFilters, item);
 
     // Clear/search UI
-    self.clearSearch = () => { self.query(''); self.results([]); self.dropdownOpen(false); };
+    self.clearSearch = () => { self.query(''); self.results([]); self.searchError(''); self.dropdownOpen(false); };
 
 
     self.clearPinnedTeams = () => {
@@ -1826,6 +1884,7 @@ export function ConfigVM(root, deps) {
     self.save = () => {
         const cfg = buildConfig();
         cfg.locationFilters = {
+            ...cfg.locationFilters,
             teams: hqFiltersForStorage(self.teamFilters()),
             incidents: hqFiltersForStorage(self.incidentFilters())
         };
@@ -1903,6 +1962,9 @@ export function ConfigVM(root, deps) {
                         self.incidentFilters([normEntity]);
                         self.teamFilters([normEntity]);
                     }
+                }).catch(err => {
+                    console.error('Loading the HQ from the URL failed:', err);
+                    self.lookupError(`Couldn't load the HQ LAD was opened for: ${describeBeaconError(err)}. Search for it instead.`);
                 });
             }
         }
@@ -1953,6 +2015,8 @@ export function ConfigVM(root, deps) {
             self.teamFilters(cfg.locationFilters.teams || []);
             self.incidentFilters(cfg.locationFilters.incidents || []);
         }
+        self.teamsAllUnits(cfg.locationFilters?.teamsAllUnits === true && self.teamFilters().length === 0);
+        self.incidentsAllUnits(cfg.locationFilters?.incidentsAllUnits === true && self.incidentFilters().length === 0);
         fillEmptyHqFilters();
 
 

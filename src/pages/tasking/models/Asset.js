@@ -2,13 +2,20 @@
 import ko from "knockout";
 import { fmtRelative, safeStr } from "../utils/common.js";
 
+// A latitude/longitude from the feed, or null when it isn't a real number.
+function coordOrNull(v) {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+}
+
 export function Asset(data = {}, deps = {}) {
     const self = this;
     self.id = ko.observable(data.properties.id ?? null);
     self.name = ko.observable(data.properties.name ?? "");
     self.markerLabel = ko.observable(data.markerLabel ?? "");
 
-    self.latLng = ko.observable({ lat: data.geometry?.coordinates?.[1], lng: data.geometry?.coordinates?.[0] });
+    self.latLng = ko.observable({ lat: coordOrNull(data.geometry?.coordinates?.[1]), lng: coordOrNull(data.geometry?.coordinates?.[0]) });
     self.latitude = ko.pureComputed(() => self.latLng()?.lat ?? null);
     self.longitude = ko.pureComputed(() => self.latLng()?.lng ?? null);
 
@@ -129,17 +136,19 @@ export function Asset(data = {}, deps = {}) {
         if (d.exerciseHqId !== undefined) this.exerciseHqId(d.exerciseHqId ?? null);
 
 
-        // SET ONCE: update both lat/lng in a single observable write
-        if (d.geometry !== undefined && Array.isArray(d.geometry.coordinates)) {
-            const lat = d.geometry.coordinates[1];
-            const lng = d.geometry.coordinates[0];
-
-            // only write if at least one is present
-            if (lat !== undefined || lng !== undefined) {
+        // SET ONCE: update both lat/lng in a single observable write.
+        // An axis that's missing or not a number (the feed can send null)
+        // keeps its last value: written as-is, null reads as 0 and the
+        // pin flies off to 0,0.
+        const coords = d.geometry?.coordinates;
+        if (Array.isArray(coords)) {
+            const lat = coordOrNull(coords[1]);
+            const lng = coordOrNull(coords[0]);
+            if (lat !== null || lng !== null) {
                 const cur = this.latLng?.() || { lat: null, lng: null };
                 this.latLng({
-                    lat: (lat !== undefined ? lat : cur.lat),
-                    lng: (lng !== undefined ? lng : cur.lng),
+                    lat: (lat !== null ? lat : cur.lat),
+                    lng: (lng !== null ? lng : cur.lng),
                 });
             }
         }

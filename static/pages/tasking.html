@@ -18,7 +18,14 @@
             <button type="button" class="btn btn-primary" data-bind="visible: pausedLoginOk, click: reloadPage">Reload</button>
         </div>
     </div>
-    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !tabPaused()">
+    <div id="beacon-login-banner" class="signalr-status-banner beacon-login-banner" role="alert" style="display: none" data-bind="visible: beaconLoginRejected() && !tabPaused()">
+        <span class="signalr-status-banner__icon">⚠</span>
+        <span data-bind="visible: !dataLoadStarted()">Beacon has stopped accepting this tab's login. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon.</span>
+        <span data-bind="visible: dataLoadStarted() && !beaconLoginRenewed()">Beacon has stopped accepting this tab's login, so LAD may be out of date. Open LAD again from the <strong>Lighthouse</strong> menu in Beacon, then reload this tab.</span>
+        <span data-bind="visible: beaconLoginRenewed">Beacon stopped accepting this tab's login for a while, so LAD may be out of date. Reload to bring it up to date.</span>
+        <button type="button" class="btn btn-sm btn-danger py-0" data-bind="visible: beaconLoginRenewed, click: reloadPage">Reload</button>
+    </div>
+    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected() && !tabPaused() && !beaconLoginRejected()">
         <span class="signalr-status-banner__icon">⚠</span>
         <span data-bind="text: signalrStatusText"></span>
         <button type="button" class="btn btn-sm btn-warning py-0" data-bind="visible: signalrNeedsPermission, click: allowLiveUpdatesHost">Allow</button>
@@ -226,11 +233,11 @@
                                     </button>
                             </ul>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh (also flashes on a live team update)" data-bind="
-                            click: fetchAllTeamData,
-                            disable: teamsLoading,
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh teams and asset positions (also flashes on a live team update)" data-bind="
+                            click: refreshTeamsAndAssets,
+                            disable: teamsLoading() || assetsRefreshing(),
                             flashOnChange: teamsLivePulse">
-                            <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading }"></i>
+                            <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading() || assetsRefreshing() }"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
                             data-bs-toggle="modal" data-bs-target="#configModal">
@@ -1924,7 +1931,13 @@
                                                     </li>
                                                     <!-- /ko -->
                                                     <!-- /ko -->
-                                                    <!-- ko if: config.results().length === 0 -->
+                                                    <!-- ko if: config.searchError -->
+                                                    <li>
+                                                        <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert"
+                                                            style="pointer-events:none;" data-bind="text: config.searchError"></div>
+                                                    </li>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: config.results().length === 0 && !config.searchError() -->
                                                     <li>
                                                         <div class="dropdown-item text-muted text-center py-2"
                                                             style="pointer-events:none;">
@@ -1935,6 +1948,7 @@
                                                     <!-- /ko -->
                                                 </ul>
                                             </div>
+                                            <div class="small text-danger mt-1" role="alert" data-bind="visible: config.lookupError, text: config.lookupError" style="display: none"></div>
 
                                             <div class="row g-3 mt-0">
                                                 <div class="col-12 col-sm-6">
@@ -1945,12 +1959,12 @@
                                                                 <span class="badge bg-primary me-2"
                                                                     data-bind="text: config.teamFilters().length"></span>
                                                                 <button id="clearTeams" class="btn btn-sm btn-outline-secondary"
-                                                                    data-bind="click: config.clearTeams, enable: config.teamFilters().length">Clear</button>
+                                                                    data-bind="click: config.clearTeams, holdToConfirm: { action: config.allUnitsTeams }, enable: config.teamsClearEnabled">Clear</button>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.teamFilters().length === 0">
                                                             <div class="card-body py-2 selected-box">
-                                                                <span class="text-muted small" data-bind="text: config.teamsEmptyHint"></span>
+                                                                <span class="small" data-bind="text: config.teamsEmptyHint, css: { 'text-muted': !config.teamsAllUnitsShown(), 'hq-all-units': config.teamsAllUnitsShown() }"></span>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.teamFilters().length > 0">
@@ -1981,12 +1995,12 @@
                                                                 <span class="badge bg-success me-2"
                                                                     data-bind="text: config.incidentFilters().length"></span>
                                                                 <button id="clearIncidents" class="btn btn-sm btn-outline-secondary"
-                                                                    data-bind="click: config.clearIncidents, enable: config.incidentFilters().length">Clear</button>
+                                                                    data-bind="click: config.clearIncidents, holdToConfirm: { action: config.allUnitsIncidents }, enable: config.incidentsClearEnabled">Clear</button>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.incidentFilters().length === 0">
                                                             <div class="card-body py-2 selected-box">
-                                                                <span class="text-muted small" data-bind="text: config.incidentsEmptyHint"></span>
+                                                                <span class="small" data-bind="text: config.incidentsEmptyHint, css: { 'text-muted': !config.incidentsAllUnitsShown(), 'hq-all-units': config.incidentsAllUnitsShown() }"></span>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.incidentFilters().length > 0">
@@ -3047,7 +3061,12 @@
                                                                 </div>
                                                             </li>
                                                             <!-- /ko -->
-                                                            <!-- ko if: searchResults().length === 0 -->
+                                                            <!-- ko if: searchError -->
+                                                            <li>
+                                                                <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                             <li>
                                                                 <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                             </li>
@@ -3099,7 +3118,12 @@
                                                                     </div>
                                                                 </li>
                                                                 <!-- /ko -->
-                                                                <!-- ko if: searchResults().length === 0 -->
+                                                                <!-- ko if: searchError -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                                 <li>
                                                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                                 </li>
@@ -3204,7 +3228,12 @@
                                                                     </div>
                                                                 </li>
                                                                 <!-- /ko -->
-                                                                <!-- ko if: searchResults().length === 0 -->
+                                                                <!-- ko if: searchError -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                                 <li>
                                                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                                 </li>
@@ -3281,7 +3310,12 @@
                                                                 </div>
                                                             </li>
                                                             <!-- /ko -->
-                                                            <!-- ko if: searchResults().length === 0 -->
+                                                            <!-- ko if: searchError -->
+                                                            <li>
+                                                                <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko if: searchResults().length === 0 && !searchError() -->
                                                             <li>
                                                                 <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                                             </li>
@@ -3804,7 +3838,12 @@
                                     </div>
                                 </li>
                                 <!-- /ko -->
-                                <!-- ko if: searchResults().length === 0 -->
+                                <!-- ko if: searchError -->
+                                <li>
+                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                 <li>
                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                 </li>
@@ -3849,7 +3888,12 @@
                                     </div>
                                 </li>
                                 <!-- /ko -->
-                                <!-- ko if: searchResults().length === 0 -->
+                                <!-- ko if: searchError -->
+                                <li>
+                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                 <li>
                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                 </li>
@@ -3895,7 +3939,12 @@
                                     </div>
                                 </li>
                                 <!-- /ko -->
-                                <!-- ko if: searchResults().length === 0 -->
+                                <!-- ko if: searchError -->
+                                <li>
+                                    <div class="dropdown-item text-danger text-center text-wrap py-2" role="alert" style="pointer-events:none;" data-bind="text: searchError"></div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 && !searchError() -->
                                 <li>
                                     <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
                                 </li>
