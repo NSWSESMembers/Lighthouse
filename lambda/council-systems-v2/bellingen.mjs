@@ -9,8 +9,8 @@
  * downloaded. Every 30 minutes in normal conditions.
  *
  * Positions and which way each camera looks: worked out by us from its
- * image, as the council doesn't publish them. Wild
- * Cattle Creek (webcam P6VQ1P) is left out: the page gives no road or place.
+ * image, as the council doesn't publish them, except Wild Cattle Creek's
+ * position, which we were given.
  */
 
 import { cameraDataset } from './cameras.mjs';
@@ -43,8 +43,9 @@ const CAMERAS = [
   camera('lavenders', 'z71j19', 'Lavenders Bridge, Bridge Street, Bellingen', -30.4510212, 152.8977963, { bearing: 50 }),
   camera('leans', '90K1qM', "Lean's Bridge, Darkwood Road, Thora", -30.4291261, 152.7707969, { bearing: 325 }),
   camera('moodys', 'P6VeDP', 'Moodys Bridge, Kalang Road, Kalang', -30.4683333, 152.8694167, { bearing: 140 }),
-  camera('spicketts', 'Mmlkkz', 'Spicketts Bridge, Bowraville Road, Brierfield', -30.5049303, 152.8933764, { bearing: 182 }),
-  camera('slarkes', 'zJlV69', 'Slarkes Bridge, North Bank Road', -30.4558333, 152.9300556, { bearing: 268 }),
+  camera('spicketts', 'Mmlkkz', 'Spicketts Bridge, Bowraville Road, Brierfield', -30.504925, 152.893853, { bearing: 182 }),
+  camera('slarkes', 'zJlV69', 'Slarkes Bridge, North Bank Road', -30.455999, 152.930090, { bearing: 268 }),
+  camera('wildcattle', 'P6VQ1P', 'Wild Cattle Creek', -30.2819167, 152.7746111, { bearing: 225 }),
 ];
 
 export const bellingen = {
