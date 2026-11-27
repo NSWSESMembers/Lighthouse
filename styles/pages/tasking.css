@@ -1934,6 +1934,55 @@ tr.job:hover {
 .cfg-location .cfg-more-btn:hover {
   background: var(--bs-tertiary-bg, #f8f9fa);
 }
+.cfg-location .hq-all-units {
+  color: var(--bs-warning-text-emphasis, #664d03);
+  font-weight: 600;
+}
+body.dark-mode .cfg-location .hq-all-units {
+  color: #ffda6a;
+}
+body.dark-mode .btn.hold-confirm.hold-arming {
+  background-color: transparent;
+  border-color: #666;
+  color: #fff;
+}
+
+/* holdToConfirm binding: fill sweeps across while the button is held */
+.hold-confirm {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.hold-confirm::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bs-warning, #ffc107);
+  opacity: 0.6;
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+.hold-confirm.hold-arming {
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-color: var(--bs-body-color, #212529);
+  background-color: transparent;
+  color: var(--bs-body-color, #212529);
+}
+.hold-confirm.hold-arming::before {
+  transform: scaleX(1);
+  transition: transform var(--hold-ms, 1000ms) linear;
+}
+.hold-confirm.hold-done {
+  animation: hold-confirm-done 0.7s ease-out;
+}
+@keyframes hold-confirm-done {
+  from { background-color: var(--bs-warning, #ffc107); color: #000; }
+}
+
 .cfg-location .selected-box .pill {
   font-size: 0.7rem;
   font-weight: 600;

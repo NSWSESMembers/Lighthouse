@@ -84,6 +84,7 @@ import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
 import { installRowTransitionBindings } from "./bindings/rowTransitions.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
 import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
+import "./bindings/holdToConfirm.js";  // registers ko.bindingHandlers.holdToConfirm
 import "./bindings/fitInPane.js";    // registers ko.bindingHandlers.fitInPane
 import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
