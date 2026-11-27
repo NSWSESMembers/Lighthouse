@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import { request, requestPaginated } from './core/request.js';
+import { PAGING_PARAMS_LENGTH, splitQueryParts } from './core/queryBatches.js';
 
 /**
  * Tasking for a team. Single-page result only.
@@ -47,7 +48,9 @@ export function get(id, ctx = {}) {
 }
 
 /**
- * Team search over a status date range.
+ * Team search over a status date range. A long list of units is split into
+ * as many requests as Beacon's query string limit needs; onProgress and onPage
+ * then report per request.
  *
  * @param {object|Array|null} unit  a single entity ({Id}), an array of entities, or null for "all"
  * @param {Date} startDate
@@ -56,7 +59,7 @@ export function get(id, ctx = {}) {
  *          statusTypes?: number[], typeIds?: number[], onProgress?: Function, onPage?: Function}} ctx
  * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export function search(unit, startDate, endDate, ctx = {}) {
+export async function search(unit, startDate, endDate, ctx = {}) {
   const { host, userId = 'notPassed', token, signal, statusTypes = [], typeIds = [], onProgress, onPage } = ctx;
 
   const params = {};
@@ -73,24 +76,27 @@ export function search(unit, startDate, endDate, ctx = {}) {
     params['TypeIds'] = typeIds;
   }
 
+  let unitIds = [];
   if (unit !== null || typeof unit === 'undefined') {
-    if (Array.isArray(unit) === false) {
-      params['AssignedToId'] = unit.Id;
-      params['CreatedAtId'] = unit.Id;
-    } else {
-      const assignedToId = [];
-      const createdAtId = [];
-      unit.forEach((d) => {
-        assignedToId.push(d.Id);
-        createdAtId.push(d.Id);
-      });
-      params['AssignedToId'] = assignedToId;
-      params['CreatedAtId'] = createdAtId;
-    }
+    unitIds = Array.isArray(unit) ? unit.map((d) => d.Id) : [unit.Id];
   }
 
-  const url = host + '/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&userId=' + userId + '&' + $.param(params, true);
-  return requestPaginated(url, { token, signal, pageSize: 50, onProgress, onPage });
+  // A long unit list (every unit selected) is split into as many requests as
+  // Beacon's query string limit needs; a team can come back from more than one.
+  const fixedQuery = 'LighthouseFunction=GetJSONTeamsfromBeacon&userId=' + userId + '&' + $.param(params, true) + '&';
+  const parts = unitIds.map((id) => 'AssignedToId=' + encodeURIComponent(id) + '&CreatedAtId=' + encodeURIComponent(id) + '&');
+  const batches = splitQueryParts(parts, fixedQuery.length + PAGING_PARAMS_LENGTH);
+
+  const pages = await Promise.all(
+    batches.map((batch) =>
+      requestPaginated(host + '/Api/v1/Teams/Search?' + (fixedQuery + batch.join('')).slice(0, -1), { token, signal, pageSize: 50, onProgress, onPage }),
+    ),
+  );
+  if (pages.length === 1) return pages[0];
+  const byId = new Map();
+  pages.forEach((p) => p.results.forEach((team) => byId.set(team.Id, team)));
+  const results = [...byId.values()];
+  return { results, totalItems: results.length };
 }
 
 /**
