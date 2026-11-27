@@ -399,6 +399,10 @@ export function ConfigVM(root, deps) {
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
+    // An empty list deliberately set to load every unit (holding Clear on
+    // Production Beacon, where an empty list otherwise means the focus unit).
+    self.teamsAllUnits = ko.observable(false);
+    self.incidentsAllUnits = ko.observable(false);
 
     // Selected-filter boxes collapse past this many pills; a "…more" button
     // toggles the expanded state.
@@ -1606,7 +1610,9 @@ export function ConfigVM(root, deps) {
         layoutPreset: normalizeLayoutPreset(self.layoutPreset()),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
-            incidents: ko.toJS(self.incidentFilters)
+            incidents: ko.toJS(self.incidentFilters),
+            teamsAllUnits: !!self.teamsAllUnits(),
+            incidentsAllUnits: !!self.incidentsAllUnits()
         },
         // these are your “ignored” statuses used by filters
         teamStatusFilter: ko.toJS(self.teamStatusFilter),
@@ -1675,10 +1681,12 @@ export function ConfigVM(root, deps) {
     const focusHqId = requireHqFilter ? parseInt(deps.defaultHqId, 10) : NaN;
     let focusUnitFilter = focusHqId > 0 ? { id: focusHqId, name: 'Your focus unit', entityType: 0 } : null;
 
+    const allUnitsFlagFor = (arr) => (arr === self.teamFilters ? self.teamsAllUnits : self.incidentsAllUnits);
+
     const fillEmptyHqFilters = () => {
         if (!focusUnitFilter) return;
         [self.teamFilters, self.incidentFilters].forEach((arr) => {
-            if (arr().length === 0) arr([focusUnitFilter]);
+            if (arr().length === 0 && !allUnitsFlagFor(arr)()) arr([focusUnitFilter]);
         });
     };
 
@@ -1697,17 +1705,33 @@ export function ConfigVM(root, deps) {
 
     // Only when Production Beacon has no focus unit to fall back on.
     self.hqFilterMissing = ko.pureComputed(() =>
-        requireHqFilter && (self.teamFilters().length === 0 || self.incidentFilters().length === 0));
-    self.teamsEmptyHint = requireHqFilter
-        ? 'Choose at least one headquarters - Production Beacon can\'t load teams from all units'
-        : 'No Filters Applied - Teams from all units will be fetched';
-    self.incidentsEmptyHint = requireHqFilter
-        ? 'Choose at least one headquarters - Production Beacon can\'t load incidents from all units'
-        : 'No Filters Applied - Incidents from all units will be fetched';
+        requireHqFilter && (
+            (self.teamFilters().length === 0 && !self.teamsAllUnits()) ||
+            (self.incidentFilters().length === 0 && !self.incidentsAllUnits())));
+    self.teamsEmptyHint = ko.pureComputed(() => {
+        if (requireHqFilter && self.teamsAllUnits()) return 'All units - teams from every unit in NSW will be fetched';
+        return requireHqFilter
+            ? 'Choose at least one headquarters - Production Beacon can\'t load teams from all units'
+            : 'No Filters Applied - Teams from all units will be fetched';
+    });
+    self.incidentsEmptyHint = ko.pureComputed(() => {
+        if (requireHqFilter && self.incidentsAllUnits()) return 'All units - incidents from every unit in NSW will be fetched';
+        return requireHqFilter
+            ? 'Choose at least one headquarters - Production Beacon can\'t load incidents from all units'
+            : 'No Filters Applied - Incidents from all units will be fetched';
+    });
+    self.teamsAllUnitsShown = ko.pureComputed(() => requireHqFilter && self.teamsAllUnits());
+    self.incidentsAllUnitsShown = ko.pureComputed(() => requireHqFilter && self.incidentsAllUnits());
+    // Clear stays enabled on Production so it can be held for all units.
+    self.teamsClearEnabled = ko.pureComputed(() => requireHqFilter || self.teamFilters().length > 0);
+    self.incidentsClearEnabled = ko.pureComputed(() => requireHqFilter || self.incidentFilters().length > 0);
 
     const upsert = (arr, item) => {
         const exists = arr().some(x => x.id === item.id);
-        if (!exists) arr.push(item);
+        if (!exists) {
+            arr.push(item);
+            allUnitsFlagFor(arr)(false);
+        }
         if (exists) arr.remove(x => x.id === item.id);
         fillEmptyHqFilters();
     };
@@ -1716,8 +1740,11 @@ export function ConfigVM(root, deps) {
         fillEmptyHqFilters();
     };
 
-    self.clearTeams = () => { self.teamFilters.removeAll(); fillEmptyHqFilters(); self.teamsExpanded(false); };
-    self.clearIncidents = () => { self.incidentFilters.removeAll(); fillEmptyHqFilters(); self.incidentsExpanded(false); };
+    self.clearTeams = () => { self.teamFilters.removeAll(); self.teamsAllUnits(false); fillEmptyHqFilters(); self.teamsExpanded(false); };
+    self.clearIncidents = () => { self.incidentFilters.removeAll(); self.incidentsAllUnits(false); fillEmptyHqFilters(); self.incidentsExpanded(false); };
+    // Holding Clear (holdToConfirm binding) loads every unit, even on Production.
+    self.allUnitsTeams = () => { self.teamFilters.removeAll(); self.teamsAllUnits(true); self.teamsExpanded(false); };
+    self.allUnitsIncidents = () => { self.incidentFilters.removeAll(); self.incidentsAllUnits(true); self.incidentsExpanded(false); };
     self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
@@ -1786,9 +1813,11 @@ export function ConfigVM(root, deps) {
 
         const teamExists = self.teamFilters().some(x => x.id === n.id);
         if (!teamExists) self.teamFilters.push(n);
+        self.teamsAllUnits(false);
 
         const incidentExists = self.incidentFilters().some(x => x.id === n.id);
         if (!incidentExists) self.incidentFilters.push(n);
+        self.incidentsAllUnits(false);
 
         self.dropdownOpen(true);
         self.inputHasFocus(true);
@@ -1855,6 +1884,7 @@ export function ConfigVM(root, deps) {
     self.save = () => {
         const cfg = buildConfig();
         cfg.locationFilters = {
+            ...cfg.locationFilters,
             teams: hqFiltersForStorage(self.teamFilters()),
             incidents: hqFiltersForStorage(self.incidentFilters())
         };
@@ -1985,6 +2015,8 @@ export function ConfigVM(root, deps) {
             self.teamFilters(cfg.locationFilters.teams || []);
             self.incidentFilters(cfg.locationFilters.incidents || []);
         }
+        self.teamsAllUnits(cfg.locationFilters?.teamsAllUnits === true && self.teamFilters().length === 0);
+        self.incidentsAllUnits(cfg.locationFilters?.incidentsAllUnits === true && self.incidentFilters().length === 0);
         fillEmptyHqFilters();
 
 

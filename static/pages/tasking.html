@@ -1959,12 +1959,12 @@
                                                                 <span class="badge bg-primary me-2"
                                                                     data-bind="text: config.teamFilters().length"></span>
                                                                 <button id="clearTeams" class="btn btn-sm btn-outline-secondary"
-                                                                    data-bind="click: config.clearTeams, enable: config.teamFilters().length">Clear</button>
+                                                                    data-bind="click: config.clearTeams, holdToConfirm: { action: config.allUnitsTeams }, enable: config.teamsClearEnabled">Clear</button>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.teamFilters().length === 0">
                                                             <div class="card-body py-2 selected-box">
-                                                                <span class="text-muted small" data-bind="text: config.teamsEmptyHint"></span>
+                                                                <span class="small" data-bind="text: config.teamsEmptyHint, css: { 'text-muted': !config.teamsAllUnitsShown(), 'hq-all-units': config.teamsAllUnitsShown() }"></span>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.teamFilters().length > 0">
@@ -1995,12 +1995,12 @@
                                                                 <span class="badge bg-success me-2"
                                                                     data-bind="text: config.incidentFilters().length"></span>
                                                                 <button id="clearIncidents" class="btn btn-sm btn-outline-secondary"
-                                                                    data-bind="click: config.clearIncidents, enable: config.incidentFilters().length">Clear</button>
+                                                                    data-bind="click: config.clearIncidents, holdToConfirm: { action: config.allUnitsIncidents }, enable: config.incidentsClearEnabled">Clear</button>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.incidentFilters().length === 0">
                                                             <div class="card-body py-2 selected-box">
-                                                                <span class="text-muted small" data-bind="text: config.incidentsEmptyHint"></span>
+                                                                <span class="small" data-bind="text: config.incidentsEmptyHint, css: { 'text-muted': !config.incidentsAllUnitsShown(), 'hq-all-units': config.incidentsAllUnitsShown() }"></span>
                                                             </div>
                                                         </div>
                                                         <div data-bind="if: config.incidentFilters().length > 0">
