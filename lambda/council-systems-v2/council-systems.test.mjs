@@ -314,7 +314,7 @@ const headers = (h) => ({ headers: new Headers(h) });
 
 describe('council flood cameras', () => {
   it('list each council\'s cameras, with where to ask for the latest image', async () => {
-    for (const [council, count] of [['tweed', 13], ['clarence', 9], ['bellingen', 5], ['coffsharbour', 1]]) {
+    for (const [council, count] of [['tweed', 13], ['clarence', 9], ['bellingen', 6], ['coffsharbour', 1]]) {
       const features = await cameraList(council);
       expect(features).toHaveLength(count);
       const { item } = COUNCILS[council].datasets['flood-cameras'];
